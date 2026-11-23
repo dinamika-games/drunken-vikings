@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <rect width="16" height="16" fill="#1f3a5a"/>
+  <!-- A longship with a striped sail, flat-shaded. -->
+  <rect x="7" y="2" width="1" height="9" fill="#5a3a1e"/>
+  <rect x="4" y="3" width="7" height="2" fill="#c8302c"/>
+  <rect x="4" y="5" width="7" height="2" fill="#f2efe6"/>
+  <rect x="4" y="7" width="7" height="2" fill="#c8302c"/>
+  <polygon points="1,10 15,10 13,13 3,13" fill="#8a5a2b"/>
+  <rect x="1" y="9" width="1" height="1" fill="#8a5a2b"/>
+  <rect x="14" y="9" width="1" height="1" fill="#8a5a2b"/>
+  <rect x="0" y="13" width="16" height="3" fill="#2f5f8a"/>
+</svg>
