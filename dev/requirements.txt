@@ -3,3 +3,4 @@ black==24.10.0
 gdtoolkit==4.5.0
 numpy==2.2.6
 matplotlib==3.10.9
+shapely==2.0.6

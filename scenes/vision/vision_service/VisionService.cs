@@ -45,6 +45,8 @@ public partial class VisionService : Node
 
     public const string RtmPoseModelPath = "res://scenes/vision/rtmpose/model/rtmpose_t_body7_256x192.onnx";
 
+    public const string HandModelPath = "res://scenes/vision/yolox/model/yolox_n_body_head_hand_Nx3xHxW.onnx";
+
     /// <summary>Use only the key points of at least this score for the signals.</summary>
     public const float KeypointThreshold = 0.3f;
 
@@ -80,6 +82,9 @@ public partial class VisionService : Node
 
     /// <summary>The signals of each player on their latest pose.</summary>
     private readonly RowingSignals[] _signals = { RowingSignals.Unknown, RowingSignals.Unknown };
+
+    /// <summary>The strokes and the steering of each player.</summary>
+    private readonly RowingMeter[] _meters = { new(), new() };
 
     /// <summary>When each player was seen the last time.</summary>
     private readonly double[] _seenAt = { double.NegativeInfinity, double.NegativeInfinity };
@@ -173,7 +178,27 @@ public partial class VisionService : Node
     }
 
     private Thread? _poseThread;
+    private Thread? _handThread;
     private volatile bool _running;
+
+    /// <summary>Whether the hand detector runs (only while a screen shows the hand cursor).</summary>
+    private volatile bool _handTracking;
+
+    private readonly FrameSlot _handSlot = new();
+
+    /// <summary>The hands which YOLOX found last: the time, the size of the frame and the boxes.</summary>
+    private sealed class HandSnapshot
+    {
+        public double Timestamp { get; init; }
+        public int Width { get; init; }
+        public int Height { get; init; }
+        public IReadOnlyList<BoundingBox> Hands { get; init; } = Array.Empty<BoundingBox>();
+    }
+
+    private HandSnapshot? _latestHands;
+
+    /// <summary>Whether we shut down (see <see cref="Shutdown"/>): no more frames are taken.</summary>
+    private bool _shutDown;
     private volatile int _threadPlayerCount = 1;
     private readonly FrameSlot _poseSlot = new();
 
@@ -239,6 +264,9 @@ public partial class VisionService : Node
             float unit = _scales[i].Observe(snapshot.Timestamp, pose, KeypointThreshold);
             _signals[i] = RowingSignals.Measure(pose, unit, snapshot.Height, KeypointThreshold);
             signals[i] = _signals[i];
+            var head = pose?.Head(KeypointThreshold);
+            _meters[i].Observe(
+                snapshot.Timestamp, head?.X ?? float.NaN, head?.Y ?? float.NaN, unit);
             if (pose != null)
             {
                 _seenAt[i] = snapshot.Timestamp;
@@ -336,6 +364,35 @@ public partial class VisionService : Node
         return scores;
     }
 
+    /// <summary>
+    /// Run the hand detector (for the hand cursor of the screens) or stop it,
+    /// so that it takes the processor only while a screen needs it.
+    /// </summary>
+    public void SetHandTracking(bool on) => _handTracking = on;
+
+    /// <summary>
+    /// The hands which the hand detector found lately (of all the players), as
+    /// their centers in the mirrored picture, normalized; empty if none were
+    /// found in the last 0.3 s, or the detector does not run.
+    /// </summary>
+    public Vector2[] GetHands()
+    {
+        var snapshot = Volatile.Read(ref _latestHands);
+        if (snapshot == null || !_handTracking || Now - snapshot.Timestamp > 0.3)
+        {
+            return Array.Empty<Vector2>();
+        }
+
+        var hands = new Vector2[snapshot.Hands.Count];
+        for (int i = 0; i < hands.Length; i++)
+        {
+            var box = snapshot.Hands[i];
+            hands[i] = new Vector2(1f - box.CenterX / snapshot.Width, box.CenterY / snapshot.Height);
+        }
+
+        return hands;
+    }
+
     /// <summary>Which model found the latest pose of the player: "Rtmo", "RtmPose" or "None".</summary>
     public string GetPoseSource(int player)
     {
@@ -350,6 +407,28 @@ public partial class VisionService : Node
     /// <summary>The signals of the player on their latest pose (see <see cref="RowingSignals"/>); NaN where unknown.</summary>
     public float[] GetSignals(int player) => _signals[Index(player)].ToArray();
 
+    /// <summary>How many strokes the player rowed so far (see <see cref="RowingMeter"/>).</summary>
+    public int GetStrokes(int player) => _meters[Index(player)].Strokes;
+
+    /// <summary>How deep the last stroke of the player was, in units of the player (about 0.5 to 1).</summary>
+    public float GetLastStrokeDepth(int player) => _meters[Index(player)].LastStrokeDepth;
+
+    /// <summary>The steering of the player in [-1, 1], positive to the player's right.</summary>
+    public float GetSteer(int player) => _meters[Index(player)].Steer;
+
+    /// <summary>
+    /// How far the player is through the stroke now (0 reaching forward, 1
+    /// leaning back; see <see cref="RowingMeter.Pull"/>), or -1 while they do not row.
+    /// </summary>
+    public float GetPull(int player)
+    {
+        float pull = _meters[Index(player)].Pull;
+        return float.IsNaN(pull) ? -1f : pull;
+    }
+
+    /// <summary>How far the head of the player is to their right of home, in units.</summary>
+    public float GetShift(int player) => _meters[Index(player)].Shift;
+
     /// <summary>How long the latest poses took, in milliseconds.</summary>
     public double GetInferenceMs() => Latest?.InferenceMs ?? 0.0;
 
@@ -362,6 +441,7 @@ public partial class VisionService : Node
         for (int i = 0; i < PlayerSplit.MaxPlayers; i++)
         {
             _scales[i].Reset();
+            _meters[i].Reset();
             _signals[i] = RowingSignals.Unknown;
             _seenAt[i] = double.NegativeInfinity;
         }
@@ -710,10 +790,31 @@ public partial class VisionService : Node
             Priority = ThreadPriority.BelowNormal,
         };
         _poseThread.Start();
+
+        if (FileAccess.FileExists(HandModelPath))
+        {
+            byte[] handModel = FileAccess.GetFileAsBytes(HandModelPath);
+            _handThread = new Thread(() => HandLoop(handModel))
+            {
+                IsBackground = true,
+                Name = "Hands",
+                Priority = ThreadPriority.BelowNormal,
+            };
+            _handThread.Start();
+        }
+        else
+        {
+            GD.PushWarning($"The hand model {HandModelPath} is missing; the screens work only with the mouse.");
+        }
     }
 
     private void OnFrameChanged()
     {
+        if (_shutDown)
+        {
+            return;
+        }
+
         if (!_fullFrameRateKept)
         {
             // NOTE (mristin):
@@ -729,13 +830,14 @@ public partial class VisionService : Node
         }
 
         bool forPose = _poseSlot.Requested;
+        bool forHands = _handTracking && _handSlot.Requested;
         bool twoPlanes = _feed.GetDatatype() == CameraFeed.FeedDataType.YcbcrSep;
 
         // NOTE (mristin):
         // While we save the frames, we take every frame of the camera, so
         // that the pictures are the whole video, not only what the vision saw.
         bool forFrames = _frameQueue != null;
-        if (!forPose && !twoPlanes && !forFrames)
+        if (!forPose && !forHands && !twoPlanes && !forFrames)
         {
             return;
         }
@@ -766,7 +868,7 @@ public partial class VisionService : Node
                 _ycbcrPreview.Update(preview);
             }
 
-            if (!forPose && !forFrames)
+            if (!forPose && !forHands && !forFrames)
             {
                 return;
             }
@@ -797,6 +899,11 @@ public partial class VisionService : Node
         if (forPose)
         {
             _poseSlot.Put(frame);
+        }
+
+        if (forHands)
+        {
+            _handSlot.Put(frame);
         }
     }
 
@@ -847,15 +954,64 @@ public partial class VisionService : Node
     }
 
     /// <summary>Ask for the next camera frame and wait for it; null on a timeout or the exit.</summary>
-    private Frame? NextFrame()
+    private Frame? NextFrame(FrameSlot slot)
     {
-        _poseSlot.Requested = true;
-        if (!_poseSlot.Ready.WaitOne(500) || !_running)
+        slot.Requested = true;
+        if (!slot.Ready.WaitOne(500) || !_running)
         {
             return null;
         }
 
-        return _poseSlot.Take();
+        return slot.Take();
+    }
+
+    private void HandLoop(byte[] model)
+    {
+        YoloxHeadDetector? detector = null;
+        try
+        {
+            detector = new YoloxHeadDetector(model);
+            var heads = new List<Detection>();
+            while (_running)
+            {
+                if (!_handTracking)
+                {
+                    Thread.Sleep(50);
+                    continue;
+                }
+
+                var frame = NextFrame(_handSlot);
+                if (frame == null)
+                {
+                    continue;
+                }
+
+                detector.Detect(frame, heads);
+                var hands = new List<BoundingBox>();
+                foreach (var hand in detector.Hands)
+                {
+                    hands.Add(hand.Box);
+                }
+
+                Volatile.Write(ref _latestHands, new HandSnapshot
+                {
+                    Timestamp = frame.Timestamp,
+                    Width = frame.Width,
+                    Height = frame.Height,
+                    Hands = hands,
+                });
+            }
+        }
+        catch (Exception exception)
+        {
+            // NOTE (mristin):
+            // Without the hands, the screens still work with the mouse.
+            GD.PushWarning($"The hand detector stopped: {exception}");
+        }
+        finally
+        {
+            detector?.Dispose();
+        }
     }
 
     private void PoseLoop(byte[] rtmo, byte[] rtmPose, int threads)
@@ -868,7 +1024,7 @@ public partial class VisionService : Node
 
             while (_running)
             {
-                var frame = NextFrame();
+                var frame = NextFrame(_poseSlot);
                 if (frame != null)
                 {
                     Volatile.Write(ref _latest, follower.Process(frame, _threadPlayerCount));
@@ -894,13 +1050,37 @@ public partial class VisionService : Node
         GD.Print($"Vision: {status}: {message}");
     }
 
-    public override void _ExitTree()
+    public override void _Notification(int what)
     {
+        if (what == NotificationWMCloseRequest)
+        {
+            Shutdown();
+        }
+    }
+
+    public override void _ExitTree() => Shutdown();
+
+    /// <summary>
+    /// Stop the camera, the pose thread and the recording; call it before
+    /// quitting, so that no camera frame arrives while the engine shuts down.
+    /// Calling it again does nothing.
+    /// </summary>
+    public void Shutdown()
+    {
+        if (_shutDown)
+        {
+            return;
+        }
+
+        _shutDown = true;
         StopRecording();
         _running = false;
         _poseSlot.Ready.Set();
+        _handSlot.Ready.Set();
         _poseThread?.Join(2000);
         _poseThread = null;
+        _handThread?.Join(2000);
+        _handThread = null;
 
         if (_feed != null)
         {

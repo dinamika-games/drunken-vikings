@@ -35,3 +35,6 @@ obj/
 
 # Python bytecode
 __pycache__/
+
+# The downloads of dev/maps/
+/.cache/

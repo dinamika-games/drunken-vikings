@@ -140,6 +140,13 @@ namespace DrunkenVikings.Vision
         {
             _writer.WriteLine(JsonSerializer.Serialize(line));
             Lines++;
+
+            // NOTE (mristin):
+            // Flush now and then, so that a crash loses at most a few lines.
+            if (Lines % 50 == 0)
+            {
+                _writer.Flush();
+            }
         }
 
         public void Dispose()

@@ -58,80 +58,6 @@ const _GRAPHS := [
 ]
 
 
-## The camera picture, mirrored, with the skeletons of the players.
-class CameraView:
-    extends Control
-
-    const _BONES := [
-        [5, 6],
-        [5, 7],
-        [7, 9],
-        [6, 8],
-        [8, 10],
-        [5, 11],
-        [6, 12],
-        [11, 12],
-        [11, 13],
-        [13, 15],
-        [12, 14],
-        [14, 16],
-        [0, 1],
-        [0, 2],
-        [1, 3],
-        [2, 4],
-    ]
-
-    var service: Node
-
-    func _process(_delta: float) -> void:
-        queue_redraw()
-
-    func _draw() -> void:
-        draw_rect(Rect2(Vector2.ZERO, size), Color("161a24"))
-        if service == null:
-            return
-        var texture: Texture2D = service.GetCameraTexture()
-        if texture != null:
-            # NOTE (mristin):
-            # The picture is mirrored, so that the players see themselves as
-            # in a mirror; a negative width flips it.
-            draw_texture_rect(texture, Rect2(Vector2(size.x, 0), Vector2(-size.x, size.y)), false)
-
-        var count: int = service.GetPlayerCount()
-        if count > 1:
-            draw_dashed_line(
-                Vector2(size.x / 2.0, 0), Vector2(size.x / 2.0, size.y), _GREY, 3.0, 12.0
-            )
-
-        for player in range(count):
-            var points: PackedVector2Array = service.GetKeypoints(player)
-            var scores: PackedFloat32Array = service.GetKeypointScores(player)
-            if points.size() != 17 or scores.size() != 17:
-                continue
-            var color: Color = _PLAYER_COLORS[player]
-            for bone in _BONES:
-                var a: int = bone[0]
-                var b: int = bone[1]
-                if scores[a] < 0.3 or scores[b] < 0.3:
-                    continue
-                draw_line(points[a] * size, points[b] * size, color, 5.0)
-            for k in range(17):
-                var faint := scores[k] < 0.3
-                var dot := Color(color, 0.35) if faint else color
-                draw_circle(points[k] * size, 7.0, dot)
-
-            var source: String = service.GetPoseSource(player)
-            draw_string(
-                get_theme_default_font(),
-                Vector2(16.0 + (size.x / 2.0) * player, size.y - 16.0),
-                "player %d: %s" % [player + 1, source],
-                HORIZONTAL_ALIGNMENT_LEFT,
-                -1,
-                22,
-                color
-            )
-
-
 ## The signals of the players over the last seconds, one graph per signal.
 class SignalGraphs:
     extends Control
@@ -295,7 +221,7 @@ func _build() -> void:
     screen.set_anchors_preset(Control.PRESET_FULL_RECT)
     root.add_child(screen)
 
-    var camera := CameraView.new()
+    var camera := CameraPanel.new()
     camera.service = _service
     camera.position = Vector2(20, 90)
     camera.size = Vector2(1200, 900)
@@ -390,6 +316,8 @@ func _process(_delta: float) -> bool:
     if Input.is_key_pressed(KEY_ESCAPE):
         if not _done:
             _finish()
+        if _service != null:
+            _service.Shutdown()
         return true
     if _service == null:
         return false

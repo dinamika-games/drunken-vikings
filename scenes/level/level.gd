@@ -1,0 +1,487 @@
+extends Node2D
+
+## The party mode, for the smaller children: the players row their small
+## boat through the lakes behind the wedding longship, from their farm to the
+## market village. The wedding party drops flower wreaths, ribbons, honey
+## cakes and apples into the water (see [Treats]); every one the players pick
+## up gives them a silver coin, into the purse of their voyage (see
+## GameState). The longship waits for the players, and nobody is ever lost.
+##
+## Each stroke of the players pushes the boat, which glides on (see
+## RowingMeter). Alone, the player steers by going sideways with the head; two
+## players pull an oar each (the player on the left of the mirrored picture
+## the left one), and the boat turns away from the stronger rower (see
+## RowBoat). Start with [code]-- --players=2[/code] for two players. The
+## players play only with their bodies, never with the keyboard. The view turns with the boat,
+## so that the bow always points up and going left turns left.
+##
+## Once the longship is in the market village, the players choose with
+## their hands (see ChoicePanel): another party, the farm, or stop. Escape quits.
+##
+## With [code]-- --autopilot[/code], the boat rows and steers by itself along
+## the route, to try the level without the camera (e.g., to render it). With
+## [code]-- --record[/code], the vision records what it measures while the
+## players row (only numbers, see VisionRecorder) into
+## ~/Downloads/rowing_recordings/level-<time>.jsonl, to study it with
+## dev/rowing/analyze.py.
+
+## How many pixels a metre takes on the screen.
+const ZOOM := 6.0
+
+## The camera looks this far ahead of the boat, in metres, so that the
+## players see where they go.
+const LOOK_AHEAD := 45.0
+
+## The wedding party drops a treat every this many seconds (at random within).
+const DROP_EVERY := Vector2(4.0, 7.0)
+
+## The treats fall this far to the side of the longship's wake, in metres.
+const DROP_SIDEWAYS := Vector2(6.0, 24.0)
+
+## The level is done when the boat comes this close to the end of the route
+## after the viking ship arrived, in metres.
+const FINISH_DISTANCE := 90.0
+
+const _PAPER := Color("f1f0ea")
+const _GOLD := Color("f2c14e")
+const _INK := Color("0c0e14")
+
+## The map of the level, made by dev/maps/make_lakes.py.
+@export var map_path := GameState.MAP_PATH
+
+var _map: LakeMap
+var _boat := RowBoat.new()
+var _rower: RowerView
+var _ship: Longship
+var _boat_wake: Wake
+var _splashes: Splashes
+var _drip := 0.0
+var _ship_wake: Wake
+var _camera: Camera2D
+var _labels: Array[Node2D] = []
+var _service: Node
+## The strokes of each player which the boat got already.
+var _strokes_seen := [0, 0]
+var _elapsed := 0.0
+var _done := false
+var _treats: Treats
+var _drop_left := 1.0
+var _coins := 0
+var _rng := RandomNumberGenerator.new()
+var _state: Node
+var _panel: ChoicePanel
+var _actions: Array[Callable] = []
+var _autopilot := false
+var _autopilot_beat := 0.0
+
+var _hud: CanvasLayer
+var _banner: Label
+var _info: Label
+var _overlay: Control
+
+
+func _ready() -> void:
+    _autopilot = "--autopilot" in OS.get_cmdline_user_args()
+    _rng.seed = Time.get_ticks_usec()
+    _state = get_node_or_null("/root/GameState")
+    if _state != null and not _state.load_voyage():
+        _state.new_voyage()
+    var vision := get_node_or_null("/root/Vision")
+    if vision != null:
+        _service = vision.service
+        _strokes_seen = [_service.GetStrokes(0), _service.GetStrokes(1)]
+        if "--record" in OS.get_cmdline_user_args():
+            var path := (
+                "%s/Downloads/rowing_recordings/level-%s.jsonl"
+                % [
+                    OS.get_environment("HOME"),
+                    Time.get_datetime_string_from_system().replace(":", "").replace("T", "-")
+                ]
+            )
+            if _service.StartRecording(path, false, "level"):
+                print("Recording into %s" % path)
+
+    _map = LakeMap.new()
+    add_child(_map)
+    var error := _map.load_map(map_path)
+    if error != "":
+        push_error(error)
+        return
+
+    _splashes = Splashes.new()
+    add_child(_splashes)
+
+    _boat_wake = Wake.new()
+    _boat_wake.width = 1.5
+    _boat_wake.spread = 5.0
+    add_child(_boat_wake)
+    _ship_wake = Wake.new()
+    _ship_wake.width = 4.0
+    _ship_wake.spread = 9.0
+    add_child(_ship_wake)
+
+    _treats = Treats.new()
+    add_child(_treats)
+
+    _ship = Longship.new()
+    _ship.wedding = true
+    _ship.map = _map
+    _ship.progress = 80.0
+    var course := _map.route_point(95.0) - _map.route_point(80.0)
+    _ship.heading = course.angle() + PI / 2.0
+    _ship.position = _map.route_point(80.0)
+    _ship.rotation = _ship.heading
+    add_child(_ship)
+
+    _boat.position = _map.route_point(0.0)
+    var ahead := _map.route_point(20.0) - _boat.position
+    _boat.heading = ahead.angle() + PI / 2.0
+    _rower = RowerView.new()
+    _rower.boat = _boat
+    _rower.pair = players() == 2
+    add_child(_rower)
+
+    for label in _map.labels:
+        if label["kind"] == "village":
+            continue
+        var mark := MapLabel.new()
+        mark.text = label["name"]
+        mark.kind = label["kind"]
+        mark.position = label["at"]
+        add_child(mark)
+        _labels.append(mark)
+    for village in [_map.start, _map.goal]:
+        var mark := MapLabel.new()
+        mark.text = village["name"]
+        mark.kind = "village"
+        mark.position = village["at"]
+        add_child(mark)
+        _labels.append(mark)
+
+    _camera = Camera2D.new()
+    _camera.zoom = Vector2(ZOOM, ZOOM)
+    _camera.ignore_rotation = false
+    _camera.position_smoothing_enabled = false
+    add_child(_camera)
+    _camera.make_current()
+
+    _build_hud()
+    _camera.rotation = _boat.heading
+    _camera.position = _boat.position + Vector2.UP.rotated(_boat.heading) * LOOK_AHEAD
+
+
+func _build_hud() -> void:
+    _hud = CanvasLayer.new()
+    add_child(_hud)
+
+    _overlay = HudOverlay.new()
+    _overlay.level = self
+    _overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+    _overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _hud.add_child(_overlay)
+
+    _banner = _label(Vector2(0, 20), Vector2(1920, 60), 40, _GOLD)
+    _banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    _info = _label(Vector2(30, 960), Vector2(900, 100), 24, _PAPER)
+
+    _panel = ChoicePanel.new(_service)
+    _panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+    _panel.visible = false
+    _panel.chosen.connect(_on_chosen)
+    _hud.add_child(_panel)
+
+    var panel := CameraPanel.new()
+    panel.service = _service
+    panel.position = Vector2(1560, 790)
+    panel.size = Vector2(340, 255)
+    _hud.add_child(panel)
+
+
+func _label(at: Vector2, size: Vector2, font_size: int, color: Color) -> Label:
+    var label := Label.new()
+    label.position = at
+    label.size = size
+    label.add_theme_font_size_override("font_size", font_size)
+    label.add_theme_color_override("font_color", color)
+    label.add_theme_color_override("font_outline_color", _INK)
+    label.add_theme_constant_override("outline_size", 10)
+    _hud.add_child(label)
+    return label
+
+
+func _unhandled_input(event: InputEvent) -> void:
+    if not event is InputEventKey or not event.pressed or event.echo:
+        return
+    if event.keycode == KEY_ESCAPE:
+        _quit()
+
+
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_WM_CLOSE_REQUEST:
+        _quit()
+
+
+## Stop the camera first, so that no camera frame arrives while the game shuts down.
+func _quit() -> void:
+    if _service != null:
+        _service.Shutdown()
+    get_tree().quit()
+
+
+## How many players row: two pull an oar each.
+func players() -> int:
+    return _service.GetPlayerCount() if _service != null else 1
+
+
+## The steering, from the head of the player; with two players, nobody steers
+## with the head (the boat turns away from the stronger rower).
+func _read_steer() -> float:
+    if _service != null and _service.IsRunning() and players() == 1:
+        return _service.GetSteer(0)
+    return 0.0
+
+
+func _read_strokes() -> void:
+    if _service == null:
+        return
+    var pair := players() == 2
+    for player in range(players()):
+        var strokes: int = _service.GetStrokes(player)
+        while _strokes_seen[player] < strokes:
+            _strokes_seen[player] += 1
+            if _done:
+                continue
+            var depth: float = _service.GetLastStrokeDepth(player)
+            if pair:
+                _boat.stroke_side(player, depth)
+            else:
+                _boat.stroke(depth)
+
+
+func _process(delta: float) -> void:
+    if _map == null or _map.route.is_empty():
+        return
+    _read_strokes()
+    _boat.steer = _read_steer()
+    if _autopilot:
+        _fly(delta)
+    if not _done:
+        _elapsed += delta
+    _boat.move(delta, _map)
+    _rower.position = _boat.position
+    _rower.rotation = _boat.heading
+    _rower.live_pull = _live_pull()
+    _boat_wake.follow(_boat.position - _boat.forward() * 3.0 * RowerView.SCALE, delta)
+
+    var progress := _map.route_progress(_boat.position)
+    _ship.sail(delta, progress)
+    _splash_oars(delta)
+    _ship_wake.follow(
+        _ship.position - Vector2.UP.rotated(_ship.heading) * 11.0 * Longship.SCALE, delta
+    )
+
+    _drop_treats(delta)
+    var picked := _treats.pick(_boat.position)
+    if picked > 0:
+        _coins += picked
+        if _state != null:
+            _state.silver += picked
+
+    if not _done and _ship.arrived and _boat.position.distance_to(_map.route[-1]) < FINISH_DISTANCE:
+        _done = true
+        print("Done: %d strokes in %.0f s, %d coins" % [_boat.strokes, _elapsed, _coins])
+        _finish()
+
+    _place_camera(delta)
+    for label in _labels:
+        label.rotation = _camera.rotation
+    _update_hud(progress)
+
+
+## Splash where the oars dip in: a big splash at the start of each pull, and
+## small swirls behind the blades while they pull; and the oars of the
+## longship, at each beat of its crew.
+func _splash_oars(delta: float) -> void:
+    _drip += delta
+    var drip := _drip >= 0.12
+    if drip:
+        _drip = 0.0
+    for side in [0, 1]:
+        var blade := _rower.blade_position(side)
+        if _rower.catches[side]:
+            _splashes.splash(blade, 5.0, 1.6, 1.0)
+        elif _rower.pulling[side] and drip:
+            _splashes.splash(blade, 2.5, 0.9, 0.6)
+    if _ship.dipped:
+        for blade in _ship.blade_positions():
+            _splashes.splash(blade, 4.0, 1.3, 0.5)
+
+
+## Row a stroke every few seconds, and steer to a point of the route ahead:
+## alone with the head, as a pair with an extra stroke on the side away from
+## the turn.
+func _fly(delta: float) -> void:
+    _autopilot_beat += delta
+    var target := _map.route_point(_map.route_progress(_boat.position) + 60.0)
+    # NOTE (mristin):
+    # Go for a treat close ahead.
+    for item in _treats.items:
+        var at: Vector2 = item["at"]
+        if (
+            at.distance_to(_boat.position) < 50.0
+            and (at - _boat.position).dot(_boat.forward()) > 0.0
+        ):
+            target = at
+            break
+    var wanted := (target - _boat.position).angle() + PI / 2.0
+    var turn := clampf(angle_difference(_boat.heading, wanted) * 2.0, -1.0, 1.0)
+    if players() == 2:
+        if _autopilot_beat >= 2.6 and not _done:
+            _autopilot_beat = 0.0
+            _boat.stroke_side(0)
+            _boat.stroke_side(1)
+        elif (
+            absf(turn) > 0.3
+            and _autopilot_beat >= 1.3
+            and _boat.since_side[0] > 1.0
+            and _boat.since_side[1] > 1.0
+        ):
+            # NOTE (mristin):
+            # To turn right, the left oar pulls (and the other way round).
+            _boat.stroke_side(0 if turn > 0.0 else 1)
+        return
+    if _autopilot_beat >= 2.6 and not _done:
+        _autopilot_beat = 0.0
+        _boat.stroke()
+    _boat.steer = turn
+
+
+## How far each oar's player is through the stroke, from the vision (see
+## RowerView.live_pull): alone, the player pulls both oars.
+func _live_pull() -> Array:
+    if _service == null or not _service.IsRunning():
+        return [-1.0, -1.0]
+    if players() == 2:
+        return [_service.GetPull(0), _service.GetPull(1)]
+    var pull: float = _service.GetPull(0)
+    return [pull, pull]
+
+
+func _place_camera(delta: float) -> void:
+    # NOTE (mristin):
+    # The view follows the turn of the boat a bit late, so that the players
+    # see the boat turn first.
+    var weight := 1.0 - exp(-delta / 1.2)
+    _camera.rotation = lerp_angle(_camera.rotation, _boat.heading, weight)
+    var target := _boat.position + Vector2.UP.rotated(_camera.rotation) * LOOK_AHEAD
+    _camera.position = _camera.position.lerp(target, 1.0 - exp(-delta / 0.25))
+
+
+## The wedding party drops a treat now and then, to the side of the wake.
+func _drop_treats(delta: float) -> void:
+    if _done or _ship.arrived:
+        return
+    _drop_left -= delta
+    if _drop_left > 0.0:
+        return
+    _drop_left = _rng.randf_range(DROP_EVERY.x, DROP_EVERY.y)
+    var back := Vector2.DOWN.rotated(_ship.heading)
+    var side := back.orthogonal() * (1.0 if _rng.randf() < 0.5 else -1.0)
+    var spot: Vector2 = (
+        _ship.position + back * 24.0 + side * _rng.randf_range(DROP_SIDEWAYS.x, DROP_SIDEWAYS.y)
+    )
+    # NOTE (mristin):
+    # Only on the water, never on the shore.
+    if _map.is_water(spot) and not _map.crosses_land(_ship.position, spot):
+        _treats.drop(spot, _rng)
+
+
+## The party is over: the coins go into the voyage, and the players choose
+## what next with their hands.
+func _finish() -> void:
+    if _state != null:
+        _state.save()
+    var cards: Array = [
+        {"title": "Another party!", "detail": ""},
+        {"title": "To the farm", "detail": "trade and farm"},
+        {"title": "Stop for today", "detail": "see you!"},
+    ]
+    _actions = [get_tree().reload_current_scene, _to_farm, _quit]
+    _panel.show_cards(
+        "What a wedding!",
+        (
+            (
+                "The wedding party is in %s. You picked up %d things from the water: "
+                + "%d silver coins for your purse!"
+            )
+            % [_map.goal["name"], _coins, _coins]
+        ),
+        cards,
+        {"hair": Color("e8c25a"), "braids": true}
+    )
+
+
+func _to_farm() -> void:
+    get_tree().change_scene_to_file("res://scenes/world/world.tscn")
+
+
+func _on_chosen(index: int) -> void:
+    if index >= 0 and index < _actions.size():
+        _actions[index].call()
+
+
+func _update_hud(progress: float) -> void:
+    var goal: String = _map.goal["name"]
+    if _done:
+        _banner.text = "What a wedding!"
+        _info.text = "%d silver coins!" % _coins
+    else:
+        if _ship.arrived:
+            _banner.text = "The wedding party is in %s. Row to the jetty!" % goal
+        elif _ship.waiting:
+            _banner.text = "The wedding longship waits for you. Row!"
+        else:
+            _banner.text = "Follow the wedding to %s, and pick up what falls into the water!" % goal
+        _info.text = (
+            (
+                "Coins: %d    Strokes: %d    %d:%02d\n"
+                + (
+                    "Row in time to go straight; the stronger rower turns the boat."
+                    if players() == 2
+                    else "Row: lean back and forth.   Steer: go to the side with your head."
+                )
+            )
+            % [_coins, _boat.strokes, int(_elapsed) / 60, int(_elapsed) % 60]
+        )
+    _overlay.progress = progress / maxf(_map.route_length(), 1.0)
+    _overlay.ship_progress = _ship.progress / maxf(_map.route_length(), 1.0)
+    _overlay.queue_redraw()
+
+
+## Where a point of the world is on the screen.
+func to_screen(point: Vector2) -> Vector2:
+    return get_viewport().get_canvas_transform() * point
+
+
+func map() -> LakeMap:
+    return _map
+
+
+func boat() -> RowBoat:
+    return _boat
+
+
+func ship() -> Longship:
+    return _ship
+
+
+func steer() -> float:
+    return _boat.steer
+
+
+func service() -> Node:
+    return _service
+
+
+func camera_rotation() -> float:
+    return _camera.rotation

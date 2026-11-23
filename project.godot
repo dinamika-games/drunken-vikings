@@ -12,11 +12,13 @@ config_version=5
 
 config/name="Drunken Vikings"
 config/version="0.1.0"
+run/main_scene="res://scenes/start/start.tscn"
 config/features=PackedStringArray("4.6", "C#", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [autoload]
 
+GameState="*res://scenes/game/game_state.gd"
 Vision="*res://scenes/vision/vision.tscn"
 
 [display]

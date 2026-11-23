@@ -1,0 +1,579 @@
+extends Node2D
+
+## The open world of a region: the players row their boat across the lakes,
+## dock at the jetties of the settlements to trade, meet the skippers of the
+## boats on the lakes (news and quick offers), and come home to the farm,
+## where a night's sleep ends the day (see DESIGN.md).
+##
+## The players row and choose only with their bodies (see HandCursor and RowingMeter); the
+## keyboard is never used, but Escape quits. Start with [code]-- --players=2[/code]
+## for two players (an oar each), [code]-- --new[/code] for a new voyage, and
+## [code]-- --autopilot[/code] to let the boat trade by itself (to try the
+## world without the camera). For the developers, [code]-- --shots=<dir>[/code]
+## saves a screenshot every 20 seconds and whenever a screen opens.
+
+const ZOOM := 6.0
+const LOOK_AHEAD := 45.0
+
+## The boat docks when it glides this close to a jetty, this slowly.
+const DOCK_DISTANCE := 30.0
+const DOCK_SPEED := 3.5
+
+## After leaving a jetty, the boat docks there again only once it was this far.
+const UNDOCK_DISTANCE := 70.0
+
+## A skipper hails the players when they glide this close, this slowly.
+const HAIL_DISTANCE := 40.0
+const HAIL_SPEED := 4.0
+
+## Seconds before a skipper hails the players again.
+const HAIL_COOLDOWN := 90.0
+
+## How many boats sail the lakes.
+const NPC_COUNT := 9
+
+var _map: LakeMap
+var _boat := RowBoat.new()
+var _rower: RowerView
+var _boat_wake: Wake
+var _splashes: Splashes
+var _camera: Camera2D
+var _npcs: Array[NpcBoat] = []
+var _labels: Array[Node2D] = []
+var _service: Node
+var _state: Node
+var _strokes_seen := [0, 0]
+var _drip := 0.0
+var _rng := RandomNumberGenerator.new()
+
+var _screens: PortScreens
+var _hud: WorldHud
+var _panel: ChoicePanel
+var _actions: Array[Callable] = []
+var _mode := "rowing"
+var _left_place := ""
+var _talking_to: NpcBoat
+var _toast := ""
+var _toast_left := 0.0
+
+var _autopilot := false
+var _autopilot_target := ""
+var _autopilot_beat := 0.0
+var _autopilot_wait := 0.0
+var _autopilot_steps := 0
+## Where the autopilot bought last (it does not sell there what it bought).
+var _autopilot_bought := ""
+## Where the autopilot set out from.
+var _autopilot_from := "home"
+var _autopilot_log := 0.0
+
+var _shots := ""
+var _shot_clock := 0.0
+var _shot_count := 0
+
+
+func _ready() -> void:
+    _rng.seed = Time.get_ticks_usec()
+    _autopilot = "--autopilot" in OS.get_cmdline_user_args()
+    for arg in OS.get_cmdline_user_args():
+        if arg.begins_with("--shots="):
+            _shots = arg.trim_prefix("--shots=")
+            DirAccess.make_dir_recursive_absolute(_shots)
+    _state = get_node("/root/GameState")
+    if "--new" in OS.get_cmdline_user_args() or not _state.load_voyage():
+        _state.new_voyage()
+    var vision := get_node_or_null("/root/Vision")
+    if vision != null:
+        _service = vision.service
+        _strokes_seen = [_service.GetStrokes(0), _service.GetStrokes(1)]
+
+    _map = LakeMap.new()
+    add_child(_map)
+    var error := _map.load_map(GameState.MAP_PATH)
+    if error != "":
+        push_error(error)
+        return
+
+    _splashes = Splashes.new()
+    add_child(_splashes)
+    _boat_wake = Wake.new()
+    _boat_wake.width = 1.5
+    _boat_wake.spread = 5.0
+    add_child(_boat_wake)
+
+    for i in range(NPC_COUNT):
+        var npc := NpcBoat.new()
+        var start: Dictionary = _map.places[(i * 3 + 1) % _map.places.size()]
+        npc.setup(_map, start["id"], Gossip.skipper(i), 1000 + i)
+        npc.cooldown = 20.0
+        add_child(npc)
+        _npcs.append(npc)
+
+    _rower = RowerView.new()
+    _rower.boat = _boat
+    _rower.pair = players() == 2
+    add_child(_rower)
+
+    for label in _map.labels:
+        if label["kind"] == "place":
+            continue
+        _add_label(label["name"], label["kind"], label["at"])
+    for place in _map.places:
+        if place["kind"] != "healer":
+            _add_label(place["name"], "village", place["at"])
+
+    _camera = Camera2D.new()
+    _camera.zoom = Vector2(ZOOM, ZOOM)
+    _camera.ignore_rotation = false
+    add_child(_camera)
+    _camera.make_current()
+
+    var layer := CanvasLayer.new()
+    add_child(layer)
+    _hud = WorldHud.new()
+    _hud.world = self
+    _hud.set_anchors_preset(Control.PRESET_FULL_RECT)
+    layer.add_child(_hud)
+    var camera_panel := CameraPanel.new()
+    camera_panel.service = _service
+    camera_panel.position = Vector2(1560, 790)
+    camera_panel.size = Vector2(340, 255)
+    layer.add_child(camera_panel)
+    _panel = ChoicePanel.new(_service)
+    _panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+    _panel.visible = false
+    _panel.chosen.connect(_on_chosen)
+    layer.add_child(_panel)
+
+    _screens = PortScreens.new(self, _state, _map)
+    _undock(_state.place)
+    _camera.rotation = _boat.heading
+    _camera.position = _boat.position + Vector2.UP.rotated(_boat.heading) * LOOK_AHEAD
+    _say("Day %d. Row to the settlements to trade; glide slowly to a jetty to dock." % _state.day)
+
+
+func _add_label(text: String, kind: String, at: Vector2) -> void:
+    var mark := MapLabel.new()
+    mark.text = text
+    mark.kind = kind
+    mark.position = at
+    add_child(mark)
+    _labels.append(mark)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+        _quit()
+
+
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_WM_CLOSE_REQUEST:
+        _quit()
+
+
+func _quit() -> void:
+    if _service != null:
+        _service.Shutdown()
+    get_tree().quit()
+
+
+# ---------------------------------------------------------------------------
+# The getters for the HUD
+# ---------------------------------------------------------------------------
+
+
+func players() -> int:
+    return _service.GetPlayerCount() if _service != null else 1
+
+
+func map() -> LakeMap:
+    return _map
+
+
+func boat() -> RowBoat:
+    return _boat
+
+
+func npcs() -> Array[NpcBoat]:
+    return _npcs
+
+
+func state() -> Node:
+    return _state
+
+
+func service() -> Node:
+    return _service
+
+
+func toast() -> String:
+    return _toast if _toast_left > 0.0 else ""
+
+
+func to_screen(point: Vector2) -> Vector2:
+    return get_viewport().get_canvas_transform() * point
+
+
+# ---------------------------------------------------------------------------
+# Rowing
+# ---------------------------------------------------------------------------
+
+
+func _process(delta: float) -> void:
+    if _map == null or _map.places.is_empty():
+        return
+    _toast_left = maxf(0.0, _toast_left - delta)
+    if _shots != "":
+        _shot_clock += delta
+        if _shot_clock >= 20.0:
+            _shot_clock = 0.0
+            _shoot.call_deferred()
+    if _mode == "rowing":
+        _read_strokes()
+        _boat.steer = _read_steer()
+        if _autopilot:
+            _fly(delta)
+        _check_docking()
+        _check_hailing()
+    else:
+        # NOTE (mristin):
+        # The strokes in a port choose; they must not row once the boat is out.
+        _skip_strokes()
+        _boat.steer = 0.0
+        if _autopilot:
+            _autopilot_choose(delta)
+    _boat.move(delta, _map)
+    _rower.position = _boat.position
+    _rower.rotation = _boat.heading
+    _rower.live_pull = _live_pull()
+    _boat_wake.follow(_boat.position - _boat.forward() * 3.0 * RowerView.SCALE, delta)
+    _splash_oars(delta)
+    _place_camera(delta)
+    for label in _labels:
+        label.rotation = _camera.rotation
+    _hud.queue_redraw()
+
+
+func _read_steer() -> float:
+    if _service != null and _service.IsRunning() and players() == 1:
+        return _service.GetSteer(0)
+    return 0.0
+
+
+func _read_strokes() -> void:
+    if _service == null:
+        return
+    for player in range(players()):
+        var strokes: int = _service.GetStrokes(player)
+        while _strokes_seen[player] < strokes:
+            _strokes_seen[player] += 1
+            var depth: float = _service.GetLastStrokeDepth(player)
+            if players() == 2:
+                _boat.stroke_side(player, depth)
+            else:
+                _boat.stroke(depth)
+
+
+func _skip_strokes() -> void:
+    if _service != null:
+        _strokes_seen = [_service.GetStrokes(0), _service.GetStrokes(1)]
+
+
+func _splash_oars(delta: float) -> void:
+    _drip += delta
+    var drip := _drip >= 0.12
+    if drip:
+        _drip = 0.0
+    for side in [0, 1]:
+        var blade := _rower.blade_position(side)
+        if _rower.catches[side]:
+            _splashes.splash(blade, 5.0, 1.6, 1.0)
+        elif _rower.pulling[side] and drip:
+            _splashes.splash(blade, 2.5, 0.9, 0.6)
+
+
+## How far each oar's player is through the stroke, from the vision (see
+## RowerView.live_pull): alone, the player pulls both oars.
+func _live_pull() -> Array:
+    if _service == null or not _service.IsRunning():
+        return [-1.0, -1.0]
+    if players() == 2:
+        return [_service.GetPull(0), _service.GetPull(1)]
+    var pull: float = _service.GetPull(0)
+    return [pull, pull]
+
+
+func _place_camera(delta: float) -> void:
+    var weight := 1.0 - exp(-delta / 1.2)
+    _camera.rotation = lerp_angle(_camera.rotation, _boat.heading, weight)
+    var target := _boat.position + Vector2.UP.rotated(_camera.rotation) * LOOK_AHEAD
+    _camera.position = _camera.position.lerp(target, 1.0 - exp(-delta / 0.25))
+
+
+func _say(text: String) -> void:
+    _toast = text
+    _toast_left = 6.0
+    if _autopilot:
+        print("Day %d: %s" % [_state.day, text])
+
+
+# ---------------------------------------------------------------------------
+# Docking and the ports
+# ---------------------------------------------------------------------------
+
+
+func _check_docking() -> void:
+    for place in _map.places:
+        var distance: float = _boat.position.distance_to(place["jetty"])
+        if place["id"] == _left_place:
+            if distance > UNDOCK_DISTANCE:
+                _left_place = ""
+            continue
+        if distance < DOCK_DISTANCE and _boat.speed < DOCK_SPEED:
+            _dock(place["id"])
+            return
+
+
+func _dock(id: String) -> void:
+    var place := _map.place(id)
+    _boat.speed = 0.0
+    _boat.position = place["jetty"]
+    _state.place = id
+    _state.save()
+    _mode = "port"
+    _screens.show_port()
+
+
+## Put the boat at the jetty of the place, heading out on the water.
+func _undock(id: String) -> void:
+    var place := _map.place(id)
+    if place.is_empty():
+        place = _map.places[0]
+    _boat.position = place["jetty"]
+    var out: Vector2 = (place["jetty"] - place["at"]).normalized()
+    _boat.heading = out.angle() + PI / 2.0
+    _boat.speed = 2.0
+    _left_place = place["id"]
+    _autopilot_from = place["id"]
+    _state.place = ""
+    _mode = "rowing"
+    _panel.close()
+    _autopilot_target = ""
+
+
+## Show a screen of choices (for PortScreens).
+func show_screen(
+    title: String, text: String, cards: Array, actions: Array[Callable], face := {}
+) -> void:
+    _show(title, text, cards, actions, face)
+
+
+## Leave the jetty of the place (for PortScreens).
+func undock(id: String) -> void:
+    _undock(id)
+
+
+## Save nothing more and quit (for PortScreens).
+func quit() -> void:
+    _quit()
+
+
+func _show(title: String, text: String, cards: Array, actions: Array[Callable], face := {}) -> void:
+    _actions = actions
+    _panel.show_cards(title, text, cards, face)
+    if _shots != "":
+        _shoot.call_deferred()
+
+
+## Save a screenshot for the developers (see --shots).
+func _shoot() -> void:
+    await RenderingServer.frame_post_draw
+    var image := get_viewport().get_texture().get_image()
+    if image != null:
+        _shot_count += 1
+        image.save_png("%s/%03d.png" % [_shots, _shot_count])
+
+
+func _on_chosen(index: int) -> void:
+    if _autopilot:
+        print(
+            (
+                "Day %d, %d silver, cargo %s: %s: %s"
+                % [
+                    _state.day,
+                    _state.silver,
+                    str(_state.cargo),
+                    _panel.title,
+                    _panel.cards[index].get("title", "")
+                ]
+            )
+        )
+    if index >= 0 and index < _actions.size():
+        _actions[index].call()
+
+
+# ---------------------------------------------------------------------------
+# The skippers on the lakes
+# ---------------------------------------------------------------------------
+
+
+func _check_hailing() -> void:
+    if _boat.speed > HAIL_SPEED:
+        return
+    for npc in _npcs:
+        if npc.cooldown > 0.0 or npc.held:
+            continue
+        if npc.position.distance_to(_boat.position) < HAIL_DISTANCE:
+            _hail(npc)
+            return
+
+
+func _hail(npc: NpcBoat) -> void:
+    npc.held = true
+    _talking_to = npc
+    _mode = "skipper"
+    var who: Dictionary = npc.skipper
+    var news := Gossip.news(_state, who, _rng)
+    _state.hear(news["text"], news["place"], news["good"])
+    var deal := Gossip.offer(_state, who, _rng) if _rng.randf() < 0.7 else {}
+    var text: String = news["text"]
+    var cards: Array = []
+    var actions: Array[Callable] = []
+    if not deal.is_empty():
+        text += "  " + deal["text"]
+        var color: Color = (
+            _state.economy.goods[deal["good"]]["color"]
+            if _state.economy.goods.has(deal["good"])
+            else Color.WHITE
+        )
+        cards.append({"title": "Yes, deal!", "detail": _deal_detail(deal), "color": color})
+        actions.append(_take_deal.bind(deal))
+        cards.append({"title": "No, thank you", "detail": ""})
+        actions.append(_part.bind(""))
+    else:
+        cards.append({"title": "Thank you!", "detail": "fair winds"})
+        actions.append(_part.bind(""))
+    _show(who["name"], text, cards, actions, {"hair": who["hair"], "braids": who["braids"]})
+
+
+func _deal_detail(deal: Dictionary) -> String:
+    match deal["kind"]:
+        "buy":
+            return "-%d silver" % (int(deal["price"]) * int(deal["count"]))
+        "sell":
+            return "+%d silver" % (int(deal["price"]) * int(deal["count"]))
+    return "a swap"
+
+
+func _take_deal(deal: Dictionary) -> void:
+    _part(Gossip.take(_state, deal))
+
+
+func _part(message: String) -> void:
+    if _talking_to != null:
+        _talking_to.held = false
+        _talking_to.cooldown = HAIL_COOLDOWN
+        _talking_to = null
+    _panel.close()
+    _mode = "rowing"
+    if message != "":
+        _say(message)
+
+
+# ---------------------------------------------------------------------------
+# The autopilot (to try the world without the camera)
+# ---------------------------------------------------------------------------
+
+
+func _fly(delta: float) -> void:
+    if _autopilot_target == "":
+        var others: Array = []
+        for place in _map.places:
+            if place["id"] != _left_place:
+                others.append(place["id"])
+        _autopilot_target = (
+            "home"
+            if _autopilot_steps % 4 == 3 and _left_place != "home"
+            else others[_rng.randi() % others.size()]
+        )
+        _autopilot_steps += 1
+    var jetty: Vector2 = _map.place(_autopilot_target)["jetty"]
+    var path := _map.route_between(_autopilot_from, _autopilot_target)
+    _autopilot_log += delta
+    if _autopilot_log > 30.0:
+        _autopilot_log = 0.0
+        print(
+            (
+                "  rowing from %s to %s: %.0f m to go, speed %.1f"
+                % [
+                    _autopilot_from,
+                    _autopilot_target,
+                    _boat.position.distance_to(_map.place(_autopilot_target)["jetty"]),
+                    _boat.speed
+                ]
+            )
+        )
+    var aim := jetty
+    for point in path:
+        if (
+            point.distance_to(_boat.position) > 30.0
+            and point.distance_to(jetty) < _boat.position.distance_to(jetty)
+        ):
+            aim = point
+            break
+    var wanted := (aim - _boat.position).angle() + PI / 2.0
+    _boat.steer = clampf(angle_difference(_boat.heading, wanted) * 2.0, -1.0, 1.0)
+    _autopilot_beat += delta
+    var near := _boat.position.distance_to(jetty) < 60.0
+    if _autopilot_beat >= 2.6 and (not near or _boat.speed < 1.0):
+        _autopilot_beat = 0.0
+        _boat.stroke()
+
+
+func _autopilot_choose(delta: float) -> void:
+    _autopilot_wait += delta
+    if _autopilot_wait < 1.0 or not _panel.visible:
+        return
+    _autopilot_wait = 0.0
+    var titles: Array[String] = []
+    for card in _panel.cards:
+        titles.append(str(card.get("title", "")))
+    # NOTE (mristin):
+    # Sell what can be sold, buy a little, take the deals, sleep at home, and row on.
+    var selling: bool = _autopilot_bought != _state.place
+    for wanted in ["Yes, deal!", "Unload the boat", "Sell", "Thank you!"]:
+        for i in range(titles.size()):
+            if wanted == "Sell" and not selling:
+                continue
+            if titles[i] == wanted and bool(_panel.cards[i].get("enabled", true)):
+                _panel.choose(i)
+                return
+    for i in range(titles.size()):
+        if (
+            titles[i].begins_with("Sell ")
+            and selling
+            and bool(_panel.cards[i].get("enabled", true))
+        ):
+            _panel.choose(i)
+            return
+    if "Buy" in titles and _state.load_count() == 0:
+        var buy := titles.find("Buy")
+        if bool(_panel.cards[buy].get("enabled", true)):
+            _autopilot_bought = _state.place
+            _panel.choose(buy)
+            return
+    for i in range(titles.size()):
+        if (
+            titles[i].begins_with("Buy ")
+            and bool(_panel.cards[i].get("enabled", true))
+            and _state.load_count() < 2
+        ):
+            _panel.choose(i)
+            return
+    for wanted in ["Back", "Sleep", "Row out", "Row on", "No, thank you"]:
+        var index := titles.find(wanted)
+        if index >= 0:
+            if wanted == "Sleep" and _state.day > 3:
+                continue
+            _panel.choose(index)
+            return

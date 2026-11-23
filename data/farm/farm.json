@@ -1,0 +1,29 @@
+{
+  "comment": "The animals and the crops of the farm, per day of the game. See scenes/game/farm.gd.",
+  "animals": {
+    "hen": {"name": "Hen", "price": 4, "eats": "grain", "eats_per_day": 0.2, "gives": "eggs", "gives_per_day": 0.34, "room": 0.25},
+    "sheep": {"name": "Sheep", "price": 14, "eats": "hay", "eats_per_day": 0.5, "gives": "wool", "gives_per_day": 0.34, "room": 1.0},
+    "goat": {"name": "Goat", "price": 12, "eats": "hay", "eats_per_day": 0.4, "gives": "cheese", "gives_per_day": 0.25, "room": 1.0},
+    "cow": {"name": "Cow", "price": 40, "eats": "hay", "eats_per_day": 1.0, "gives": "cheese", "gives_per_day": 0.75, "room": 2.0},
+    "bees": {"name": "Beehive", "price": 18, "eats": "", "eats_per_day": 0.0, "gives": "honey", "gives_per_day": 0.34, "room": 0.25}
+  },
+  "crops": {
+    "barley": {"name": "Barley", "seed_price": 3, "days": 4, "window": 3, "gives": "grain", "harvest": 4},
+    "flax": {"name": "Flax", "seed_price": 4, "days": 5, "window": 3, "gives": "flax", "harvest": 3},
+    "meadow": {"name": "Hay meadow", "seed_price": 1, "days": 3, "window": 4, "gives": "hay", "harvest": 4},
+    "flowers": {"name": "Flowers", "seed_price": 2, "days": 2, "window": 2, "gives": "flowers", "harvest": 3}
+  },
+  "start": {
+    "animals": {"hen": 3, "sheep": 1},
+    "store": {"grain": 2, "hay": 3},
+    "fields": 2,
+    "pasture": 3
+  },
+  "plots": [
+    {"id": "meadow_east", "name": "The east meadow", "price": 30, "fields": 0, "pasture": 3},
+    {"id": "field_shore", "name": "The field by the shore", "price": 35, "fields": 1, "pasture": 0},
+    {"id": "hill", "name": "The sunny hill", "price": 50, "fields": 1, "pasture": 2},
+    {"id": "forest_edge", "name": "The edge of the forest", "price": 60, "fields": 2, "pasture": 2},
+    {"id": "valley", "name": "The green valley", "price": 90, "fields": 2, "pasture": 5}
+  ]
+}
