@@ -1,6 +1,6 @@
 {
   "model": "rtmo_t_body7_416x416.onnx",
-  "source": "MMPose RTMO-t (rtmo-t_8xb32-600e_body7-416x416-f48f75cb_20231219.pth), exported to ONNX with MMDeploy 1.3.0 (end2end.onnx); taken over from ergo-chaos",
+  "source": "MMPose RTMO-t (rtmo-t_8xb32-600e_body7-416x416-f48f75cb_20231219.pth), exported to ONNX with MMDeploy 1.3.0 (end2end.onnx)",
   "sha256": "20aad6e2e42359cac1c5b4a0b2da00e29bfe91a72a782fdcf287d273a04c1b24",
   "license": "Apache-2.0",
   "input": {

@@ -2,8 +2,8 @@ class_name HudOverlay
 extends Control
 
 ## What the level shows over the lakes: how far the boat and the viking ship
-## got along the route, the map of all the lakes, how the players steer, and
-## an arrow to the viking ship when it is out of sight.
+## got along the route, the map of all the lakes, the pull of each oar of two
+## players, and an arrow to the viking ship when it is out of sight.
 
 const _PAPER := Color("f1f0ea")
 const _GOLD := Color("f2c14e")
@@ -25,8 +25,13 @@ var _minimap_polygons: Array = []
 var _minimap_route := PackedVector2Array()
 var _minimap_scale := 1.0
 
+## The coins shown, and how much their number still jumps (see CoinPurse).
+var _coins := 0
+var _pop := 0.0
 
-func _process(_delta: float) -> void:
+
+func _process(delta: float) -> void:
+    _pop = maxf(0.0, _pop - delta * 2.0)
     queue_redraw()
 
 
@@ -34,6 +39,10 @@ func _draw() -> void:
     if level == null or level.map() == null:
         return
     _draw_progress()
+    if level.coins() != _coins:
+        _coins = level.coins()
+        _pop = 1.0
+    CoinPurse.draw(self, Vector2(30, 120), _coins, _pop)
     _draw_minimap()
     _draw_steering()
     _draw_ship_arrow()
@@ -51,6 +60,13 @@ func _draw_progress() -> void:
     var start_width := font.get_string_size(map.start["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x
     _outlined(font, left + Vector2(-16 - start_width, 8), map.start["name"], 24)
     _outlined(font, right + Vector2(16, 8), map.goal["name"], 24)
+    var ship := Pictures.of("longships", "hull_wedding")
+    var boat := Pictures.of("rowboat", "hull")
+    if ship != null and boat != null:
+        # The boats sail along the bar, to the right.
+        Pictures.draw(self, ship, left.lerp(right, ship_progress), 56.0, PI / 2.0)
+        Pictures.draw(self, boat, left.lerp(right, progress), 40.0, PI / 2.0)
+        return
     draw_circle(left.lerp(right, ship_progress), 12.0, _RED)
     draw_circle(left.lerp(right, ship_progress), 5.0, _PAPER)
     draw_circle(left.lerp(right, progress), 9.0, _GOLD)
@@ -98,9 +114,22 @@ func _draw_minimap() -> void:
         draw_line(_minimap_route[i], _minimap_route[i + 1], Color(1, 1, 1, 0.4), 1.5)
     draw_circle(_MINIMAP.position + map.goal["at"] * _minimap_scale, 5.0, _GOLD)
     var ship: Longship = level.ship()
-    draw_circle(_MINIMAP.position + ship.position * _minimap_scale, 6.0, _RED)
+    var ship_at := _MINIMAP.position + ship.position * _minimap_scale
+    var ship_hull := Pictures.of(
+        "longships",
+        "hull_pirate" if ship.pirate else ("hull_wedding" if ship.wedding else "hull_plain")
+    )
+    if ship_hull != null:
+        Pictures.draw(self, ship_hull, ship_at, 26.0, ship.heading)
+    else:
+        draw_circle(ship_at, 6.0, _RED)
     var boat: RowBoat = level.boat()
     var at := _MINIMAP.position + boat.position * _minimap_scale
+    var hull := Pictures.of("rowboat", "hull")
+    if hull != null:
+        draw_arc(at, 12.0, 0.0, TAU, 24, _GOLD, 2.5)
+        Pictures.draw(self, hull, at, 20.0, boat.heading)
+        return
     var forward := Vector2.UP.rotated(boat.heading)
     draw_colored_polygon(
         PackedVector2Array(
@@ -114,11 +143,10 @@ func _draw_minimap() -> void:
     )
 
 
-## How the players steer: alone, a needle from left to right (the head);
-## as a pair, the pull of each oar, so that they see who rows harder.
+## How the players row as a pair: the pull of each oar, so that they see who
+## rows harder.
 func _draw_steering() -> void:
     var center := Vector2(960, 1040)
-    var radius := 50.0
     var boat: RowBoat = level.boat()
     if level.players() == 2:
         # NOTE (mristin):
@@ -134,15 +162,6 @@ func _draw_steering() -> void:
                 Rect2(bar.position + Vector2(0, bar.size.y - height), Vector2(bar.size.x, height)),
                 color
             )
-        var turn := clampf(boat.yaw_rate / deg_to_rad(40.0), -1.0, 1.0)
-        draw_line(center, center + Vector2(turn * 30.0, -0.0), _GOLD, 6.0)
-        draw_circle(center, 7.0, _GOLD)
-    else:
-        draw_arc(center, radius, PI * 1.15, PI * 1.85, 24, _INK, 14.0)
-        draw_arc(center, radius, PI * 1.45, PI * 1.55, 8, Color(1, 1, 1, 0.3), 14.0)
-        var angle: float = PI * 1.5 + level.steer() * PI * 0.35
-        draw_line(center, center + Vector2.RIGHT.rotated(angle) * (radius + 8.0), _GOLD, 5.0)
-        draw_circle(center, 7.0, _GOLD)
 
     # NOTE (mristin):
     # For tuning: how far the head is to the side of home, and the steering.

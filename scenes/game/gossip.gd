@@ -7,11 +7,13 @@ extends RefCounted
 ## swap). The news are made from the state of the economy, so they are true
 ## when told (see DESIGN.md, "The boats on the lakes").
 
-## The skippers: each has a name, a kind (what they know best), their looks
-## (for the face) and the color of their sail.
+## The skippers: each has a name, their picture (of the sheets "skippers" and
+## "faces", see Pictures), a kind (what they know best), their looks (for the
+## face drawn in code) and the color of their sail.
 const SKIPPERS := [
     {
         "name": "Ragna the fisher",
+        "picture": "ragna",
         "kind": "fisher",
         "goods": ["fish", "salt", "ale"],
         "hair": "c9602a",
@@ -20,6 +22,7 @@ const SKIPPERS := [
     },
     {
         "name": "Old Halvard the ferryman",
+        "picture": "halvard",
         "kind": "ferryman",
         "goods": [],
         "hair": "d8d8d0",
@@ -28,6 +31,7 @@ const SKIPPERS := [
     },
     {
         "name": "Inga the messenger",
+        "picture": "inga",
         "kind": "messenger",
         "goods": ["mead", "ale", "flowers"],
         "hair": "3a2a1a",
@@ -36,6 +40,7 @@ const SKIPPERS := [
     },
     {
         "name": "Bjørn the salt trader",
+        "picture": "bjorn",
         "kind": "trader",
         "goods": ["salt", "grain", "cloth"],
         "hair": "8a5a2b",
@@ -44,6 +49,7 @@ const SKIPPERS := [
     },
     {
         "name": "Freya and Liv in their canoe",
+        "picture": "freya_and_liv",
         "kind": "children",
         "goods": ["eggs", "flowers", "honey"],
         "hair": "e8c25a",
@@ -52,6 +58,7 @@ const SKIPPERS := [
     },
     {
         "name": "Sigvor the goat woman",
+        "picture": "sigvor",
         "kind": "farmer",
         "goods": ["cheese", "hay", "wool"],
         "hair": "a04a20",

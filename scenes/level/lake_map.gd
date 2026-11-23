@@ -8,6 +8,19 @@ extends Node2D
 ## The map is in metres, x east and y south; one unit of the canvas is a metre.
 
 const WATER_SHADER := preload("res://scenes/level/water.gdshader")
+const SHORE_SHADER := preload("res://scenes/level/shore.gdshader")
+const GROUND_SHADER := preload("res://scenes/level/ground.gdshader")
+
+## The band of sand along the shores is this wide, in metres, half of it over
+## the water (for the foam), half on the land (see shore.gdshader).
+const SHORE_BAND := 16.0
+
+## The jetties are land for the boats: no boat comes closer to the middle of
+## a jetty than this, in metres (half the jetty and half a boat).
+const JETTY_CLEARANCE := 5.5
+
+## A boat lies this far beyond the end of the jetty, in metres.
+const BERTH := 8.0
 
 const LAND := Color("5d6b3a")
 const FOREST := Color("3f4d2a")
@@ -20,6 +33,127 @@ const WALL := Color("b08a5a")
 
 ## The width of the sandy shore, in metres.
 const SHORE_WIDTH := 3.0
+
+## The painted buildings of each kind of settlement, the main one first (see
+## Pictures): [sheet, picture, long side in metres].
+const PAINTED_VILLAGES := {
+    "home":
+    [["buildings", "longhouse_turf", 26.0], ["buildings", "barn", 20.0], ["farm", "sheep", 4.0]],
+    "market":
+    [
+        ["buildings", "market", 24.0],
+        ["buildings", "longhouse_shingles", 26.0],
+        ["buildings", "storehouse", 13.0],
+        ["buildings", "market", 20.0]
+    ],
+    "healer":
+    [["buildings", "herb_hut", 20.0], ["farm", "herb_bed", 8.0], ["farm", "herb_bed", 8.0]],
+    "inn":
+    [["buildings", "inn", 26.0], ["buildings", "longhouse_thatch", 24.0], ["farm", "barrels", 5.0]],
+    "fishers":
+    [
+        ["buildings", "longhouse_turf", 24.0],
+        ["buildings", "boathouse", 16.0],
+        ["farm", "fish_rack", 7.0]
+    ],
+    "brewer":
+    [["buildings", "longhouse_shingles", 26.0], ["farm", "barrels", 6.0], ["farm", "barrels", 5.0]],
+    "beekeeper":
+    [["buildings", "longhouse_thatch", 24.0], ["farm", "beehive", 4.0], ["farm", "beehive", 4.0]],
+    "horse_farm":
+    [["buildings", "longhouse_turf", 26.0], ["buildings", "barn", 20.0], ["farm", "horse", 5.0]],
+    "weaver": [["buildings", "longhouse_shingles", 24.0], ["farm", "cloth_line", 8.0]],
+    "chieftain": [["buildings", "hall", 32.0], ["buildings", "longhouse_shingles", 24.0]],
+    "farm":
+    [
+        ["buildings", "longhouse_thatch", 24.0],
+        ["buildings", "barn", 20.0],
+        ["farm", "barley_ripe", 18.0]
+    ],
+    "mill": [["buildings", "mill", 24.0], ["buildings", "storehouse", 13.0]],
+    "smith": [["buildings", "smithy", 22.0], ["buildings", "longhouse_turf", 24.0]],
+    "potter": [["buildings", "kiln", 18.0], ["buildings", "longhouse_thatch", 24.0]],
+    "herders":
+    [["buildings", "longhouse_turf", 24.0], ["farm", "sheep", 4.0], ["farm", "goat", 3.5]],
+}
+
+## The painted trees and plants on the land ("<sheet>/<picture>", see
+## Pictures), and how often each grows; the first sheet whose pictures are
+## all there is used.
+const PAINTED_TREES := [
+    {
+        "trees/pine": 4,
+        "trees/spruce": 4,
+        "trees/young_spruce": 2,
+        "trees/birch": 3,
+        "trees/oak": 2,
+        "trees/linden": 2,
+        "trees/rowan": 1,
+        "trees/apple": 1,
+        "trees/willow": 1,
+        "trees/alder": 1,
+        "trees/aspen": 1,
+        "trees/maple": 1,
+        "trees/juniper": 2,
+        "trees/birches": 2,
+        "trees/hazel": 2,
+        "trees/old_pine": 1,
+        "nature/rock": 1,
+        "bushes/lingonberry": 1,
+        "bushes/blueberry": 1,
+        "bushes/raspberry": 1,
+        "bushes/wild_rose": 1,
+        "bushes/elder": 1,
+        "bushes/hawthorn": 1,
+        "bushes/juniper": 1,
+        "bushes/fern": 1,
+        "bushes/heather": 1,
+        "bushes/broom": 1,
+        "bushes/evergreen": 1,
+        "bushes/guelder_rose": 1,
+        "bushes/sapling": 1,
+        "bushes/bracken": 1,
+        "bushes/meadowsweet": 1,
+    },
+    {
+        "nature/pine": 4,
+        "nature/spruce": 4,
+        "nature/birch": 3,
+        "nature/trees": 2,
+        "nature/berry_bush": 1,
+        "nature/rock": 1,
+        "nature/wild_flowers": 1
+    },
+]
+
+## The bushes are drawn this much smaller than the trees.
+const BUSH_SCALE := 0.5
+
+## The details scattered over the grass (see LandDetails), how often each
+## lies, and how long it is in metres.
+const GRASS_DETAILS := {
+    "tall_tuft": [3, 4.0],
+    "long_grass": [2, 4.5],
+    "clover": [3, 4.0],
+    "daisies": [3, 4.0],
+    "buttercups": [3, 4.0],
+    "heather": [1, 4.5],
+    "moss": [2, 4.0],
+    "fern": [1, 4.5],
+    "mushroom_ring": [1, 4.0],
+    "stones": [2, 4.0],
+    "molehill": [1, 3.0],
+    "bare_earth": [1, 5.0],
+    "lush_patch": [3, 10.0],
+    "dry_patch": [3, 10.0],
+    "leaves": [1, 4.0],
+}
+
+## About one detail on the grass for every this many square metres.
+const GRASS_DETAIL_AREA := 500.0
+
+## The painted textures of the land and of the sand are this many metres wide.
+const TEXTURE_METRES := 24.0
 
 ## The size of the map in metres.
 var size_m := Vector2.ZERO
@@ -38,7 +172,9 @@ var labels: Array = []
 var start := {}
 var goal := {}
 
-## The settlements: Array of {"id", "kind", "name", "at": Vector2, "jetty": Vector2}.
+## The settlements: Array of {"id", "kind", "name", "at": Vector2, "jetty":
+## Vector2 (the end of its jetty), "berth": Vector2 (where a boat lies at the
+## end of the jetty)}.
 var places: Array = []
 
 ## The ways of the boats between the places: "<id>|<id>" -> PackedVector2Array.
@@ -52,8 +188,39 @@ var _grid: AStarGrid2D
 var _route_lengths := PackedFloat32Array()
 
 var _trees: Array = []
-var _water_nodes: Array[Polygon2D] = []
+
+## The details on the grass: Array of [at, picture, length, angle, whether on
+## an island].
+var _details: Array = []
+
+## The shader of the grass on the land and the islands, or null.
+var _ground: ShaderMaterial
+
+## The reeds and the water lilies by the shores: Array of [at, picture, size, angle].
+var _water_plants: Array = []
+var _water_nodes: Array[Node2D] = []
 var _above: Node2D
+
+
+func _init() -> void:
+    texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+    _ground = _make_ground()
+    material = _ground
+
+
+## The shader of the grass (see ground.gdshader), or null without the painted grass.
+static func _make_ground() -> ShaderMaterial:
+    var lush := Pictures.of("ground", "grass_lush")
+    if lush == null:
+        return null
+    var ground := ShaderMaterial.new()
+    ground.shader = GROUND_SHADER
+    ground.set_shader_parameter("lush", lush)
+    var dry := Pictures.of("ground", "grass_dry")
+    ground.set_shader_parameter("has_dry", dry != null)
+    if dry != null:
+        ground.set_shader_parameter("dry", dry)
+    return ground
 
 
 ## Load the map from the JSON of dev/maps/make_lakes.py; return what went wrong, or "".
@@ -89,14 +256,22 @@ func load_map(path: String) -> String:
         )
     places.clear()
     for place in data.get("places", []):
-        places.append(
-            {
-                "id": place["id"],
-                "kind": place["kind"],
-                "name": place["name"],
-                "at": _vector(place["at"]),
-                "jetty": _vector(place["jetty"])
-            }
+        (
+            places
+            . append(
+                {
+                    "id": place["id"],
+                    "kind": place["kind"],
+                    "name": place["name"],
+                    "at": _vector(place["at"]),
+                    "jetty": _vector(place["jetty"]),
+                    "berth":
+                    (
+                        _vector(place["jetty"])
+                        + (_vector(place["jetty"]) - _vector(place["at"])).normalized() * BERTH
+                    ),
+                }
+            )
         )
     routes.clear()
     for key in data.get("routes", {}).keys():
@@ -125,7 +300,7 @@ static func _points(pairs: Array) -> PackedVector2Array:
     return points
 
 
-## Whether the point is on the water.
+## Whether the point is on the water (the jetties count as land).
 func is_water(point: Vector2) -> bool:
     for polygon in water:
         if not Geometry2D.is_point_in_polygon(point, polygon["outer"]):
@@ -133,7 +308,16 @@ func is_water(point: Vector2) -> bool:
         for hole in polygon["holes"]:
             if Geometry2D.is_point_in_polygon(point, hole):
                 return false
-        return true
+        return not _on_jetty(point)
+    return false
+
+
+## Whether the [param point] is on a jetty (or too close for a boat).
+func _on_jetty(point: Vector2) -> bool:
+    for item in places:
+        var closest := Geometry2D.get_closest_point_to_segment(point, item["at"], item["jetty"])
+        if closest.distance_squared_to(point) < JETTY_CLEARANCE * JETTY_CLEARANCE:
+            return true
     return false
 
 
@@ -250,8 +434,11 @@ func route_progress(point: Vector2) -> float:
 ## Plant the forests: trees on the land near the shores, the same every time.
 func _plant_trees() -> void:
     _trees.clear()
+    _water_plants.clear()
+    _scatter_details()
     var rng := RandomNumberGenerator.new()
     rng.seed = 1234
+    _plant_in_water(rng)
     var tries := int(size_m.x * size_m.y / 900.0)
     for i in range(tries):
         var p := Vector2(rng.randf() * size_m.x, rng.randf() * size_m.y)
@@ -277,7 +464,132 @@ func _plant_trees() -> void:
                 by_houses = true
         if by_houses or p.distance_to(start["at"]) < 70.0 or p.distance_to(goal["at"]) < 70.0:
             continue
-        _trees.append([p, rng.randf_range(4.0, 8.0), rng.randf() < 0.5])
+        _trees.append(
+            [p, rng.randf_range(4.0, 8.0), rng.randf() < 0.5, _pick_tree(rng), rng.randf() * TAU]
+        )
+
+
+## Reeds and water lilies in little clusters along the shores, a few metres
+## out in the water, but not by the jetties.
+func _plant_in_water(rng: RandomNumberGenerator) -> void:
+    var rings: Array = []
+    for polygon in water:
+        rings.append(polygon["outer"])
+        rings.append_array(polygon["holes"])
+    for ring: PackedVector2Array in rings:
+        var walked := 0.0
+        for i in range(ring.size()):
+            var from := ring[i]
+            var to := ring[(i + 1) % ring.size()]
+            walked += from.distance_to(to)
+            if walked < 30.0:
+                continue
+            walked = 0.0
+            if rng.randf() > 0.6:
+                continue
+            var on := (from + to) / 2.0
+            var normal := (to - from).orthogonal().normalized()
+            if not is_water(on + normal * 6.0):
+                normal = -normal
+            if not is_water(on + normal * 6.0):
+                continue
+            var by_jetty := false
+            for item in places:
+                if on.distance_to(item["at"]) < 80.0:
+                    by_jetty = true
+            if by_jetty:
+                continue
+            var reeds := rng.randf() < 0.55
+            for n in range(rng.randi_range(2, 4)):
+                var at := (
+                    on
+                    + normal * rng.randf_range(3.0, 9.0 if reeds else 16.0)
+                    + (to - from).normalized() * rng.randf_range(-9.0, 9.0)
+                )
+                if not is_water(at):
+                    continue
+                _water_plants.append(
+                    [
+                        at,
+                        "reeds" if reeds else "lilies",
+                        rng.randf_range(9.0, 14.0) if reeds else rng.randf_range(7.0, 10.0),
+                        rng.randf() * TAU
+                    ]
+                )
+
+
+## Scatter the details over the grass (see GRASS_DETAILS): not on the water,
+## nor where the villages stand.
+func _scatter_details() -> void:
+    _details.clear()
+    var total := 0
+    for name in GRASS_DETAILS:
+        if Pictures.of("grass_details", name) == null:
+            return
+        total += int(GRASS_DETAILS[name][0])
+    var rng := RandomNumberGenerator.new()
+    rng.seed = 4321
+    var area := (size_m + Vector2(400, 400)) * 1.0
+    for i in range(int(area.x * area.y / GRASS_DETAIL_AREA)):
+        var p := Vector2(rng.randf() * area.x - 200.0, rng.randf() * area.y - 200.0)
+        if is_water(p):
+            continue
+        var by_houses := false
+        for item in places:
+            if p.distance_to(item["at"]) < 60.0:
+                by_houses = true
+                break
+        if by_houses:
+            continue
+        var pick := rng.randi() % total
+        for name in GRASS_DETAILS:
+            pick -= int(GRASS_DETAILS[name][0])
+            if pick < 0:
+                var length: float = GRASS_DETAILS[name][1] * rng.randf_range(1.2, 1.9)
+                _details.append([p, name, length, rng.randf() * TAU, _on_island(p)])
+                break
+
+
+func _on_island(point: Vector2) -> bool:
+    for polygon in water:
+        for hole in polygon["holes"]:
+            if Geometry2D.is_point_in_polygon(point, hole):
+                return true
+    return false
+
+
+## Draw the details on the grass on [param canvas]: those of the islands
+## ([param islands]), or those of the land (see LandDetails and IslandLand).
+func draw_details(canvas: CanvasItem, islands := false) -> void:
+    for detail in _details:
+        if bool(detail[4]) != islands:
+            continue
+        var picture := Pictures.of("grass_details", detail[1])
+        if picture != null:
+            Pictures.draw(canvas, picture, detail[0], detail[2], detail[3])
+
+
+## A painted tree or plant, by how often each grows.
+func _pick_tree(rng: RandomNumberGenerator) -> String:
+    var kinds: Dictionary = PAINTED_TREES[-1]
+    for candidate: Dictionary in PAINTED_TREES:
+        var all_there := true
+        for key: String in candidate:
+            if Pictures.of(key.get_slice("/", 0), key.get_slice("/", 1)) == null:
+                all_there = false
+                break
+        if all_there:
+            kinds = candidate
+            break
+    var total := 0
+    for key in kinds:
+        total += int(kinds[key])
+    var pick := rng.randi() % total
+    for key in kinds:
+        pick -= int(kinds[key])
+        if pick < 0:
+            return key
+    return "nature/pine"
 
 
 ## The layers above the land: the water (with the shader of the waves), and
@@ -288,6 +600,14 @@ func _build_layers() -> void:
     _water_nodes.clear()
     if _above != null:
         _above.queue_free()
+    # NOTE (mristin):
+    # The details lie on the grass, under the water and the sand, which
+    # cover those by the shores.
+    var details := LandDetails.new()
+    details.map = self
+    add_child(details)
+    _water_nodes.append(details)
+
     var shader_material := ShaderMaterial.new()
     shader_material.shader = WATER_SHADER
     for polygon in water:
@@ -296,34 +616,99 @@ func _build_layers() -> void:
         node.material = shader_material
         add_child(node)
         _water_nodes.append(node)
+
+    # NOTE (mristin):
+    # The islands lie on the water; their sand comes over them, like the sand
+    # of the shores over the land.
+    var islands := IslandLand.new()
+    islands.map = self
+    islands.material = _ground
+    add_child(islands)
+    _water_nodes.append(islands)
+    var island_details := LandDetails.new()
+    island_details.map = self
+    island_details.islands = true
+    add_child(island_details)
+    _water_nodes.append(island_details)
+
+    var shore_material := ShaderMaterial.new()
+    shore_material.shader = SHORE_SHADER
+    var white := ImageTexture.create_from_image(Image.create(1, 1, false, Image.FORMAT_RGBA8))
+    for polygon in water:
+        var rings: Array = [polygon["outer"]]
+        rings.append_array(polygon["holes"])
+        for ring: PackedVector2Array in rings:
+            var line := Line2D.new()
+            line.points = _water_on_left(ring)
+            line.closed = true
+            line.width = SHORE_BAND
+            line.joint_mode = Line2D.LINE_JOINT_ROUND
+            line.texture = white
+            line.texture_mode = Line2D.LINE_TEXTURE_STRETCH
+            line.material = shore_material
+            add_child(line)
+            _water_nodes.append(line)
     _above = LandAbove.new()
     _above.map = self
     add_child(_above)
 
 
-## The land and the sand along the shores, under the water.
+## The [param ring] turned so that the water lies to the left of its way,
+## where the band of the shore has UV.y = 0 (see shore.gdshader).
+func _water_on_left(ring: PackedVector2Array) -> PackedVector2Array:
+    var water_left := 0
+    var count := mini(ring.size(), 24)
+    for k in range(count):
+        var i := k * ring.size() / count
+        var from := ring[i]
+        var to := ring[(i + 1) % ring.size()]
+        var middle := (from + to) / 2.0
+        var left := (to - from).normalized().orthogonal()
+        if is_water(middle + left * 2.0):
+            water_left += 1
+        elif is_water(middle - left * 2.0):
+            water_left -= 1
+    if water_left >= 0:
+        return ring
+    var turned := ring.duplicate()
+    turned.reverse()
+    return turned
+
+
+## The land, under the water.
 func _draw() -> void:
-    draw_rect(Rect2(Vector2(-2000, -2000), size_m + Vector2(4000, 4000)), LAND)
-    for polygon in water:
-        draw_colored_polygon(polygon["outer"], SHORE)
-        _draw_ring(polygon["outer"], SHORE, SHORE_WIDTH * 2.0)
+    var grass := Pictures.of("nature", "grass")
+    var land := Rect2(Vector2(-2000, -2000), size_m + Vector2(4000, 4000))
+    if _ground != null:
+        draw_rect(land, Color.WHITE)
+    elif grass != null:
+        # NOTE (mristin):
+        # The painted textures repeat (see _init); a
+        # texture is drawn in its pixels, so we scale it to TEXTURE_METRES.
+        var per_pixel := TEXTURE_METRES / grass.get_width()
+        draw_set_transform(Vector2.ZERO, 0.0, Vector2(per_pixel, per_pixel))
+        draw_texture_rect(grass, Rect2(land.position / per_pixel, land.size / per_pixel), true)
+        draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+    else:
+        draw_rect(land, LAND)
 
 
-## Draw what lies above the water: the islands, the forests and the villages.
+## Draw what lies above the water and the shores: the reeds, the forests and
+## the villages.
 func draw_above(canvas: CanvasItem) -> void:
-    for polygon in water:
-        for hole in polygon["holes"]:
-            canvas.draw_colored_polygon(hole, SHORE)
-            var closed: PackedVector2Array = hole.duplicate()
-            closed.append(hole[0])
-            canvas.draw_polyline(closed, SHORE, SHORE_WIDTH * 2.0, true)
-        for hole in polygon["holes"]:
-            var inner := Geometry2D.offset_polygon(hole, -SHORE_WIDTH)
-            for ring in inner:
-                canvas.draw_colored_polygon(ring, LAND)
+    for plant in _water_plants:
+        var picture := Pictures.of("nature", plant[1])
+        if picture != null:
+            Pictures.draw(canvas, picture, plant[0], plant[2], plant[3])
     for tree in _trees:
         var at: Vector2 = tree[0]
         var radius: float = tree[1]
+        var key: String = tree[3]
+        var painted := Pictures.of(key.get_slice("/", 0), key.get_slice("/", 1))
+        if painted != null:
+            var scale := BUSH_SCALE if key.begins_with("bushes/") else 1.0
+            Pictures.draw(canvas, painted, at, radius * 2.6 * scale, tree[4])
+            continue
         canvas.draw_circle(at + Vector2(1.5, 1.5), radius, FOREST_DARK)
         canvas.draw_circle(at, radius, FOREST if tree[2] else FOREST.lightened(0.08))
     if places.is_empty():
@@ -333,13 +718,20 @@ func draw_above(canvas: CanvasItem) -> void:
         _draw_village(canvas, item["at"], item["jetty"], item["kind"])
 
 
-func _draw_ring(ring: PackedVector2Array, color: Color, width: float) -> void:
-    var closed := ring.duplicate()
-    closed.append(ring[0])
-    draw_polyline(closed, color, width, true)
+## Fill the [param polygon] on [param canvas] with the repeating [param
+## texture], or with [param color] if there is none.
+func _fill(
+    canvas: CanvasItem, polygon: PackedVector2Array, color: Color, texture: Texture2D
+) -> void:
+    if texture == null:
+        canvas.draw_colored_polygon(polygon, color)
+        return
+    var uvs := PackedVector2Array()
+    for point in polygon:
+        uvs.append(point / TEXTURE_METRES)
+    canvas.draw_colored_polygon(polygon, Color.WHITE, uvs, texture)
 
 
-## A few long houses with red roofs and a jetty.
 ## A settlement: its houses with red roofs, a jetty out to [param jetty], and
 ## what shows its kind (the fence and the animals of a farm, the stalls of the
 ## market, the herb garden of the healer, the sign of the inn, the nets of the
@@ -362,6 +754,8 @@ func _draw_village(canvas: CanvasItem, at: Vector2, jetty := Vector2.INF, kind :
 
     # The jetty, out into the water, on its posts.
     var jetty_end := jetty if jetty != Vector2.INF else at + toward * 28.0
+    if _draw_painted_village(canvas, at, jetty_end, kind, rng):
+        return
     canvas.draw_line(at, jetty_end, WALL.darkened(0.25), 5.0)
     canvas.draw_line(at, jetty_end, WALL, 3.5)
     for k in range(1, 5):
@@ -460,6 +854,63 @@ func _draw_village(canvas: CanvasItem, at: Vector2, jetty := Vector2.INF, kind :
                 )
 
 
+## The painted settlement (see PAINTED_VILLAGES): the jetty of three pieces,
+## the main building behind it with its door to the water, the second one to
+## its side, and the rest in the yard. Return false if a picture is missing.
+func _draw_painted_village(
+    canvas: CanvasItem, at: Vector2, jetty_end: Vector2, kind: String, rng: RandomNumberGenerator
+) -> bool:
+    var things: Array = PAINTED_VILLAGES.get(kind, PAINTED_VILLAGES["home"])
+    var pieces := ["jetty_land", "jetty_middle", "jetty_end"]
+    if not Pictures.has_all("buildings", pieces):
+        return false
+    for thing in things:
+        if Pictures.of(thing[0], thing[1]) == null:
+            return false
+
+    var toward := (jetty_end - at).normalized()
+    var back := -toward
+    var side := back.orthogonal()
+
+    # NOTE (mristin):
+    # The pieces of the painted jetty lie along their width, the land at
+    # their left; they overlap a little so that no gap shows.
+    var length := at.distance_to(jetty_end) + 6.0
+    var count := maxi(3, roundi(length / 10.0))
+    var step := length / count
+    for k in range(count):
+        var piece: String = pieces[0] if k == 0 else (pieces[2] if k == count - 1 else pieces[1])
+        var middle := at - toward * 6.0 + toward * step * (k + 0.5)
+        Pictures.draw(canvas, Pictures.of("buildings", piece), middle, step * 1.12, toward.angle())
+
+    # The door of a building is at the bottom of its picture: it faces the water.
+    var facing := toward.angle() - PI / 2.0
+    var flip := 1.0 if rng.randf() < 0.5 else -1.0
+    var spots := [
+        at + back * 22.0,
+        at + back * 26.0 + side * flip * 34.0,
+        at + back * 12.0 - side * flip * 24.0,
+        at + back * 44.0 - side * flip * 26.0,
+    ]
+    for i in range(things.size()):
+        var thing: Array = things[i]
+        var spot: Vector2 = spots[i % spots.size()]
+        var angle := facing + rng.randf_range(-0.15, 0.15)
+        if thing[0] == "farm" and float(thing[2]) < 10.0:
+            # A few animals or things around their spot, every which way.
+            for k in range(3):
+                Pictures.draw(
+                    canvas,
+                    Pictures.of(thing[0], thing[1]),
+                    spot + Vector2(rng.randf_range(-8, 8), rng.randf_range(-8, 8)),
+                    float(thing[2]),
+                    rng.randf() * TAU
+                )
+            continue
+        Pictures.draw(canvas, Pictures.of(thing[0], thing[1]), spot, float(thing[2]), angle)
+    return true
+
+
 func _draw_house(canvas: CanvasItem, spot: Vector2, angle: float, scale: float) -> void:
     var transform := Transform2D(angle, spot) * Transform2D.IDENTITY.scaled(Vector2(scale, scale))
     canvas.draw_colored_polygon(
@@ -501,7 +952,38 @@ func _draw_fence(canvas: CanvasItem, center: Vector2, half: float) -> void:
     )
 
 
-## The islands, the forests and the villages, drawn above the water.
+## The details on the grass of the land (see LakeMap.draw_details).
+class LandDetails:
+    extends Node2D
+
+    var map: LakeMap
+
+    ## Whether these are the details of the islands (drawn over them).
+    var islands := false
+
+    func _draw() -> void:
+        if map != null:
+            map.draw_details(self, islands)
+
+
+## The land of the islands, drawn over the water.
+class IslandLand:
+    extends Node2D
+
+    var map: LakeMap
+
+    func _draw() -> void:
+        if map == null:
+            return
+        for polygon in map.water:
+            for hole in polygon["holes"]:
+                if material != null:
+                    draw_colored_polygon(hole, Color.WHITE)
+                else:
+                    map._fill(self, hole, LAND, Pictures.of("nature", "grass"))
+
+
+## The reeds, the forests and the villages, drawn above the water.
 class LandAbove:
     extends Node2D
 

@@ -6,7 +6,8 @@ extends Node2D
 ## where a night's sleep ends the day (see DESIGN.md).
 ##
 ## The players row and choose only with their bodies (see HandCursor and RowingMeter); the
-## keyboard is never used, but Escape quits. Start with [code]-- --players=2[/code]
+## keyboard is never used, but Escape twice ends the journey (see EscapeGuard).
+## Start with [code]-- --players=2[/code]
 ## for two players (an oar each), [code]-- --new[/code] for a new voyage, and
 ## [code]-- --autopilot[/code] to let the boat trade by itself (to try the
 ## world without the camera). For the developers, [code]-- --shots=<dir>[/code]
@@ -49,6 +50,7 @@ var _rng := RandomNumberGenerator.new()
 var _screens: PortScreens
 var _hud: WorldHud
 var _panel: ChoicePanel
+var _farm_view: FarmView
 var _actions: Array[Callable] = []
 var _mode := "rowing"
 var _left_place := ""
@@ -73,6 +75,7 @@ var _shot_count := 0
 
 
 func _ready() -> void:
+    EscapeGuard.attach(self, _leave)
     _rng.seed = Time.get_ticks_usec()
     _autopilot = "--autopilot" in OS.get_cmdline_user_args()
     for arg in OS.get_cmdline_user_args():
@@ -97,8 +100,8 @@ func _ready() -> void:
     _splashes = Splashes.new()
     add_child(_splashes)
     _boat_wake = Wake.new()
-    _boat_wake.width = 1.5
-    _boat_wake.spread = 5.0
+    _boat_wake.width = 2.5
+    _boat_wake.spread = 8.0
     add_child(_boat_wake)
 
     for i in range(NPC_COUNT):
@@ -111,6 +114,7 @@ func _ready() -> void:
 
     _rower = RowerView.new()
     _rower.boat = _boat
+    _rower.map = _map
     _rower.pair = players() == 2
     add_child(_rower)
 
@@ -139,6 +143,10 @@ func _ready() -> void:
     camera_panel.position = Vector2(1560, 790)
     camera_panel.size = Vector2(340, 255)
     layer.add_child(camera_panel)
+    _farm_view = FarmView.new()
+    _farm_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+    _farm_view.visible = false
+    layer.add_child(_farm_view)
     _panel = ChoicePanel.new(_service)
     _panel.set_anchors_preset(Control.PRESET_FULL_RECT)
     _panel.visible = false
@@ -161,9 +169,11 @@ func _add_label(text: String, kind: String, at: Vector2) -> void:
     _labels.append(mark)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-    if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-        _quit()
+## Escape twice ends the journey: save, and back to the first screen.
+func _leave() -> void:
+    if _state != null:
+        _state.save()
+    get_tree().change_scene_to_file("res://scenes/start/start.tscn")
 
 
 func _notification(what: int) -> void:
@@ -182,7 +192,10 @@ func _quit() -> void:
 # ---------------------------------------------------------------------------
 
 
+## How many row: as the journey says (see GameState.players).
 func players() -> int:
+    if _state != null:
+        return _state.players
     return _service.GetPlayerCount() if _service != null else 1
 
 
@@ -246,7 +259,7 @@ func _process(delta: float) -> void:
     _rower.position = _boat.position
     _rower.rotation = _boat.heading
     _rower.live_pull = _live_pull()
-    _boat_wake.follow(_boat.position - _boat.forward() * 3.0 * RowerView.SCALE, delta)
+    _boat_wake.follow(_boat.position, delta, absf(_boat.speed))
     _splash_oars(delta)
     _place_camera(delta)
     for label in _labels:
@@ -337,7 +350,7 @@ func _check_docking() -> void:
 func _dock(id: String) -> void:
     var place := _map.place(id)
     _boat.speed = 0.0
-    _boat.position = place["jetty"]
+    _boat.position = place["berth"]
     _state.place = id
     _state.save()
     _mode = "port"
@@ -349,7 +362,7 @@ func _undock(id: String) -> void:
     var place := _map.place(id)
     if place.is_empty():
         place = _map.places[0]
-    _boat.position = place["jetty"]
+    _boat.position = place["berth"]
     var out: Vector2 = (place["jetty"] - place["at"]).normalized()
     _boat.heading = out.angle() + PI / 2.0
     _boat.speed = 2.0
@@ -358,6 +371,7 @@ func _undock(id: String) -> void:
     _state.place = ""
     _mode = "rowing"
     _panel.close()
+    _farm_view.visible = false
     _autopilot_target = ""
 
 
@@ -380,6 +394,14 @@ func quit() -> void:
 
 func _show(title: String, text: String, cards: Array, actions: Array[Callable], face := {}) -> void:
     _actions = actions
+    # NOTE (mristin):
+    # At home, the screens show the farm behind them, dimmed less.
+    var home: bool = _mode == "port" and _state.place == "home"
+    _farm_view.visible = home
+    if home:
+        _farm_view.farm = _state.farm
+        _farm_view.day = _state.day
+    _panel.dim = 0.2 if home else ChoicePanel.DIM
     _panel.show_cards(title, text, cards, face)
     if _shots != "":
         _shoot.call_deferred()
@@ -453,7 +475,13 @@ func _hail(npc: NpcBoat) -> void:
     else:
         cards.append({"title": "Thank you!", "detail": "fair winds"})
         actions.append(_part.bind(""))
-    _show(who["name"], text, cards, actions, {"hair": who["hair"], "braids": who["braids"]})
+    _show(
+        who["name"],
+        text,
+        cards,
+        actions,
+        {"hair": who["hair"], "braids": who["braids"], "picture": who.get("picture", "")}
+    )
 
 
 func _deal_detail(deal: Dictionary) -> String:

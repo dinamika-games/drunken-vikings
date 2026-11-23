@@ -1,11 +1,13 @@
 extends Control
 
 ## The first screen: the players choose with their hands (see ChoicePanel)
-## how many row (one, or two with an oar each), and what they play: the party
-## mode for the smaller children (follow the wedding longship and pick up what
-## falls into the water), or the practical mode (the farm and the trading on
-## the lakes), going on with their voyage or starting a new one; or the
-## chase mode (row to a town before the pirates catch you).
+## their journey (see GameState): go on with the last one, open another
+## recent one, start a new one (then they choose how many row: one, or two
+## with an oar each), or delete one (in three steps). Then they choose what
+## they play: the party mode for the smaller children (follow the wedding
+## longship and pick up what falls into the water), the chase mode (row to a
+## town before the pirates catch you), or the farm and the trading on the
+## lakes. Escape twice quits.
 
 const PARTY_SCENE := "res://scenes/level/level.tscn"
 const CHASE_SCENE := "res://scenes/chase/chase.tscn"
@@ -14,11 +16,23 @@ const WORLD_SCENE := "res://scenes/world/world.tscn"
 const _TITLE := Color("f2c14e")
 const _PAPER := Color("f1f0ea")
 
+const PAINTING := "res://assets/pictures/start/start.jpg"
+
+## The most journeys shown to go on with (the last one first).
+const MAX_JOURNEYS := 3
+
+const YLVA := {"hair": Color("e8c25a"), "braids": true, "picture": "ylva"}
+const GRANDMOTHER := {"hair": Color("d8d8d0"), "braids": true, "picture": "grandmother"}
+
 var _service: Node
 var _state: Node
 var _panel: ChoicePanel
 var _actions: Array[Callable] = []
 var _time := 0.0
+
+## The painting of the start screen (see dev/pictures/cut_sheets.py), or
+## null: then we draw a simple lake.
+var _painting: Texture2D = load(PAINTING) as Texture2D if ResourceLoader.exists(PAINTING) else null
 
 
 func _ready() -> void:
@@ -30,12 +44,8 @@ func _ready() -> void:
     _panel.set_anchors_preset(Control.PRESET_FULL_RECT)
     _panel.chosen.connect(_on_chosen)
     add_child(_panel)
-    _ask_players.call_deferred()
-
-
-func _unhandled_input(event: InputEvent) -> void:
-    if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-        _quit()
+    EscapeGuard.attach(self, _quit, "Press Esc again to quit the game.")
+    _ask_journey.call_deferred()
 
 
 func _notification(what: int) -> void:
@@ -54,27 +64,121 @@ func _on_chosen(index: int) -> void:
         _actions[index].call()
 
 
-func _ask_players() -> void:
-    _actions = [_set_players.bind(1), _set_players.bind(2)]
+## The journeys: go on with the last one, open one of the other recent ones,
+## start a new one, or delete one; without any journey, a new one starts.
+func _ask_journey() -> void:
+    var journeys: Array = _state.journeys() if _state != null else []
+    if journeys.is_empty():
+        _ask_players()
+        return
+    var cards: Array = []
+    _actions = []
+    for i in range(mini(journeys.size(), MAX_JOURNEYS)):
+        var journey: Dictionary = journeys[i]
+        (
+            cards
+            . append(
+                {
+                    "title": ("Go on: " if i == 0 else "") + _journey_title(journey),
+                    "detail": _journey_detail(journey),
+                }
+            )
+        )
+        _actions.append(_open_journey.bind(str(journey["id"])))
+    cards.append({"title": "+ New journey", "detail": "one or two rowers"})
+    _actions.append(_ask_players)
+    cards.append({"title": "Delete", "detail": "a journey"})
+    _actions.append(_ask_delete)
     _panel.show_cards(
-        "Drunken Vikings",
-        "Welcome, vikings! How many of you row today? Two rowers pull an oar each.",
-        [
-            {"title": "One rower", "detail": "Ylva"},
-            {"title": "Two rowers", "detail": "Ylva and Sigrid"}
-        ],
-        {"hair": Color("e8c25a"), "braids": true}
+        "Your journeys",
+        "Welcome, vikings! Go on with your journey, or start a new one.",
+        cards,
+        YLVA
     )
 
 
-func _set_players(count: int) -> void:
-    if _service != null:
-        _service.SetPlayerCount(count)
+func _journey_detail(journey: Dictionary) -> String:
+    return "day %d, %d silver" % [int(journey["day"]), int(journey["silver"])]
+
+
+## The name of the journey, and its two rowers if it has them.
+func _journey_title(journey: Dictionary) -> String:
+    return str(journey["name"]) + (" (2 rowers)" if int(journey["players"]) == 2 else "")
+
+
+func _open_journey(id: String) -> void:
+    if _state != null and not _state.open_journey(id):
+        _ask_journey()
+        return
+    _apply_players()
     _ask_mode()
 
 
+## A new journey: how many row?
+func _ask_players() -> void:
+    _actions = [_start_journey.bind(1), _start_journey.bind(2), _ask_journey]
+    (
+        _panel
+        . show_cards(
+            "A new journey",
+            "How many of you row? Two rowers pull an oar each.",
+            [
+                {"title": "One rower", "detail": "Ylva"},
+                {"title": "Two rowers", "detail": "Ylva and Sigrid"},
+                {"title": "Back", "detail": ""},
+            ],
+            YLVA
+        )
+    )
+
+
+func _start_journey(count: int) -> void:
+    if _state != null:
+        _state.new_journey(count)
+    _apply_players()
+    _ask_mode()
+
+
+## Tell the camera how many players to follow, as the journey says.
+func _apply_players() -> void:
+    if _service != null and _state != null:
+        _service.SetPlayerCount(_state.players)
+
+
+## Which journey to delete: the first of three steps, so that a hand resting
+## on the screen never deletes one by chance.
+func _ask_delete() -> void:
+    var journeys: Array = _state.journeys() if _state != null else []
+    var cards: Array = []
+    _actions = []
+    for i in range(mini(journeys.size(), MAX_JOURNEYS + 1)):
+        var journey: Dictionary = journeys[i]
+        cards.append({"title": _journey_title(journey), "detail": _journey_detail(journey)})
+        _actions.append(_confirm_delete.bind(journey))
+    cards.append({"title": "Back", "detail": ""})
+    _actions.append(_ask_journey)
+    _panel.show_cards("Delete a journey", "Which journey should be deleted?", cards, GRANDMOTHER)
+
+
+func _confirm_delete(journey: Dictionary) -> void:
+    _actions = [_delete.bind(str(journey["id"])), _ask_journey]
+    _panel.show_cards(
+        "Delete %s?" % journey["name"],
+        "The journey and everything in it will be gone for good.",
+        [{"title": "Delete", "detail": "for good"}, {"title": "Keep", "detail": ""}],
+        GRANDMOTHER
+    )
+
+
+func _delete(id: String) -> void:
+    if _state != null:
+        _state.delete_journey(id)
+    _ask_journey()
+
+
 func _ask_mode() -> void:
-    _actions = [_party, _chase, _ask_voyage, _ask_players]
+    _actions = [_party, _chase, _go_on, _ask_journey]
+    var name: String = _state.journey_name if _state != null else ""
     (
         _panel
         . show_cards(
@@ -88,9 +192,9 @@ func _ask_mode() -> void:
                 {"title": "Party!", "detail": "follow the wedding"},
                 {"title": "Chase!", "detail": "flee the pirates"},
                 {"title": "The farm", "detail": "trade and farm"},
-                {"title": "Back", "detail": ""},
+                {"title": "Back", "detail": name},
             ],
-            {"hair": Color("e8c25a"), "braids": true}
+            YLVA
         )
     )
 
@@ -103,38 +207,7 @@ func _chase() -> void:
     get_tree().change_scene_to_file(CHASE_SCENE)
 
 
-func _ask_voyage() -> void:
-    var saved: bool = _state != null and _state.load_voyage()
-    if not saved:
-        _new_voyage()
-        return
-    _actions = [_go_on, _new_voyage, _ask_mode]
-    (
-        _panel
-        . show_cards(
-            "Your voyage",
-            (
-                "Go on where you stopped, or start a new voyage "
-                + "with a small farm and a few pieces of silver?"
-            ),
-            [
-                {"title": "Go on", "detail": "day %d, %d silver" % [_state.day, _state.silver]},
-                {"title": "A new voyage", "detail": "from the start"},
-                {"title": "Back", "detail": ""},
-            ],
-            {"hair": Color("d8d8d0"), "braids": true}
-        )
-    )
-
-
 func _go_on() -> void:
-    get_tree().change_scene_to_file(WORLD_SCENE)
-
-
-func _new_voyage() -> void:
-    if _state != null:
-        _state.new_voyage()
-        _state.save()
     get_tree().change_scene_to_file(WORLD_SCENE)
 
 
@@ -145,6 +218,16 @@ func _process(delta: float) -> void:
 
 ## The lake at dusk behind the screens, with a longship sailing by.
 func _draw() -> void:
+    if _painting != null:
+        # NOTE (mristin):
+        # The painting fills the screen and drifts very slowly, as if one
+        # looked around over the lake.
+        var zoom := 1.04 + 0.02 * sin(_time * 0.1)
+        var cover := maxf(size.x / _painting.get_width(), size.y / _painting.get_height()) * zoom
+        var shown := Vector2(_painting.get_size()) * cover
+        var drift := Vector2(sin(_time * 0.07), cos(_time * 0.05)) * (shown - size) * 0.4
+        draw_texture_rect(_painting, Rect2((size - shown) / 2.0 + drift, shown), false)
+        return
     draw_rect(Rect2(Vector2.ZERO, size), Color("1f3a5a"))
     for i in range(14):
         var y := 420.0 + i * 46.0

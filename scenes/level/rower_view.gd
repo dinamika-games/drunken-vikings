@@ -32,6 +32,45 @@ const RECOVER_SECONDS := 0.5
 ## The oar follows the pull of the player with this time constant, in seconds.
 const FOLLOW_SECONDS := 0.06
 
+## Where the painted pictures of the boat are.
+const PICTURES := "res://assets/pictures/rowboat"
+
+## The painted hull is this long, in the units of the boat (before [constant SCALE]).
+const HULL_LENGTH := 6.4
+
+## The painted rower sits this tall (the middle pose), in the same units.
+const ROWER_HEIGHT := 2.3
+
+## The oarlocks of the painted hull, from the middle of the boat.
+const LOCK := Vector2(1.15, 0.25)
+
+## The rowers sit this far from the middle of the boat, so that their hands
+## are level with the oarlocks in the middle of the stroke.
+const SEAT_Y := -0.5
+
+## The oar reaches this far out from its lock, and its handle this far past
+## the hand which holds it, in the units of the boat.
+const OUTBOARD := 4.5
+const HANDLE_PAST_HAND := 0.15
+
+## Where the hands hold the oars in each painted pose, as a fraction of its
+## picture: [the hand on the left oar, the hand on the right oar], or one grip
+## when the rower pulls one oar with both hands.
+const HANDS := {
+    "ylva_forward": [Vector2(0.28, 0.91), Vector2(0.75, 0.92)],
+    "ylva_middle": [Vector2(0.23, 0.89), Vector2(0.72, 0.87)],
+    "ylva_back": [Vector2(0.32, 0.8), Vector2(0.68, 0.81)],
+    "sigrid_forward": [Vector2(0.72, 0.9)],
+    "sigrid_middle": [Vector2(0.7, 0.88)],
+    "sigrid_back": [Vector2(0.62, 0.87)],
+}
+
+## How long the blade takes to come out of the water or to dip in, in seconds.
+const LIFT_SECONDS := 0.3
+
+## How long pulling an oar in (or putting it out) takes, in seconds.
+const SHIP_SECONDS := 0.35
+
 ## Where the oars rest while the boat glides (between -1 forward and 1 back).
 const REST := 0.3
 
@@ -57,6 +96,9 @@ const SIGRID := [Color("c9602a"), Color("a04a20"), Color("2f5f8a"), Color("7a3a6
 ## The boat to draw.
 var boat: RowBoat
 
+## The lakes, so that the rowers pull in an oar over the land (or null).
+var map: LakeMap
+
 ## Whether two players row, an oar each.
 var pair := false
 
@@ -70,9 +112,22 @@ var live_pull := [-1.0, -1.0]
 var catches := [false, false]
 var pulling := [false, false]
 
+## The painted pictures of the boat and the rowers (see
+## dev/pictures/cut_sheets.py), or empty if they are missing: then we draw
+## the boat with shapes.
+var _pictures := {}
+
 ## The swing of each oar: -1 forward (the blade towards the bow, ready to
 ## pull), 1 back (the pull done).
 var _swing := [REST, REST]
+
+## How far each blade is lifted out of the water (see OarDrawing): 0 while it
+## pulls, 1 while it comes forward, a little while the boat glides.
+var _lift := [0.4, 0.4]
+
+## How far each oar is pulled in along the hull, out of the way of the land:
+## from 0 (out) to 1 (in).
+var _shipped := [0.0, 0.0]
 
 ## The stage of each oar when it plays the strokes: "rest", "recover" (coming
 ## forward) or "pull"; and how many strokes wait to be played.
@@ -81,10 +136,41 @@ var _pending := [0, 0]
 var _last_since := [INF, INF]
 
 
+func _ready() -> void:
+    for name in [
+        "hull",
+        "oar",
+        "ylva_forward",
+        "ylva_middle",
+        "ylva_back",
+        "sigrid_forward",
+        "sigrid_middle",
+        "sigrid_back",
+    ]:
+        var path := "%s/%s.png" % [PICTURES, name]
+        if not ResourceLoader.exists(path):
+            _pictures = {}
+            return
+        _pictures[name] = load(path)
+
+
 func _process(delta: float) -> void:
     if boat != null and delta > 0.0:
         for side in [0, 1]:
             _move_oar(side, delta)
+            var resting := absf(float(_swing[side]) - REST) < 0.05
+            var wanted := 0.0 if pulling[side] else (0.4 if resting else 1.0)
+            _lift[side] = move_toward(_lift[side], wanted, delta / LIFT_SECONDS)
+            # NOTE (mristin):
+            # Over the land, the rower pulls the oar in along the hull, and
+            # puts it out again when there is water.
+            var over_land := map != null and not map.is_water(_blade_out(side))
+            _shipped[side] = move_toward(
+                _shipped[side], 1.0 if over_land else 0.0, delta / SHIP_SECONDS
+            )
+            if _shipped[side] > 0.0:
+                catches[side] = false
+                pulling[side] = false
     queue_redraw()
 
 
@@ -141,6 +227,9 @@ func _draw() -> void:
     var oar_color := OAR_GOLD if boat.since_in_time < GOLD_SECONDS else OAR
 
     var swings := [_swing[0], _swing[1]]
+    if not _pictures.is_empty():
+        _draw_painted(swings, boat.since_in_time < GOLD_SECONDS)
+        return
     for side in [0, 1]:
         _draw_oar(side, swings[side], oar_color)
 
@@ -152,6 +241,133 @@ func _draw() -> void:
         _draw_rower(Vector2(0, 0.35), swings, YLVA, 1.0, [0, 1])
 
 
+## The boat, its oars and its rowers, painted.
+func _draw_painted(swings: Array, golden: bool) -> void:
+    var base := Transform2D(0.0, Vector2(SCALE, SCALE), 0.0, Vector2.ZERO)
+    var tint := Color(1.0, 0.85, 0.4) if golden else Color.WHITE
+    for side in [0, 1]:
+        var oar := _painted_oar(side, swings)
+        var inboard: float = oar[2]
+        # NOTE (mristin):
+        # The handle of the painted oar is at its left, the blade at its right;
+        # it turns around the oarlock, its handle in the hand of the rower.
+        OarDrawing.draw(
+            self,
+            _pictures["oar"],
+            base,
+            oar[0],
+            oar[1],
+            inboard + OUTBOARD,
+            inboard / (inboard + OUTBOARD),
+            maxf(_lift[side], _shipped[side]),
+            tint
+        )
+    draw_set_transform(Vector2.ZERO, 0.0, Vector2(SCALE, SCALE))
+    var hull: Texture2D = _pictures["hull"]
+    var hull_width := HULL_LENGTH * hull.get_width() / hull.get_height()
+    draw_texture_rect(
+        hull,
+        Rect2(Vector2(-hull_width / 2.0, -HULL_LENGTH / 2.0), Vector2(hull_width, HULL_LENGTH)),
+        false
+    )
+    for side in [0, 1]:
+        var oar := _painted_oar(side, swings)
+        var inboard: float = oar[2]
+        OarDrawing.draw(
+            self,
+            _pictures["oar"],
+            base,
+            oar[0],
+            oar[1],
+            inboard + OUTBOARD,
+            inboard / (inboard + OUTBOARD),
+            maxf(_lift[side], _shipped[side]),
+            tint,
+            true
+        )
+    draw_set_transform(Vector2.ZERO, 0.0, Vector2(SCALE, SCALE))
+    for seat in _seats(swings):
+        _draw_painted_rower(seat[0], seat[1], seat[2], seat[3])
+
+
+## Who sits where: Array of [who, seat, swing, size] (see _draw_painted_rower).
+func _seats(swings: Array) -> Array:
+    if pair:
+        return [
+            ["ylva", Vector2(-0.5, SEAT_Y), float(swings[0]), 0.8],
+            ["sigrid", Vector2(0.5, SEAT_Y), float(swings[1]), 0.8],
+        ]
+    return [["ylva", Vector2(0, SEAT_Y), (float(swings[0]) + float(swings[1])) / 2.0, 1.0]]
+
+
+## The painted oar of the [param side] (0 left, 1 right): [its lock, its
+## angle, how long it is from the lock to the end of its handle]. The oar
+## runs from the hand of its rower through the lock.
+func _painted_oar(side: int, swings: Array) -> Array:
+    var sign := -1.0 if side == 0 else 1.0
+    var lock := Vector2(sign * LOCK.x, LOCK.y)
+    var seats := _seats(swings)
+    var seat: Array = seats[side] if pair else seats[0]
+    var hand := _hand(seat[0], seat[1], seat[2], seat[3], side)
+    var out := (lock - hand).normalized()
+    var angle := out.angle()
+    var shipped: float = _shipped[side]
+    if shipped > 0.0:
+        # Pulled in: the oar lies along the hull, its blade towards the stern.
+        var along := Vector2(-sign * 0.12, 1.0).angle()
+        angle = lerp_angle(angle, along, smoothstep(0.0, 1.0, shipped))
+    return [lock, angle, lock.distance_to(hand) + HANDLE_PAST_HAND]
+
+
+## Where the hand of the rower [param who] holds the oar of the [param side]
+## (0 left, 1 right), in the units of the boat, as her poses blend (see
+## _draw_painted_rower).
+func _hand(who: String, seat: Vector2, swing: float, size: float, side: int) -> Vector2:
+    var poses := ["forward", "middle"] if swing < 0.0 else ["middle", "back"]
+    var blend := swing + 1.0 if swing < 0.0 else swing
+    var per_pixel := ROWER_HEIGHT * size / (_pictures[who + "_middle"] as Texture2D).get_height()
+    var hand := Vector2.ZERO
+    for i in range(2):
+        var weight := (1.0 - blend) if i == 0 else blend
+        var name := "%s_%s" % [who, poses[i]]
+        var picture: Texture2D = _pictures[name]
+        var picture_size := Vector2(picture.get_width(), picture.get_height()) * per_pixel
+        var top := seat + Vector2(-picture_size.x / 2.0, -ROWER_HEIGHT * size * 0.55)
+        var grips: Array = HANDS[name]
+        var grip: Vector2 = grips[side] if grips.size() > 1 else grips[0]
+        hand += (top + grip * picture_size) * weight
+    return hand
+
+
+## A painted rower at [param seat], in the pose of the [param swing]: the
+## pictures of the forward, the middle and the back pose blend into each
+## other, so that she moves with the player without jumping.
+func _draw_painted_rower(who: String, seat: Vector2, swing: float, size: float) -> void:
+    var poses := ["forward", "middle"] if swing < 0.0 else ["middle", "back"]
+    var blend := swing + 1.0 if swing < 0.0 else swing
+    var middle: Texture2D = _pictures[who + "_middle"]
+    var per_pixel := ROWER_HEIGHT * size / middle.get_height()
+    for i in range(2):
+        var weight := (1.0 - blend) if i == 0 else blend
+        if weight <= 0.01:
+            continue
+        var picture: Texture2D = _pictures["%s_%s" % [who, poses[i]]]
+        var picture_size := Vector2(picture.get_width(), picture.get_height()) * per_pixel
+        # NOTE (mristin):
+        # The poses share the top of the head (the braids point to the bow),
+        # and the arms reach down towards the stern as far as the pose does.
+        var top := seat + Vector2(-picture_size.x / 2.0, -ROWER_HEIGHT * size * 0.55)
+        draw_texture_rect(picture, Rect2(top, picture_size), false, Color(1, 1, 1, weight))
+
+
+## Where the blade of the oar of the [param side] would be if it were out,
+## in the world.
+func _blade_out(side: int) -> Vector2:
+    var sign := -1.0 if side == 0 else 1.0
+    var out := Vector2(sign, 0).rotated(sign * swing_of(side) * 0.6)
+    return to_global((Vector2(sign * LOCK.x, LOCK.y) + out * OUTBOARD) * SCALE)
+
+
 ## The swing of the oar of a side (0 left, 1 right) now.
 func swing_of(side: int) -> float:
     return _swing[side]
@@ -160,6 +376,9 @@ func swing_of(side: int) -> float:
 ## Where the blade of the oar of a side (0 left, 1 right) is, in the world.
 func blade_position(side: int) -> Vector2:
     var sign := -1.0 if side == 0 else 1.0
+    if not _pictures.is_empty():
+        var oar := _painted_oar(side, [swing_of(0), swing_of(1)])
+        return to_global((oar[0] + Vector2.RIGHT.rotated(oar[1]) * OUTBOARD * 0.9) * SCALE)
     var out := Vector2(sign, 0).rotated(sign * swing_of(side) * 0.6)
     return to_global((Vector2(sign * 1.0, 0.2) + out * 4.1) * SCALE)
 

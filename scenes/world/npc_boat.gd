@@ -100,6 +100,15 @@ func _set_out() -> void:
 
 
 func _draw() -> void:
+    var painted := Pictures.of("skippers", skipper.get("picture", ""))
+    if painted != null:
+        # NOTE (mristin):
+        # The painted boat, with its sail and its oars, is 7 long in the
+        # units of the drawing; it rocks a little while it sails.
+        var rock := sin(_time * 2.4) * 0.04 if _speed > 0.5 else 0.0
+        Pictures.draw(self, painted, Vector2.ZERO, 7.0 * SCALE, rock)
+        _draw_bubble()
+        return
     draw_set_transform(Vector2.ZERO, 0.0, Vector2(SCALE, SCALE))
     var swing := sin(_time * 2.4) if _speed > 0.5 else 0.3
     for sign in [-1.0, 1.0]:
@@ -140,8 +149,13 @@ func _draw() -> void:
         sail
     )
     draw_line(Vector2(-1.7, -0.6), Vector2(1.7, -0.6), HULL_DARK, 0.2)
-    # A bubble when the skipper wants to talk.
+    _draw_bubble()
+
+
+## A bubble when the skipper wants to talk.
+func _draw_bubble() -> void:
+    draw_set_transform(Vector2.ZERO, 0.0, Vector2(SCALE, SCALE))
     if not held and cooldown <= 0.0:
         var bob := sin(_time * 3.0) * 0.2
-        draw_circle(Vector2(1.8, -2.6 + bob), 0.7, Color(1, 1, 1, 0.9))
-        draw_circle(Vector2(1.2, -1.9 + bob), 0.25, Color(1, 1, 1, 0.9))
+        draw_circle(Vector2(2.4, -3.4 + bob), 0.7, Color(1, 1, 1, 0.9))
+        draw_circle(Vector2(1.8, -2.7 + bob), 0.25, Color(1, 1, 1, 0.9))

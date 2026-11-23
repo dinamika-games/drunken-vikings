@@ -151,8 +151,8 @@ namespace DrunkenVikings.Vision
     }
 
     /// <summary>
-    /// Assign the persons to the players by the half of the picture, as in Bird
-    /// Dog and Ergo Chaos: with two players, each plays in their own half.
+    /// Assign the persons to the players by the half of the picture: with two
+    /// players, each plays in their own half.
     /// </summary>
     /// <remarks>
     /// The players see the picture mirrored, so player 0, who plays the left

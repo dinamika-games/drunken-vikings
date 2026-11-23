@@ -11,4 +11,4 @@ The webcam images are processed locally, in memory, and are never sent anywhere.
 ## License
 
 Drunken Vikings is licensed under the [MIT License](LICENSE).
-The third-party components (e.g., the pose models) keep their own licenses; see `scenes/vision/*/model/LICENSE`.
+The third-party components (e.g., the pose models) keep their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

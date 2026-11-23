@@ -6,8 +6,9 @@ extends Node2D
 ## players row over them and pick them up: each one gives a silver coin, and
 ## a "+1" floats up where it was.
 
-## The kinds of the treats.
+## The kinds of the treats; the painted ones have more (see Pictures).
 const KINDS := ["wreath", "ribbon", "cake", "apple"]
+const PAINTED_KINDS := ["wreath", "ribbon", "cake", "apple", "bread", "bouquet", "toy_horse"]
 
 ## The boat picks a treat up within this many metres of its middle.
 const PICK_RADIUS := 10.0
@@ -28,8 +29,9 @@ var _time := 0.0
 
 ## Drop a treat of a random kind at [param at].
 func drop(at: Vector2, rng: RandomNumberGenerator) -> void:
+    var kinds: Array = PAINTED_KINDS if Pictures.has_all("treats", PAINTED_KINDS) else KINDS
     items.append(
-        {"at": at, "kind": KINDS[rng.randi() % KINDS.size()], "age": 0.0, "spin": rng.randf() * TAU}
+        {"at": at, "kind": kinds[rng.randi() % kinds.size()], "age": 0.0, "spin": rng.randf() * TAU}
     )
 
 
@@ -78,6 +80,14 @@ func _draw() -> void:
         # players see it from afar.
         var glow := 0.5 + 0.5 * sin(_time * 4.0 + float(item["spin"]))
         draw_arc(Vector2.ZERO, 2.4, 0.0, TAU, 24, Color(1, 1, 0.8, 0.35 * fade * glow), 0.25)
+        var painted := Pictures.of("treats", item["kind"])
+        if painted != null:
+            var base := Transform2D(
+                float(item["spin"]) + _time * 0.2, Vector2(SCALE, SCALE), 0.0, at + Vector2(0, bob)
+            )
+            Pictures.draw(self, painted, Vector2.ZERO, 3.4, 0.0, base, Color(1, 1, 1, fade))
+            draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+            continue
         match item["kind"]:
             "wreath":
                 for k in range(8):
@@ -138,6 +148,12 @@ func _draw() -> void:
             44,
             Color(Color("f2c14e"), alpha)
         )
-        draw_circle(Vector2(46, -14), 14.0, Color(Color("d8d8e0"), alpha))
-        draw_circle(Vector2(46, -14), 9.0, Color(Color("b8b8c8"), alpha))
+        var coin := Pictures.of("treats", "coin")
+        if coin != null:
+            draw_texture_rect(
+                coin, Rect2(Vector2(28, -34), Vector2(40, 40)), false, Color(1, 1, 1, alpha)
+            )
+        else:
+            draw_circle(Vector2(46, -14), 14.0, Color(Color("d8d8e0"), alpha))
+            draw_circle(Vector2(46, -14), 9.0, Color(Color("b8b8c8"), alpha))
         draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

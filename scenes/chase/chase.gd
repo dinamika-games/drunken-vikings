@@ -30,6 +30,9 @@ const CATCH_DISTANCE := 22.0
 ## The players are safe this close to the jetty of the target, in metres.
 const SAFE_DISTANCE := 35.0
 
+## The pirate captain shakes a fist from this close, in metres.
+const SHAKE_DISTANCE := 90.0
+
 ## The target lies this far from the start along the water, in metres.
 const TARGET_DISTANCE := Vector2(800.0, 1800.0)
 
@@ -64,6 +67,9 @@ var _start: Dictionary
 var _target: Dictionary
 var _path := PackedVector2Array()
 var _replan := 0.0
+
+## Whether the pirates may sail straight to their goal (see _hunt).
+var _straight := false
 var _elapsed := 0.0
 var _outcome := ""
 
@@ -79,9 +85,11 @@ var _actions: Array[Callable] = []
 
 var _autopilot := false
 var _autopilot_beat := 0.0
+var _autopilot_strokes := 0
 
 
 func _ready() -> void:
+    EscapeGuard.attach(self, _leave)
     _autopilot = "--autopilot" in OS.get_cmdline_user_args()
     _rng.seed = Time.get_ticks_usec()
     _state = get_node_or_null("/root/GameState")
@@ -103,12 +111,12 @@ func _ready() -> void:
     _splashes = Splashes.new()
     add_child(_splashes)
     _boat_wake = Wake.new()
-    _boat_wake.width = 1.5
-    _boat_wake.spread = 5.0
+    _boat_wake.width = 2.5
+    _boat_wake.spread = 8.0
     add_child(_boat_wake)
     _pirate_wake = Wake.new()
-    _pirate_wake.width = 4.0
-    _pirate_wake.spread = 9.0
+    _pirate_wake.width = 6.0
+    _pirate_wake.spread = 16.0
     add_child(_pirate_wake)
 
     _beacon = Beacon.new()
@@ -122,6 +130,7 @@ func _ready() -> void:
 
     _rower = RowerView.new()
     _rower.boat = _boat
+    _rower.map = _map
     _rower.pair = players() == 2
     add_child(_rower)
 
@@ -134,7 +143,7 @@ func _ready() -> void:
             add_child(mark)
             _labels.append(mark)
 
-    _boat.position = _start["jetty"]
+    _boat.position = _start["berth"]
     var out: Vector2 = (_start["jetty"] - _start["at"]).normalized()
     _boat.heading = out.angle() + PI / 2.0
     _boat.speed = 2.0
@@ -236,9 +245,11 @@ func _label(at: Vector2, size: Vector2, font_size: int, color: Color) -> Label:
     return label
 
 
-func _unhandled_input(event: InputEvent) -> void:
-    if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-        _quit()
+## Escape twice ends the journey: save, and back to the first screen.
+func _leave() -> void:
+    if _state != null:
+        _state.save()
+    get_tree().change_scene_to_file("res://scenes/start/start.tscn")
 
 
 func _notification(what: int) -> void:
@@ -252,7 +263,10 @@ func _quit() -> void:
     get_tree().quit()
 
 
+## How many row: as the journey says (see GameState.players).
 func players() -> int:
+    if _state != null:
+        return _state.players
     return _service.GetPlayerCount() if _service != null else 1
 
 
@@ -292,11 +306,9 @@ func _process(delta: float) -> void:
     _rower.position = _boat.position
     _rower.rotation = _boat.heading
     _rower.live_pull = _live_pull()
-    _boat_wake.follow(_boat.position - _boat.forward() * 3.0 * RowerView.SCALE, delta)
+    _boat_wake.follow(_boat.position, delta, absf(_boat.speed))
     _hunt(delta)
-    _pirate_wake.follow(
-        _pirates.position - Vector2.UP.rotated(_pirates.heading) * 11.0 * Longship.SCALE, delta
-    )
+    _pirate_wake.follow(_pirates.position, delta, _pirates.speed)
     _splash_oars(delta)
     _check_outcome()
     _place_camera(delta)
@@ -315,29 +327,41 @@ func _hunt(delta: float) -> void:
     if _outcome != "":
         # NOTE (mristin):
         # Caught or escaped, the pirates sail off, away from the players.
-        goal = _pirates.position + (_pirates.position - _boat.position).normalized() * 100.0
-        if not _map.is_water(goal):
-            goal = _pirate_start
+        goal = _pirate_start
         speed = PIRATE_SPEED * 0.6
-        _path = PackedVector2Array([goal])
+    _replan -= delta
+    if _replan <= 0.0:
+        _replan = REPLAN_SECONDS
+        var found := _map.water_path(_pirates.position, goal)
+        if not found.is_empty():
+            _path = found
+        _straight = (
+            _pirates.position.distance_to(goal) < 60.0
+            and not _map.crosses_land(_pirates.position, goal)
+        )
+    # NOTE (mristin):
+    # The pirates only ever sail along their way over the water; straight to
+    # the goal only when it is near and no land lies between.
+    var aim := _pirates.position
+    if _straight:
+        aim = goal
     else:
-        _replan -= delta
-        if _replan <= 0.0:
-            _replan = REPLAN_SECONDS
-            _path = _map.water_path(_pirates.position, _boat.position)
-    var aim := goal
-    for point in _path:
-        if point.distance_to(_pirates.position) > 12.0:
-            aim = point
-            break
+        for point in _path:
+            if point.distance_to(_pirates.position) > 12.0:
+                aim = point
+                break
     _pirates.drive(delta, aim, speed)
 
 
 func _check_outcome() -> void:
+    # NOTE (mristin):
+    # The pirate captain shakes a fist at the players when close: funny, harmless.
+    _pirates.shaking = _boat.position.distance_to(_pirates.position) < SHAKE_DISTANCE
     if _outcome != "":
         return
     if _boat.position.distance_to(_target["jetty"]) < SAFE_DISTANCE:
         _outcome = "escaped"
+        _replan = 0.0
         if _state != null:
             _state.silver += REWARD
             _state.save()
@@ -354,6 +378,7 @@ func _check_outcome() -> void:
         )
     elif _elapsed > HEAD_START and _boat.position.distance_to(_pirates.position) < CATCH_DISTANCE:
         _outcome = "caught"
+        _replan = 0.0
         _boat.speed = 0.0
         print("Caught after %.0f s" % _elapsed)
         _show_end(
@@ -372,7 +397,9 @@ func _show_end(title: String, text: String) -> void:
         {"title": "Stop for today", "detail": "see you!"},
     ]
     _actions = [get_tree().reload_current_scene, _to_start, _quit]
-    _panel.show_cards(title, text, cards, {"hair": Color("e8c25a"), "braids": true})
+    _panel.show_cards(
+        title, text, cards, {"hair": Color("e8c25a"), "braids": true, "picture": "ylva"}
+    )
 
 
 func _to_start() -> void:
@@ -477,6 +504,19 @@ func _fly(delta: float) -> void:
     if _autopilot_beat >= 2.3:
         _autopilot_beat = 0.0
         _boat.stroke()
+        _autopilot_strokes += 1
+        if _autopilot_strokes % 5 == 0:
+            print(
+                (
+                    "  rowing to %s: %.0f m to go, speed %.1f, pirates %.0f m behind"
+                    % [
+                        _target["name"],
+                        _boat.position.distance_to(_target["jetty"]),
+                        _boat.speed,
+                        _boat.position.distance_to(_pirates.position)
+                    ]
+                )
+            )
 
 
 ## The jetty of the target: a golden ring which pulses, so that the players

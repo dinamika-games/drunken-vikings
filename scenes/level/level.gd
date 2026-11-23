@@ -16,7 +16,8 @@ extends Node2D
 ## so that the bow always points up and going left turns left.
 ##
 ## Once the longship is in the market village, the players choose with
-## their hands (see ChoicePanel): another party, the farm, or stop. Escape quits.
+## their hands (see ChoicePanel): another party, the farm, or stop. Escape twice
+## ends the journey (see EscapeGuard).
 ##
 ## With [code]-- --autopilot[/code], the boat rows and steers by itself along
 ## the route, to try the level without the camera (e.g., to render it). With
@@ -81,6 +82,7 @@ var _overlay: Control
 
 
 func _ready() -> void:
+    EscapeGuard.attach(self, _leave)
     _autopilot = "--autopilot" in OS.get_cmdline_user_args()
     _rng.seed = Time.get_ticks_usec()
     _state = get_node_or_null("/root/GameState")
@@ -112,12 +114,12 @@ func _ready() -> void:
     add_child(_splashes)
 
     _boat_wake = Wake.new()
-    _boat_wake.width = 1.5
-    _boat_wake.spread = 5.0
+    _boat_wake.width = 2.5
+    _boat_wake.spread = 8.0
     add_child(_boat_wake)
     _ship_wake = Wake.new()
-    _ship_wake.width = 4.0
-    _ship_wake.spread = 9.0
+    _ship_wake.width = 6.0
+    _ship_wake.spread = 16.0
     add_child(_ship_wake)
 
     _treats = Treats.new()
@@ -138,6 +140,7 @@ func _ready() -> void:
     _boat.heading = ahead.angle() + PI / 2.0
     _rower = RowerView.new()
     _rower.boat = _boat
+    _rower.map = _map
     _rower.pair = players() == 2
     add_child(_rower)
 
@@ -209,11 +212,11 @@ func _label(at: Vector2, size: Vector2, font_size: int, color: Color) -> Label:
     return label
 
 
-func _unhandled_input(event: InputEvent) -> void:
-    if not event is InputEventKey or not event.pressed or event.echo:
-        return
-    if event.keycode == KEY_ESCAPE:
-        _quit()
+## Escape twice ends the journey: save, and back to the first screen.
+func _leave() -> void:
+    if _state != null:
+        _state.save()
+    get_tree().change_scene_to_file("res://scenes/start/start.tscn")
 
 
 func _notification(what: int) -> void:
@@ -229,7 +232,10 @@ func _quit() -> void:
 
 
 ## How many players row: two pull an oar each.
+## How many row: as the journey says (see GameState.players).
 func players() -> int:
+    if _state != null:
+        return _state.players
     return _service.GetPlayerCount() if _service != null else 1
 
 
@@ -271,14 +277,12 @@ func _process(delta: float) -> void:
     _rower.position = _boat.position
     _rower.rotation = _boat.heading
     _rower.live_pull = _live_pull()
-    _boat_wake.follow(_boat.position - _boat.forward() * 3.0 * RowerView.SCALE, delta)
+    _boat_wake.follow(_boat.position, delta, absf(_boat.speed))
 
     var progress := _map.route_progress(_boat.position)
     _ship.sail(delta, progress)
     _splash_oars(delta)
-    _ship_wake.follow(
-        _ship.position - Vector2.UP.rotated(_ship.heading) * 11.0 * Longship.SCALE, delta
-    )
+    _ship_wake.follow(_ship.position, delta, _ship.speed)
 
     _drop_treats(delta)
     var picked := _treats.pick(_boat.position)
@@ -417,7 +421,7 @@ func _finish() -> void:
             % [_map.goal["name"], _coins, _coins]
         ),
         cards,
-        {"hair": Color("e8c25a"), "braids": true}
+        {"hair": Color("e8c25a"), "braids": true, "picture": "ylva"}
     )
 
 
@@ -444,14 +448,14 @@ func _update_hud(progress: float) -> void:
             _banner.text = "Follow the wedding to %s, and pick up what falls into the water!" % goal
         _info.text = (
             (
-                "Coins: %d    Strokes: %d    %d:%02d\n"
+                "Strokes: %d    %d:%02d\n"
                 + (
                     "Row in time to go straight; the stronger rower turns the boat."
                     if players() == 2
                     else "Row: lean back and forth.   Steer: go to the side with your head."
                 )
             )
-            % [_coins, _boat.strokes, int(_elapsed) / 60, int(_elapsed) % 60]
+            % [_boat.strokes, int(_elapsed) / 60, int(_elapsed) % 60]
         )
     _overlay.progress = progress / maxf(_map.route_length(), 1.0)
     _overlay.ship_progress = _ship.progress / maxf(_map.route_length(), 1.0)
@@ -473,6 +477,11 @@ func boat() -> RowBoat:
 
 func ship() -> Longship:
     return _ship
+
+
+## How many coins the players picked up.
+func coins() -> int:
+    return _coins
 
 
 func steer() -> float:

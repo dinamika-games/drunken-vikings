@@ -26,6 +26,14 @@ const KIND_NAMES := {
 }
 
 ## Which animals each kind of settlement sells.
+## The painted fields of the crops on their cards (see Pictures).
+const CROP_PICTURES := {
+    "barley": "barley_ripe", "flax": "flax_bloom", "meadow": "hay_meadow", "flowers": "flower_field"
+}
+
+## Grandmother Åsa, who keeps the farm at home.
+const GRANDMOTHER := {"hair": Color("d8d8d0"), "braids": true, "picture": "grandmother"}
+
 const ANIMALS_SOLD := {
     "market": ["hen", "sheep"],
     "horse_farm": ["goat", "cow"],
@@ -88,7 +96,10 @@ func show_port(message := "") -> void:
     if economy.is_market(id):
         for good in economy.good_ids:
             _state.note_prices(id, good)
-    _world.show_screen(place_title(id), text, cards, actions)
+    var face := {}
+    if Pictures.of("faces", place["kind"]) != null:
+        face = {"picture": place["kind"]}
+    _world.show_screen(place_title(id), text, cards, actions, face)
 
 
 func _sellable(id: String) -> Array:
@@ -144,6 +155,7 @@ func _show_sell(page: int, message := "") -> void:
                     "Sell %s (%d)" % [_state.good_name(good).to_lower(), int(_state.cargo[good])],
                     "detail": "%d silver" % economy.sell_price(id, good),
                     "color": economy.goods[good]["color"],
+                    "picture": ["goods", good],
                     "mood": economy.mood(id, good),
                 }
             )
@@ -183,6 +195,7 @@ func _show_buy(page: int, message := "") -> void:
                     "title": "Buy %s" % _state.good_name(good).to_lower(),
                     "detail": "%d silver" % price,
                     "color": economy.goods[good]["color"],
+                    "picture": ["goods", good],
                     "mood": economy.mood(id, good),
                     "enabled": _state.silver >= price and _state.has_room(),
                 }
@@ -229,6 +242,7 @@ func _show_animals(message := "") -> void:
                 {
                     "title": "Buy a %s" % String(animal["name"]).to_lower(),
                     "detail": "%d silver" % price,
+                    "picture": ["farm", "beehive" if kind == "bees" else kind],
                     "enabled": _state.silver >= price and _state.has_room(),
                 }
             )
@@ -274,7 +288,7 @@ func _talk() -> void:
         news["text"],
         cards,
         actions,
-        {"hair": who["hair"], "braids": who["braids"]}
+        {"hair": who["hair"], "braids": who["braids"], "picture": who.get("picture", "")}
     )
 
 
@@ -310,9 +324,7 @@ func _show_home(message := "") -> void:
     var actions: Array[Callable] = [
         _show_farm, _unload, _show_load.bind(0), _sleep, _world.undock.bind("home")
     ]
-    _world.show_screen(
-        place_title("home"), text, cards, actions, {"hair": Color("d8d8d0"), "braids": true}
-    )
+    _world.show_screen(place_title("home"), text, cards, actions, GRANDMOTHER)
 
 
 func _animals_line() -> String:
@@ -368,9 +380,7 @@ func _show_farm(message := "") -> void:
         {"title": "Back", "detail": ""},
     ]
     var actions: Array[Callable] = [_show_plant.bind(empty), _harvest, _show_land, _show_home]
-    _world.show_screen(
-        "The farm", " ".join(lines), cards, actions, {"hair": Color("d8d8d0"), "braids": true}
-    )
+    _world.show_screen("The farm", " ".join(lines), cards, actions, GRANDMOTHER)
 
 
 func _show_plant(field: int) -> void:
@@ -386,6 +396,7 @@ func _show_plant(field: int) -> void:
                     "title": String(kind["name"]),
                     "detail": "%d silver, %d days" % [price, int(kind["days"])],
                     "color": _state.economy.goods[kind["gives"]]["color"],
+                    "picture": ["farm", CROP_PICTURES.get(crop, "")],
                     "enabled": _state.silver >= price,
                 }
             )
@@ -492,6 +503,7 @@ func _show_load(page: int, message := "") -> void:
                     "title": "Load %s" % _state.good_name(good).to_lower(),
                     "detail": "%d in the store" % _state.farm.crates(good),
                     "color": _state.economy.goods[good]["color"],
+                    "picture": ["goods", good],
                     "enabled": _state.has_room(),
                 }
             )
@@ -532,6 +544,4 @@ func _sleep() -> void:
         {"title": "The farm", "detail": ""}
     ]
     var actions: Array[Callable] = [_world.undock.bind("home"), _world.quit, _show_farm]
-    _world.show_screen(
-        "A new day", " ".join(lines), cards, actions, {"hair": Color("d8d8d0"), "braids": true}
-    )
+    _world.show_screen("A new day", " ".join(lines), cards, actions, GRANDMOTHER)

@@ -99,7 +99,17 @@ func _draw() -> void:
     var ink := _INK if on else _GREY
 
     var top := rect.position.y + 50.0
-    if card.has("color"):
+    var painted: Texture2D = null
+    if card.has("picture"):
+        painted = Pictures.of(card["picture"][0], card["picture"][1])
+    if painted != null:
+        var size := Pictures.size_of(painted, 80.0)
+        var at := rect.position + Vector2(rect.size.x / 2.0, 56.0)
+        draw_texture_rect(
+            painted, Rect2(at - size / 2.0, size), false, Color.WHITE if on else Color(1, 1, 1, 0.4)
+        )
+        top = rect.position.y + 124.0
+    elif card.has("color"):
         var crate := Rect2(rect.position + Vector2(rect.size.x / 2.0 - 34.0, 18.0), Vector2(68, 52))
         var color: Color = card["color"]
         draw_rect(crate, color if on else Color(color, 0.4))

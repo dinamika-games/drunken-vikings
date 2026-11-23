@@ -17,6 +17,9 @@ extends Control
 
 signal chosen(index: int)
 
+## How much the screen darkens what lies behind it, by default.
+const DIM := 0.55
+
 const _PAPER := Color("f1e6cc")
 const _INK := Color("2a1e14")
 const _WOOD := Color("6a4320")
@@ -28,7 +31,11 @@ const _GAP := 34.0
 var title := ""
 var text := ""
 
-## The face of who speaks: {"hair": Color, "braids": bool} or empty.
+## How much the screen darkens what lies behind it.
+var dim := DIM
+
+## The face of who speaks: {"hair": Color, "braids": bool, "picture": the
+## name of the painted face (see Pictures), if any} or empty.
 var face := {}
 
 var cards: Array = []
@@ -125,7 +132,7 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
     if not visible:
         return
-    draw_rect(Rect2(Vector2.ZERO, size), Color(0.05, 0.07, 0.1, 0.55))
+    draw_rect(Rect2(Vector2.ZERO, size), Color(0.05, 0.07, 0.1, dim))
     if _cursor != null:
         _cursor.draw_mirror(self, size)
 
@@ -160,8 +167,16 @@ func _draw() -> void:
         draw_rect(rect, Color("5ec8f2"), false, 4.0)
 
 
-## A simple face: who speaks to the players.
+## The face of who speaks to the players: painted, or drawn simply.
 func _draw_face(center: Vector2, radius: float) -> void:
+    var painted := Pictures.of("faces", str(face.get("picture", "")))
+    if painted != null:
+        var size := Pictures.size_of(painted, radius * 2.4)
+        var frame := Rect2(center - size / 2.0, size)
+        draw_rect(frame.grow(6.0), _WOOD)
+        draw_rect(frame, Color("e8d8b0"))
+        draw_texture_rect(painted, frame, false)
+        return
     var hair: Color = face.get("hair", Color("8a5a2b"))
     var skin: Color = face.get("skin", Color("f0c8a0"))
     draw_circle(center + Vector2(0, radius * 0.15), radius * 1.05, hair)

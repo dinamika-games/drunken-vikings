@@ -28,6 +28,23 @@ const SHIELDS := [Color("c8a23a"), Color("b8332a"), Color("2f5f8a"), Color("e8e0
 const OAR := Color("d8c08a")
 const HAIR := [Color("e8c25a"), Color("8a5a2b"), Color("c9502a"), Color("3a2a1a")]
 
+## The painted ship (see Pictures), in the units of the drawing: how long the
+## hull is from the dragon to the stern, where the oars go out under the
+## shields, and how long they are.
+const PAINTED_LENGTH := 25.0
+const PAINTED_LOCK_X := 3.4
+## One oar for each rower: the crew sits on three benches, two on each
+## (see the crew in _draw_painted, 6.3 long around 1.2).
+const PAINTED_OARS_Y := [-0.9, 1.2, 3.3]
+const PAINTED_OAR := 7.5
+
+## The painted ship is drawn this much smaller than the units above, so that
+## it fits the lakes.
+const PAINTED_SCALE := 0.75
+
+## How long the crew takes to pull the oars in, or to put them out, in seconds.
+const SHIP_SECONDS := 0.5
+
 ## The map whose route the ship sails.
 var map: LakeMap
 
@@ -57,14 +74,22 @@ var wedding := false
 ## laughing skull, and the pirates with their red scarves.
 var pirate := false
 
+## Whether the captain of the pirates stands at the bow and shakes a fist.
+var shaking := false
+
 var _time := 0.0
 var _beat := 0.0
+
+## How far the oars of each side ([left, right]) are pulled in along the hull,
+## out of the way of the land: from 0 (out) to 1 (in).
+var _shipped := [0.0, 0.0]
 
 
 ## Sail for a frame; [param players_progress] is how far along the route the
 ## players got (the farthest of them).
 func sail(delta: float, players_progress: float) -> void:
     _time += delta
+    _ship_oars(delta)
     var before := _beat
     _beat += delta * (0.4 + speed / CRUISE * 0.5)
     # NOTE (mristin):
@@ -97,6 +122,7 @@ func sail(delta: float, players_progress: float) -> void:
 ## per second), not along the route: for the pirates of the chase mode.
 func drive(delta: float, target: Vector2, target_speed: float) -> void:
     _time += delta
+    _ship_oars(delta)
     var before := _beat
     _beat += delta * (0.4 + speed / CRUISE * 0.5)
     dipped = floorf(_beat) > floorf(before) and speed > 0.5
@@ -110,15 +136,36 @@ func drive(delta: float, target: Vector2, target_speed: float) -> void:
     queue_redraw()
 
 
+## Over the land, the crew pulls in the oars of that side, and puts them out
+## again over the water.
+func _ship_oars(delta: float) -> void:
+    if map == null or not _painted():
+        return
+    for i in range(2):
+        var side := -1.0 if i == 0 else 1.0
+        var reach := Vector2(side * (PAINTED_LOCK_X + PAINTED_OAR * 0.85), PAINTED_OARS_Y[1])
+        var over_land := not map.is_water(to_global(reach * SCALE * PAINTED_SCALE))
+        _shipped[i] = move_toward(_shipped[i], 1.0 if over_land else 0.0, delta / SHIP_SECONDS)
+
+
 ## How far the oars are through their swing, from -1 to 1.
 func _swing() -> float:
     return -cos(_beat * TAU) if speed > 0.5 else 0.3
 
 
-## Where the blades of the oars are, in the world.
+## Where the blades of the oars which are out are, in the world.
 func blade_positions() -> Array[Vector2]:
     var blades: Array[Vector2] = []
     var swing := _swing()
+    if _painted():
+        for y: float in PAINTED_OARS_Y:
+            for side in [-1.0, 1.0]:
+                if _shipped[0 if side < 0.0 else 1] > 0.0:
+                    continue
+                var out := Vector2(side, 0).rotated(side * swing * 0.45)
+                var blade := Vector2(side * PAINTED_LOCK_X, y) + out * PAINTED_OAR * 0.75
+                blades.append(to_global(blade * SCALE * PAINTED_SCALE))
+        return blades
     for i in range(7):
         var y := -6.0 + i * 2.2
         for side in [-1.0, 1.0]:
@@ -127,7 +174,24 @@ func blade_positions() -> Array[Vector2]:
     return blades
 
 
+## Which of the painted ships this is.
+func _kind() -> String:
+    return "pirate" if pirate else ("wedding" if wedding else "plain")
+
+
+## Whether the pictures of the painted ship are there.
+func _painted() -> bool:
+    var kind := _kind()
+    return Pictures.has_all(
+        "longships",
+        ["hull_" + kind, "oar", "crew_" + kind, "sail_%s_full" % kind, "sail_%s_slack" % kind]
+    )
+
+
 func _draw() -> void:
+    if _painted():
+        _draw_painted()
+        return
     draw_set_transform(Vector2.ZERO, 0.0, Vector2(SCALE, SCALE))
 
     # NOTE (mristin):
@@ -274,3 +338,62 @@ func _draw_wedding() -> void:
     draw_circle(Vector2(0.7, 8.2), 0.75, Color("2f5f8a"))
     draw_circle(Vector2(0.7, 8.0), 0.45, Color("8a5a2b"))
     draw_line(Vector2(1.3, 8.0), Vector2(1.9, 7.3 - wave), Color("f0c8a0"), 0.2)
+
+
+## The painted ship: the oars turning around their locks under the shields,
+## the hull, the crew bobbing with the stroke, the bride and the groom of the
+## wedding at the stern, and the sail, full while the ship moves.
+func _draw_painted() -> void:
+    var kind := _kind()
+    var base := Transform2D(0.0, Vector2(SCALE, SCALE) * PAINTED_SCALE, 0.0, Vector2.ZERO)
+    var swing := _swing()
+
+    # NOTE (mristin):
+    # The blades pull in the water while the swing goes back, and come out
+    # flat on the way forward (see OarDrawing); they rest half lifted.
+    var lift := 0.5
+    if speed > 0.5:
+        lift = clampf(0.5 - 0.9 * sin(_beat * TAU), 0.0, 1.0)
+    var oar := Pictures.of("longships", "oar")
+    for y: float in PAINTED_OARS_Y:
+        for side in [-1.0, 1.0]:
+            var out := Vector2(side, 0).rotated(side * swing * 0.45)
+            var shipped: float = _shipped[0 if side < 0.0 else 1]
+            # Pulled in, the oar lies along the hull, its blade to the stern.
+            var angle := lerp_angle(
+                out.angle(), Vector2(-side * 0.1, 1.0).angle(), smoothstep(0.0, 1.0, shipped)
+            )
+            OarDrawing.draw(
+                self,
+                oar,
+                base,
+                Vector2(side * PAINTED_LOCK_X, y),
+                angle,
+                PAINTED_OAR,
+                1.0 / 6.0,
+                maxf(lift, shipped)
+            )
+
+    Pictures.draw(
+        self, Pictures.of("longships", "hull_" + kind), Vector2(0, -0.5), PAINTED_LENGTH, 0.0, base
+    )
+    Pictures.draw(
+        self,
+        Pictures.of("longships", "crew_" + kind),
+        Vector2(0, 1.2 + swing * 0.2),
+        6.3,
+        0.0,
+        base
+    )
+    if wedding:
+        var bride := Pictures.of("longships", "bride_and_groom")
+        if bride != null:
+            var wave := sin(_time * 5.0) * 0.04
+            Pictures.draw(self, bride, Vector2(0, 7.6), 4.6, wave, base)
+    var sail := "sail_%s_%s" % [kind, "full" if speed > 0.5 else "slack"]
+    Pictures.draw(
+        self, Pictures.of("longships", sail), Vector2(0, -3.8), 12.0, 0.0, base, Color.WHITE, 0.42
+    )
+    var fist := Pictures.of("longships", "pirate_fist")
+    if pirate and shaking and fist != null:
+        Pictures.draw(self, fist, Vector2(0, -7.5), 5.0, sin(_time * 12.0) * 0.2, base)
