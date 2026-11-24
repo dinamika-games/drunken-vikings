@@ -423,7 +423,7 @@ def make(seed: int) -> dict:
         ],
         "places": [shifted_place(place) for place in places],
         "routes": {key: shift(points) for key, points in routes.items()},
-        "nav": navigation_grid(water, dx, dy),
+        "nav": navigation_grid(water, places, dx, dy),
         "start": {"name": home["name"], "at": home["at"]},
         "goal": {"name": market["name"], "at": market["at"]},
     }
@@ -440,16 +440,17 @@ NAV_CELL_M = 8.0
 NAV_CLEARANCE_M = 10.0
 
 
-def navigation_grid(water: Polygon, dx: float, dy: float) -> dict:
+def navigation_grid(water: Polygon, places: List[dict], dx: float, dy: float) -> dict:
     """
     The grid of the water for the path finding, in the shifted coordinates of
     the map: "cell" (metres), "cols", "rows", and "runs": for each row, the
     lengths of the runs of the cells, alternating, starting with a run of land
-    (which may be empty).
+    (which may be empty). The free cells keep clear of the shores and of the
+    jetties.
     """
     import numpy as np
 
-    inner = water.buffer(-NAV_CLEARANCE_M)
+    inner = water.buffer(-NAV_CLEARANCE_M).difference(jetty_zones(places))
     west, north, east, south = water.bounds
     cols = int((east - west + 2 * MARGIN_M) / NAV_CELL_M) + 1
     rows = int((south - north + 2 * MARGIN_M) / NAV_CELL_M) + 1
@@ -518,6 +519,34 @@ ROUTE_CLEARANCE_M = 14.0
 
 #: The grid of the path finding, in metres.
 GRID_M = 5.0
+
+#: How close to a jetty the game takes a point for the jetty (see
+#: LakeMap.JETTY_CLEARANCE), and where a boat lies beside its end (see
+#: LakeMap.BERTH), in metres.
+JETTY_CLEARANCE_M = 5.5
+BERTH_M = 8.0
+
+#: The boats which the game steers keep this far from a jetty (beyond
+#: JETTY_CLEARANCE_M), but at their own berth, in metres (see
+#: tests/godot/test_map.gd).
+JETTY_KEEP_OFF_M = 4.0
+
+
+def berth(place: dict) -> Vec:
+    """Where a boat lies at the jetty of the place: beyond the end of the jetty, as in LakeMap."""
+    (ax, ay), (jx, jy) = place["at"], place["jetty"]
+    length = math.hypot(jx - ax, jy - ay)
+    return (jx + (jx - ax) / length * BERTH_M, jy + (jy - ay) / length * BERTH_M)
+
+
+def jetty_zones(places: List[dict]):
+    """The water around the jetties, where the boats which the game steers do not go."""
+    return unary_union(
+        [
+            LineString([place["at"], place["jetty"]]).buffer(JETTY_CLEARANCE_M + JETTY_KEEP_OFF_M)
+            for place in places
+        ]
+    )
 
 
 def make_place_name(rng: random.Random, endings: List[str], used: set) -> str:
@@ -613,15 +642,15 @@ def place_settlements(rng, used, water, line, route, sections, section_of) -> Li
 
 def find_routes(water: Polygon, places: List[dict]) -> dict:
     """
-    The routes of the boats between every two places, along the water and away
-    from the shores: a shortest path on a grid, straightened where the water
-    lets it.
+    The routes of the boats between every two places, from berth to berth,
+    along the water and away from the shores and the jetties: a shortest path
+    on a grid, straightened where the water lets it.
     """
     import heapq
 
     import numpy as np
 
-    inner = water.buffer(-ROUTE_CLEARANCE_M)
+    inner = water.buffer(-ROUTE_CLEARANCE_M).difference(jetty_zones(places))
     west, north, east, south = water.bounds
     cols = int((east - west) / GRID_M) + 1
     rows = int((south - north) / GRID_M) + 1
@@ -684,7 +713,8 @@ def find_routes(water: Polygon, places: List[dict]) -> dict:
         return result
 
     routes = {}
-    cells = [cell(place["jetty"]) for place in places]
+    berths = [berth(place) for place in places]
+    cells = [cell(point) for point in berths]
     for a, place in enumerate(places):
         parent = dijkstra(cells[a])
         for b in range(a + 1, len(places)):
@@ -694,11 +724,7 @@ def find_routes(water: Polygon, places: List[dict]) -> dict:
                     raise RuntimeError(f"No way on the water from {place['id']} to {places[b]['id']}")
                 path.append(parent[path[-1]])
             path.reverse()
-            points = (
-                [place["jetty"]]
-                + [(west + c * GRID_M, north + r * GRID_M) for r, c in path]
-                + [places[b]["jetty"]]
-            )
+            points = [berths[a]] + [(west + c * GRID_M, north + r * GRID_M) for r, c in path] + [berths[b]]
             routes[f"{place['id']}|{places[b]['id']}"] = straighten(points)
     return routes
 

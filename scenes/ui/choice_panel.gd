@@ -25,6 +25,11 @@ const _INK := Color("2a1e14")
 const _WOOD := Color("6a4320")
 const _GREY := Color("8a8070")
 
+## The sizes of the text on the board, the usual first (see [method
+## fit_text]), and how far down the board the lines may go, in pixels.
+const TEXT_SIZES := [28, 26, 24, 22]
+const TEXT_HEIGHT := 180.0
+
 const _CARD := Vector2(250, 190)
 const _GAP := 34.0
 
@@ -149,15 +154,17 @@ func _draw() -> void:
     draw_string(
         font, Vector2(left, box.position.y + 60.0), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 40, _WOOD
     )
-    var lines := wrap_text(font, text, box.end.x - left - 40.0, 28)
-    for i in range(mini(lines.size(), 6)):
+    var fitted := fit_text(font, text, box.end.x - left - 40.0)
+    var lines: Array[String] = fitted["lines"]
+    var font_size: int = fitted["size"]
+    for i in range(lines.size()):
         draw_string(
             font,
-            Vector2(left, box.position.y + 110.0 + i * 36.0),
+            Vector2(left, box.position.y + 110.0 + i * (font_size + 8.0)),
             lines[i],
             HORIZONTAL_ALIGNMENT_LEFT,
             -1,
-            28,
+            font_size,
             _INK
         )
     draw_string(
@@ -199,6 +206,20 @@ func _draw_face(center: Vector2, radius: float) -> void:
                     radius * 0.15,
                     hair
                 )
+
+
+## Fit the [param text] into the [param width] of the board, in at most the
+## lines which the board has room for: at the usual size of the text, or a
+## little smaller for a long text; return {"lines", "size"} (the lines which
+## fit, all of them unless the text is too long even at the smallest size).
+static func fit_text(font: Font, text: String, width: float) -> Dictionary:
+    var lines: Array[String] = []
+    for font_size in TEXT_SIZES:
+        lines = wrap_text(font, text, width, font_size)
+        var room := int(TEXT_HEIGHT / (font_size + 8.0)) + 1
+        if lines.size() <= room or font_size == TEXT_SIZES[-1]:
+            return {"lines": lines.slice(0, room), "size": font_size, "all": lines.size() <= room}
+    return {"lines": lines, "size": TEXT_SIZES[0], "all": true}
 
 
 ## Break the [param line] into lines which fit the [param width].

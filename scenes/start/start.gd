@@ -45,6 +45,8 @@ func _ready() -> void:
     _panel.chosen.connect(_on_chosen)
     add_child(_panel)
     EscapeGuard.attach(self, _quit, "Press Esc again to quit the game.")
+    Audio.music("start")
+    Audio.ambient("")
     _ask_journey.call_deferred()
 
 

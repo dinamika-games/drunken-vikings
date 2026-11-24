@@ -54,14 +54,24 @@ The ships of the shipwright (`data/ships/ships.json`, see `Ships` and DESIGN.md,
 
 The missions (`data/missions/<nnn>_<id>/mission.json`, see DESIGN.md, section 10) are offered in the ports (the card "Tasks"); `Missions` (`scenes/game/missions.gd`) checks their data when the game starts, and `tests/godot/test_missions.gd` plays all of them through, in their order, as a careful player would.
 
-The map of the Home Lakes is made by `venv/bin/python dev/maps/make_lakes.py --name home_lakes` (the lakes, the islands, the settlements and the ways of the boats between them; `--plot out.png` draws it). The economy (`data/economy/`) and the farm (`data/farm/`) are plain data.
+The map of the Home Lakes is made by `venv/bin/python dev/maps/make_lakes.py --name home_lakes` (the lakes, the islands, the settlements and the ways of the boats between them, from berth to berth, clear of the shores and the jetties; `--plot out.png` draws it).
+`tests/godot/test_map.gd` checks the preconditions of the map, on which the boats which the game steers rely: `LakeMap.is_water` tells the water from the land everywhere (it counts the shores crossed itself, see `Shores`: `Geometry2D.is_point_in_polygon` put thin lines of land across the lakes), every berth is clear of the shore, the routes between the places (the skippers), the route of the party (the wedding longship) and the grid of the water (the pirates) stay on the water and keep 3 m from the land and the jetties. The economy (`data/economy/`) and the farm (`data/farm/`) are plain data.
 
 ## The tests
 
 ```
 dotnet test tests/DrunkenVikings.Tests
 for test in tests/godot/test_*.gd; do $GODOT --headless --path . --script $test -- --no-camera; done
+$GODOT --headless --fixed-fps 60 --path . --script tests/godot/end2end/test_playthrough.gd -- --no-camera
 ```
+
+**The end-to-end test** (`tests/godot/end2end/test_playthrough.gd`) plays the game from the first screen on, as the players do: only through the camera, which `fake_vision.gd` stands in for (it rows strokes, leans to steer, raises both hands to brake, and holds a raised hand on a card until it is chosen), and with Escape and C from the keyboard.
+It starts a new journey with one rower, follows the wedding to its end, does the first 40 tasks on the Home Lakes (`lakes_bot.gd`: it takes the tasks, rows where they lead, buys, carries, hails, plants, unloads, sleeps when a task waits, trades when it lacks silver, buys a ship when it has silver to spare, and takes detours: the news, its tasks, the deals of the skippers, the map, Escape once), escapes the pirates in the chase, starts and deletes a second journey with two rowers, and goes on with the first, which must come back from the disk as it was left.
+All the way, it checks the contracts of the game on every frame (`contracts.gd`, in the tests only): e.g., every screen lets the players go on, the cards fit the screen and their texts fit the cards, the boat never leaves the water nor crosses the land, the boat rows exactly while no screen shows, the silver never goes below zero, the cargo fits the hold, nothing of a finished task stays aboard, and the save on the disk is the voyage in memory whenever the boat docks.
+It fails on any error which the game logs (`error_log.gd`), and whenever the players get stuck: a card which the hand holds is not chosen, the boat comes no closer to its jetty, or a task is not done within 40 legs.
+
+It runs as fast as the computer can: `--fixed-fps 60` makes every frame 1/60 s of the game however fast it is computed, the game runs 8 times faster than that, and what redraws on every frame (the boats, the wakes, the HUD) is drawn only on every 8th frame, so that about six hours of the game take some two and a half minutes (about 1000 frames a second).
+The random choices come from a seed; try others with `-- --seed=<n>`, and more tasks with `-- --tasks=<n>` (all 100 take some seven minutes: `-- --tasks=100 --wall-seconds=600`); `-- --trace` prints every choice and where the bot rows.
 
 ## The rowing experiment
 
@@ -99,6 +109,20 @@ To study a party played with `-- --log-pose` (how the vision saw the player, how
 $GODOT --path . res://scenes/level/level.tscn -- --log-pose > party.log 2>&1
 venv/bin/python dev/rowing/analyze_party_log.py party.log
 ```
+
+## The music and the sounds
+
+The game plays its music and its sounds through `Audio` (`scenes/audio/audio.gd`, which passes on to the autoload `AudioService`): the music by mood (`Audio.music("lakes")`: the start screen, the farm, the lakes, the party, the chase; the tunes of a mood shuffled, fading into each other), the sounds over it (`Audio.play("oar")`), and one sound of the surroundings looping under it all (`Audio.ambient("water")`).
+Start the game with `-- --mute` for silence.
+
+The music and the sounds are made from the downloads of `~/Downloads/viking/music/` (MIDI) and `~/Downloads/viking/sounds/` (see `~/Downloads/viking/AUDIO_SOURCES.md`, and THIRD_PARTY_NOTICES.md for their licenses) by
+
+```
+venv/bin/python dev/audio/make_audio.py
+```
+
+which renders the tunes with TiMidity++ and the FluidR3 General MIDI SoundFont (`sudo apt install timidity fluid-soundfont-gm`), and cuts, fades and evens out the sounds with ffmpeg and sox, into `assets/audio/`.
+The end-to-end test checks that the music fits where the players are, and that the players hear the sounds of what they do.
 
 ## Formatting
 

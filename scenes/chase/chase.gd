@@ -90,6 +90,8 @@ var _autopilot_strokes := 0
 
 func _ready() -> void:
     EscapeGuard.attach(self, _leave)
+    Audio.music("chase")
+    Audio.ambient("water")
     _autopilot = "--autopilot" in OS.get_cmdline_user_args()
     _rng.seed = Time.get_ticks_usec()
     _state = get_node_or_null("/root/GameState")
@@ -294,6 +296,9 @@ func _process(delta: float) -> void:
     if _map == null or _target.is_empty():
         return
     if _outcome == "":
+        if _elapsed < HEAD_START and _elapsed + delta >= HEAD_START:
+            # NOTE: The pirates set out.
+            Audio.play("pirates")
         _elapsed += delta
         _boat.brake = _read_brake()
         _read_strokes()
@@ -368,6 +373,7 @@ func _check_outcome() -> void:
             _state.silver += REWARD
             _state.save()
         print("Escaped to %s in %.0f s" % [_target["name"], _elapsed])
+        Audio.play("jingle")
         _show_end(
             "You made it!",
             (
@@ -383,6 +389,7 @@ func _check_outcome() -> void:
         _replan = 0.0
         _boat.speed = 0.0
         print("Caught after %.0f s" % _elapsed)
+        Audio.play("pirates_laugh")
         _show_end(
             "Caught!",
             (
@@ -484,6 +491,8 @@ func _splash_oars(delta: float) -> void:
     var drip := _drip >= 0.12
     if drip:
         _drip = 0.0
+    if _rower.catches[0] or _rower.catches[1]:
+        Audio.play("oar")
     for side in [0, 1]:
         var blade := _rower.blade_position(side)
         if _rower.catches[side]:

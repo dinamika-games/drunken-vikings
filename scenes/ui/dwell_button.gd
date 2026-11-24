@@ -74,6 +74,7 @@ func _process(delta: float) -> void:
 func press() -> void:
     if not enabled():
         return
+    Audio.play("click")
     progress = 0.0
     pressed.emit()
 

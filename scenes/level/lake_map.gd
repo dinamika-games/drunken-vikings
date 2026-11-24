@@ -159,8 +159,12 @@ const TEXTURE_METRES := 24.0
 var size_m := Vector2.ZERO
 
 ## The polygons of the water: Array of {"outer": PackedVector2Array,
-## "holes": Array[PackedVector2Array]}.
-var water: Array = []
+## "holes": Array[PackedVector2Array]}. Assign it whole (its shores are
+## indexed then, see [method is_water]).
+var water: Array = []:
+    set(value):
+        water = value
+        _shores = Shores.new(water)
 
 ## The course of the viking ship.
 var route := PackedVector2Array()
@@ -183,6 +187,9 @@ var routes := {}
 ## The grid of the water for the boats which find their own way (the pirates
 ## of the chase), or null if the map has none.
 var _grid: AStarGrid2D
+
+## The shores, which tell the water from the land (see [method is_water]).
+var _shores := Shores.new([])
 
 ## The length of the route up to each of its points, in metres.
 var _route_lengths := PackedFloat32Array()
@@ -232,12 +239,13 @@ func load_map(path: String) -> String:
     if not data is Dictionary:
         return "The map %s is no JSON object." % path
     size_m = Vector2(data["size_m"][0], data["size_m"][1])
-    water.clear()
+    var polygons: Array = []
     for polygon in data["water"]:
         var holes: Array[PackedVector2Array] = []
         for hole in polygon["holes"]:
             holes.append(_points(hole))
-        water.append({"outer": _points(polygon["outer"]), "holes": holes})
+        polygons.append({"outer": _points(polygon["outer"]), "holes": holes})
+    water = polygons
     route = _points(data["route"])
     _route_lengths.resize(route.size())
     var total := 0.0
@@ -302,14 +310,7 @@ static func _points(pairs: Array) -> PackedVector2Array:
 
 ## Whether the point is on the water (the jetties count as land).
 func is_water(point: Vector2) -> bool:
-    for polygon in water:
-        if not Geometry2D.is_point_in_polygon(point, polygon["outer"]):
-            continue
-        for hole in polygon["holes"]:
-            if Geometry2D.is_point_in_polygon(point, hole):
-                return false
-        return not _on_jetty(point)
-    return false
+    return _shores.encloses(point) and not _on_jetty(point)
 
 
 ## Whether the [param point] is on a jetty (or too close for a boat).
@@ -385,8 +386,8 @@ func place(id: String) -> Dictionary:
     return {}
 
 
-## The way of the boats on the water from the jetty of one place to the jetty
-## of another.
+## The way of the boats on the water from the berth of one place to the
+## berth of another, clear of the shores and the jetties.
 func route_between(from_id: String, to_id: String) -> PackedVector2Array:
     if routes.has("%s|%s" % [from_id, to_id]):
         return routes["%s|%s" % [from_id, to_id]]

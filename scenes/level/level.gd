@@ -98,6 +98,9 @@ var _overlay: Control
 
 func _ready() -> void:
     EscapeGuard.attach(self, _leave)
+    Audio.music("party")
+    Audio.ambient("water")
+    Audio.play("horn")
     _autopilot = "--autopilot" in OS.get_cmdline_user_args()
     _rng.seed = Time.get_ticks_usec()
     _state = get_node_or_null("/root/GameState")
@@ -316,6 +319,8 @@ func _process(delta: float) -> void:
     _drop_treats(delta)
     var picked := _treats.pick(_boat.position)
     if picked > 0:
+        Audio.play("pickup")
+        Audio.play("coin")
         _coins += picked
         if _state != null:
             _state.silver += picked
@@ -350,6 +355,8 @@ func _splash_oars(delta: float) -> void:
     var drip := _drip >= 0.12
     if drip:
         _drip = 0.0
+    if _rower.catches[0] or _rower.catches[1]:
+        Audio.play("oar")
     for side in [0, 1]:
         var blade := _rower.blade_position(side)
         if _rower.catches[side]:
@@ -520,6 +527,7 @@ func _log_party() -> void:
 ## The party is over: the coins go into the voyage, and the players choose
 ## what next with their hands.
 func _finish() -> void:
+    Audio.play("hooray")
     if _state != null:
         _state.save()
     var cards: Array = [

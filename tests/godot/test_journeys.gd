@@ -34,8 +34,11 @@ func _run() -> void:
     _check(state.last_journey() == first, "the first journey is the last one")
 
     # NOTE (mristin):
-    # The ids are the date and the time to the second; wait for a new one.
-    await create_timer(1.1).timeout
+    # The ids are the date and the time to the second; wait for a new one (on
+    # the wall clock: a timer of the game may fire early after a slow frame).
+    var started := Time.get_datetime_string_from_system()
+    while Time.get_datetime_string_from_system() == started:
+        await process_frame
     state.new_journey(1)
     var second: String = state.journey_id
     _check(second != first, "a new journey has a new id")

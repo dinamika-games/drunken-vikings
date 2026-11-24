@@ -44,8 +44,9 @@ const ANIMALS_SOLD := {
     "herders": ["sheep", "goat"],
 }
 
-## How many cards a list shows at once (with "More" and "Back").
-const PAGE := 5
+## How many cards a list shows at once (with "More" and "Back", six cards
+## fit the screen side by side).
+const PAGE := 4
 
 var _world: Node
 var _state: Node
@@ -185,6 +186,7 @@ func _sell(good: String, page: int) -> void:
     var id: String = _state.place
     var price: int = _state.economy.sell_price(id, good)
     if _state.sell(id, good):
+        Audio.play("coins")
         _show_sell(
             page,
             (
@@ -228,6 +230,7 @@ func _buy(good: String, page: int) -> void:
     var id: String = _state.place
     var price: int = _state.economy.buy_price(id, good)
     if _state.buy(id, good):
+        Audio.play("coins")
         _show_buy(
             page,
             (
@@ -282,6 +285,7 @@ func _buy_animal(kind: String) -> void:
         return
     _state.silver -= price
     _state.add_cargo("animal:" + kind)
+    Audio.play(Audio.ANIMALS.get(kind, "coins"))
     _show_animals(
         (
             "The %s is in the boat. Row it home to your farm!"
@@ -323,7 +327,7 @@ func _show_home(message := "") -> void:
         )
         text = " ".join([text] + _task_notes("home"))
     var cards: Array = [
-        {"title": "The farm", "detail": _animals_line()},
+        {"title": "The farm", "detail": _animals_count()},
         {
             "title": "Unload the boat",
             "detail": "%d crates" % _unloadable(),
@@ -347,6 +351,14 @@ func _show_home(message := "") -> void:
         _world.undock.bind("home")
     ]
     _world.show_screen(place_title("home"), text, cards, actions, GRANDMOTHER)
+
+
+## How many animals the farm keeps, short enough for a card.
+func _animals_count() -> String:
+    var total := 0
+    for kind in _state.farm.animals.keys():
+        total += int(_state.farm.animals[kind])
+    return "%d animal%s" % [total, "" if total == 1 else "s"]
 
 
 func _animals_line() -> String:
@@ -380,9 +392,11 @@ func _show_farm(message := "") -> void:
     lines.append("Animals: %s (room for %d)." % [_animals_line(), int(farm.pasture)])
     var store: Array[String] = []
     for good in farm.store.keys():
-        store.append("%.1f %s" % [farm.store[good], _state.good_name(good).to_lower()])
+        if farm.crates(good) > 0:
+            store.append("%d %s" % [farm.crates(good), _state.good_name(good).to_lower()])
     lines.append("Store: %s." % (", ".join(store) if not store.is_empty() else "empty"))
-    for reminder in farm.reminders(_state.day):
+    # NOTE: The board has room for the two most pressing reminders.
+    for reminder in farm.reminders(_state.day).slice(0, 2):
         lines.append(reminder["text"])
     var empty := -1
     var ripe := false
@@ -492,6 +506,7 @@ func _buy_land(plot: Dictionary) -> void:
 
 
 func _unload() -> void:
+    Audio.play("creak")
     var parts: Array[String] = []
     for item in _state.cargo.keys():
         var count := int(_state.cargo[item])
@@ -551,6 +566,7 @@ func _load_good(good: String, page: int) -> void:
 func _sleep() -> void:
     var before: Dictionary = _state.farm.store.duplicate()
     _state.next_day()
+    Audio.play("rooster")
     _state.save()
     var made: Array[String] = []
     for good in _state.farm.store.keys():
@@ -629,6 +645,7 @@ func _show_events(events: Array, index: int, then: Callable) -> void:
     var cards: Array = [{"title": "Hooray!" if event["done"] else "Go on", "detail": ""}]
     if event["done"]:
         cards[0]["stars"] = int(event.get("stars", 0))
+        Audio.play("hooray")
     var actions: Array[Callable] = [_show_events.bind(events, index + 1, then)]
     _world.show_screen(event["title"], text, cards, actions, _face(who, event["place"]))
 
@@ -751,15 +768,15 @@ func _show_shipyard(message := "") -> void:
         var kind: Dictionary = ships.kinds[id]
         var detail := "%d silver" % int(kind["price"])
         if id == ships.current:
-            detail = "your ship now"
+            detail = "your ship"
         elif id in ships.owned:
             detail = "yours"
         (
             cards
             . append(
                 {
-                    "title": "%s, %d crates" % [kind["name"], ships.hold(id)],
-                    "detail": detail,
+                    "title": str(kind["name"]),
+                    "detail": "%d crates, %s" % [ships.hold(id), detail],
                     "picture": kind["drawn"]["hull"] if kind.has("drawn") else ["rowboat", "hull"],
                 }
             )
@@ -848,6 +865,7 @@ func _buy_ship(id: String) -> void:
     if not ships.buy(_state, id):
         return
     ships.take(id, _state.load_count())
+    Audio.play("jingle")
     _world.refit()
     _state.save()
     _show_shipyard(
@@ -868,6 +886,7 @@ func _buy_ship(id: String) -> void:
 func _take_ship(id: String) -> void:
     var ships: Ships = _state.ships
     if ships.take(id, _state.load_count()):
+        Audio.play("creak")
         _world.refit()
         _state.save()
         _show_shipyard("Your cargo goes over into the %s. She is ready!" % ships.kinds[id]["name"])

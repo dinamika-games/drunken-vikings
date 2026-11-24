@@ -29,6 +29,13 @@ const WALK := 22.0
 
 ## The pictures of a crop as it grows: the first which is there is drawn.
 const STAGES := {
+    "sown":
+    {
+        "barley": ["sown", "soil"],
+        "flax": ["sown", "soil"],
+        "meadow": ["sown", "soil"],
+        "flowers": ["sown", "soil"],
+    },
     "sprouts":
     {
         "barley": ["sprouts", "barley_young"],

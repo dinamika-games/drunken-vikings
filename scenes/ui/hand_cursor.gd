@@ -65,6 +65,11 @@ var mirror := true
 var _service: Node = null
 var _hands: Array[Hand] = []
 
+## The seconds of the game since the cursor appeared: the hands are followed
+## and smoothed in the time of the game, as the cards count it (see
+## DwellButton), also when the game runs faster (e.g., in the tests).
+var _clock := 0.0
+
 
 ## Where the hands point.
 static func points() -> Array[Vector2]:
@@ -80,6 +85,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+    _clock += delta
     if not is_visible_in_tree():
         cursors.clear()
         by_hand = false
@@ -159,7 +165,7 @@ func _follow_hands() -> void:
         return
     _follow_shoulders()
     var lowest := reach.end.y + _BELOW_REACH
-    var now := Time.get_ticks_msec() / 1000.0
+    var now := _clock
     var found: Array[Vector2] = []
     for hand in _service.GetHands():
         if hand.y <= lowest:

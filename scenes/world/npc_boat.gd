@@ -41,13 +41,14 @@ var _time := 0.0
 var _speed := 0.0
 
 
-## Start at the jetty of the place, with the skipper, on the [param map].
+## Start at the berth of the place (beside the end of its jetty, on the
+## water), with the skipper, on the [param map].
 func setup(map: LakeMap, place_id: String, who: Dictionary, seed: int) -> void:
     _map = map
     skipper = who
     _rng.seed = seed
     _at_place = place_id
-    position = map.place(place_id)["jetty"]
+    position = map.place(place_id)["berth"]
     _wait = _rng.randf_range(0.0, WAIT.y)
     _time = _rng.randf() * 10.0
 
@@ -95,6 +96,11 @@ func _set_out() -> void:
     if others.is_empty():
         return
     _to_place = others[_rng.randi() % others.size()]
+    # NOTE (mristin):
+    # The routes run from jetty to jetty, whose ends count as land: the boat
+    # leaves from the berth and moors at the berth instead.
+    # NOTE: The routes run from berth to berth, clear of the shores and the
+    # jetties (see dev/maps/make_lakes.py and tests/godot/test_map.gd).
     _path = _map.route_between(_at_place, _to_place)
     _index = 0
 

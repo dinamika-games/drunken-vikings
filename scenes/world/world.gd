@@ -34,6 +34,9 @@ const HAIL_COOLDOWN := 90.0
 ## How many boats sail the lakes.
 const NPC_COUNT := 9
 
+## The gulls cry now and then on the lakes, every this many seconds at random.
+const GULLS_EVERY := Vector2(25.0, 70.0)
+
 ## The painted pictures of the cards which show no good, animal or crop (see
 ## dev/pictures/: the sheet "icons"), by their titles, so that the children
 ## who can not read yet see what a card does.
@@ -94,6 +97,7 @@ var _left_place := ""
 var _talking_to: NpcBoat
 var _toast := ""
 var _toast_left := 0.0
+var _gulls_left := 10.0
 
 var _autopilot := false
 var _autopilot_target := ""
@@ -204,6 +208,7 @@ func _ready() -> void:
     _undock(_state.place)
     _camera.rotation = _boat.heading
     _camera.position = _boat.position + Vector2.UP.rotated(_boat.heading) * LOOK_AHEAD
+    Audio.ambient("water")
     _say("Day %d. Row to the settlements to trade; glide slowly to a jetty to dock." % _state.day)
 
 
@@ -378,8 +383,14 @@ func _process(delta: float) -> void:
         _boat.steer = _read_steer()
         if _autopilot:
             _fly(delta)
+        _gulls_left -= delta
+        if _gulls_left <= 0.0:
+            _gulls_left = _rng.randf_range(GULLS_EVERY.x, GULLS_EVERY.y)
+            Audio.play("gulls")
         _check_docking()
-        _check_hailing()
+        # NOTE: The boat which just docked hails nobody: the port shows.
+        if _mode == "rowing":
+            _check_hailing()
     else:
         # NOTE (mristin):
         # The strokes in a port choose; they must not row once the boat is out.
@@ -448,6 +459,8 @@ func _splash_oars(delta: float) -> void:
         # The crew dips its oars with the players.
         for blade in _ship_view.blade_positions():
             _splashes.splash(blade, 4.0, 1.4, 0.9)
+    if _rower.catches[0] or _rower.catches[1]:
+        Audio.play("oar")
     for side in [0, 1]:
         var blade := _rower.blade_position(side)
         if _rower.catches[side]:
@@ -509,7 +522,24 @@ func _dock(id: String) -> void:
     _state.place = id
     _state.save()
     _mode = "port"
+    _sound_of_port(place)
     _screens.show_port()
+
+
+## The sounds of the port at the [param place]: the jetty, and what lives
+## there (the farm's music and an animal at home, the crowd of a market).
+func _sound_of_port(place: Dictionary) -> void:
+    Audio.play("dock")
+    match place["kind"]:
+        "home":
+            Audio.music("farm")
+            var kinds: Array = _state.farm.animals.keys()
+            if not kinds.is_empty():
+                Audio.play(Audio.ANIMALS.get(kinds[_rng.randi() % kinds.size()], "hens"))
+        "market":
+            Audio.play("market")
+        "beekeeper":
+            Audio.play("bees")
 
 
 ## Put the boat at the jetty of the place, heading out on the water.
@@ -525,6 +555,7 @@ func _undock(id: String) -> void:
     _autopilot_from = place["id"]
     _state.place = ""
     _mode = "rowing"
+    Audio.music("lakes")
     _panel.close()
     _farm_view.visible = false
     _arrows.visible = true
@@ -612,6 +643,7 @@ func _check_hailing() -> void:
 
 
 func _hail(npc: NpcBoat) -> void:
+    Audio.play("bell")
     npc.held = true
     _talking_to = npc
     _mode = "skipper"
@@ -664,6 +696,7 @@ func _show_hail_events(events: Array, index: int, face: Dictionary) -> void:
     var cards: Array = [{"title": "Hooray!" if event["done"] else "Thank you!", "detail": ""}]
     if event["done"]:
         cards[0]["stars"] = int(event.get("stars", 0))
+        Audio.play("hooray")
     var actions: Array[Callable] = [_show_hail_events.bind(events, index + 1, face)]
     _show(event["title"], text, cards, actions, {} if event["done"] else face)
 
@@ -678,6 +711,7 @@ func _deal_detail(deal: Dictionary) -> String:
 
 
 func _take_deal(deal: Dictionary) -> void:
+    Audio.play("coins")
     _part(Gossip.take(_state, deal))
 
 

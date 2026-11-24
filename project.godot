@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 
 GameState="*res://scenes/game/game_state.gd"
 Vision="*res://scenes/vision/vision.tscn"
+AudioService="*res://scenes/audio/audio_service.gd"
 
 [display]
 
