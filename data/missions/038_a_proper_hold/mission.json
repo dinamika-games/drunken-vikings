@@ -12,7 +12,7 @@
     "hair": "3a2a1a",
     "place": "market"
   },
-  "offer": "You are real traders now: you need a real hold! Bring me eight planks from Frosttorp and two crates of iron tools, and pay 20 silver. Then your boat takes eight crates.",
+  "offer": "You are real traders now: you need a real hold! Bring me eight planks from Frosttorp and two crates of iron tools, and pay 20 silver. Then your hold takes two more crates.",
   "items": {
     "plank": {
       "name": "Plank",
@@ -45,7 +45,7 @@
       "do": "pay",
       "at": "market",
       "silver": 20,
-      "say": "Saw, plane, rivets... Look at her! Longer, wider, and room for eight crates."
+      "say": "Saw, plane, rivets... Look at her! Longer, wider, and room for two more crates."
     }
   ],
   "reward": {

@@ -184,17 +184,21 @@ The players' farm lies on the shore of the home lakes, with its own jetty. Grand
 
 ## 8. Ships
 
-| Ship | Rowers | Sail | Hold | Unlocks |
-|---|---|---|---|---|
-| **Rowing boat** (the start) | The players | No | 4 crates | The home lakes |
-| **Færing** (a light four-oared boat) | The players and 2 crew | No | 8 crates | The rivers (fast enough against the current) |
-| **Karve** (a small ship) | The players and 6 crew | A small square sail | 16 crates | The long lakes, the northern waters |
-| **Knarr** (the trading ship) | The players and 4 crew | A big square sail | 40 crates | The sea |
-| **Longship** (the prize at the end) | The players and 20 crew | A great sail | 20 crates | Everything, the fastest |
+**Signe the shipwright** builds ships in her shipyard in Ekvik, the fishing village where the tar comes from (the card "Shipyard" in its port; the skippers on the lakes tell of her). As in Bird Dog, a ship is bought once for very much silver and kept: the players may take any of their ships in the shipyard for free, if their cargo fits in its hold. A ship changes how the boat rows (`data/ships/ships.json`, `Ships`):
 
-* **The crew rows with the players.** Each stroke of the players is the beat for the whole crew: a bigger ship is heavier, but has more rowers, so a stroke still matters as much. The crew is paid a little silver per trip (it is part of the trading sums, not a punishment).
-* **The sail** carries the ship with the wind, but rowing still makes it faster, and against the wind only rowing helps. So the exercise never stops mattering.
-* A ship is bought once and kept; the players choose which one to take for a trip (the small boat fits the narrow rivers, the knarr does not).
+| Ship | Price | Hold | Crew | Stroke | Glide | Turns | Top speed |
+|---|---|---|---|---|---|---|---|
+| **Rowing boat** (the start) | | 4 | | 100% | 100% | 100% | 100% |
+| **Færing** (a light four-oared boat) | 80 | 8 | 2 | 120% | 115% | 95% | 115% |
+| **Karve** (a small ship with a square sail) | 220 | 16 | 6 | 135% | 145% | 80% | 130% |
+| **Knarr** (the wide trading ship) | 450 | 40 | 4 | 100% | 170% | 60% | 115% |
+| **Longship** (the fastest) | 800 | 20 | 20 | 170% | 150% | 90% | 160% |
+
+* **The crew rows with the players.** Each stroke of the players is the beat for the whole crew: their oars swing with the players' oars, so a stroke of a bigger ship pushes more, and the sail keeps it gliding longer. So the exercise never stops mattering: without strokes, every ship slows down.
+* **The players row on the stern bench** of a bigger ship (their own oars still follow their bodies), with the crew on the benches before them; the bow of a ship stays on the water (it slides along the shores like the small boat).
+* **The boatwright's crates** (Bjarne, in the missions) widen whatever ship the players row: they go with the players from ship to ship.
+* A big hold shows on the HUD as one crate for each kind of cargo, with how many, and how full the hold is.
+* Later: the crew is paid a little silver per trip, the sail needs the wind, and the small boat fits the narrow rivers where the knarr does not.
 
 ## 9. Rowing and steering
 

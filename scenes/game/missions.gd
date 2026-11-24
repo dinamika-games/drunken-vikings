@@ -669,7 +669,7 @@ func _reward(state: Node, reward: Dictionary) -> Array[String]:
         state.silver += int(reward["silver"])
         gifts.append("%d silver" % int(reward["silver"]))
     if int(reward.get("capacity", 0)) > 0:
-        state.capacity += int(reward["capacity"])
+        state.ships.hold_bonus += int(reward["capacity"])
         gifts.append(
             (
                 "a bigger hold (room for %d more crate%s)"

@@ -68,6 +68,18 @@ var heading := 0.0
 ## The speed, in metres per second.
 var speed := 0.0
 
+## How the ship rows, as shares of the small rowing boat (see [method
+## set_ship]): the push of a stroke, how long it glides, how quickly it turns
+## and how fast it can go.
+var push_share := 1.0
+var glide_share := 1.0
+var turn_share := 1.0
+var top_share := 1.0
+
+## How far the bow of the ship reaches ahead of where the boat is, in metres:
+## the bow, too, must stay on the water (0 for the small boat).
+var bow := 0.0
+
 ## The steering of the player, from -1 (left) to 1 (right).
 var steer := 0.0
 
@@ -94,12 +106,22 @@ var since_in_time := INF
 var _slide_side := 1.0
 
 
+## Row as the ship of the [param data] rows (its "push", "glide", "turn" and
+## "top", see data/ships/ships.json).
+func set_ship(data: Dictionary) -> void:
+    push_share = float(data.get("push", 1.0))
+    glide_share = float(data.get("glide", 1.0))
+    turn_share = float(data.get("turn", 1.0))
+    top_share = float(data.get("top", 1.0))
+    bow = float(data.get("bow", 0.0))
+
+
 ## Row a stroke of the [param depth] (in units of the player).
 func stroke(depth := USUAL_DEPTH) -> void:
     if brake:
         return
     var strength := clampf(depth / USUAL_DEPTH, 0.6, 1.3)
-    speed = minf(MAX_SPEED, speed + STROKE_PUSH * strength)
+    speed = minf(MAX_SPEED * top_share, speed + STROKE_PUSH * strength * push_share)
     since_stroke = 0.0
     strokes += 1
 
@@ -111,15 +133,15 @@ func stroke_side(side: int, depth := USUAL_DEPTH) -> void:
     if brake:
         return
     var strength := clampf(depth / USUAL_DEPTH, 0.6, 1.3)
-    var push := STROKE_PUSH * strength * PAIR_SHARE
+    var push := STROKE_PUSH * strength * PAIR_SHARE * push_share
     if since_side[1 - side] <= IN_TIME_SECONDS:
         push *= 1.0 + IN_TIME_BONUS
         since_in_time = 0.0
-    speed = minf(MAX_SPEED, speed + push)
+    speed = minf(MAX_SPEED * top_share, speed + push)
     # NOTE (mristin):
     # The left oar pushes the left side forward, so the bow turns right.
     var away := 1.0 if side == 0 else -1.0
-    yaw_rate += away * deg_to_rad(KICK_DEGREES) / KICK_SECONDS * strength
+    yaw_rate += away * deg_to_rad(KICK_DEGREES) / KICK_SECONDS * strength * turn_share
     since_side[side] = 0.0
     since_stroke = 0.0
     strokes += 1
@@ -138,9 +160,11 @@ func move(delta: float, map: LakeMap) -> float:
     since_in_time += delta
     var turning := clampf(TURN_STILL + speed / TURN_FULL_SPEED, TURN_STILL, 1.0)
     heading = wrapf(
-        heading + (steer * deg_to_rad(TURN_DEGREES) * turning + yaw_rate) * delta, -PI, PI
+        heading + (steer * deg_to_rad(TURN_DEGREES) * turning * turn_share + yaw_rate) * delta,
+        -PI,
+        PI
     )
-    var slowing := BRAKE_SECONDS if brake else GLIDE_SECONDS
+    var slowing := BRAKE_SECONDS if brake else GLIDE_SECONDS * glide_share
     yaw_rate *= exp(-delta / minf(KICK_SECONDS, slowing))
     speed *= exp(-delta / slowing)
     if speed < 0.05:
@@ -149,11 +173,19 @@ func move(delta: float, map: LakeMap) -> float:
     var next := position + forward() * speed * delta
     if next == position:
         return 0.0
-    if not map.is_water(next) or map.crosses_land(position, next):
+    if not _free(next, forward(), map):
         next = _slide(next, map, delta)
     var moved := position.distance_to(next)
     position = next
     return moved
+
+
+## Whether the boat may go from where it is to [param next], heading
+## [param ahead]: on the water all the way, and its bow on the water too.
+func _free(next: Vector2, ahead: Vector2, map: LakeMap) -> bool:
+    if not map.is_water(next) or map.crosses_land(position, next):
+        return false
+    return bow <= 0.0 or map.is_water(next + ahead * bow)
 
 
 ## The boat runs onto the shore at [param blocked]: it slides along the shore
@@ -174,7 +206,7 @@ func _slide(blocked: Vector2, map: LakeMap, delta: float) -> Vector2:
             var along := Vector2.UP.rotated(heading + angle)
             var keep := cos(angle)
             var candidate := position + along * step * keep
-            if not map.is_water(candidate) or map.crosses_land(position, candidate):
+            if not _free(candidate, along, map):
                 continue
             _slide_side = side
             speed *= lerpf(1.0, keep, minf(1.0, delta * 4.0))

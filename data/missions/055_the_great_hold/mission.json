@@ -12,7 +12,7 @@
     "hair": "3a2a1a",
     "place": "market"
   },
-  "offer": "Now we make your boat great! Ten planks from Frosttorp, three crates of tools, and 30 silver. Then she takes ten crates. Ten planks are more than you can carry at once.",
+  "offer": "Now we make your boat great! Ten planks from Frosttorp, three crates of tools, and 30 silver. Then she takes two more crates. Ten planks are more than you can carry at once.",
   "items": {
     "plank": {
       "name": "Plank",
@@ -45,7 +45,7 @@
       "do": "pay",
       "at": "market",
       "silver": 30,
-      "say": "She is the biggest rowing boat on the lakes! Ten crates. Soon you will want a ship with a sail."
+      "say": "Two more crates! And go and see Signe in Ekvik: she builds real ships, and my crates go with you into any of them."
     }
   ],
   "reward": {

@@ -21,12 +21,10 @@ const GOODS_PATH := "res://data/economy/goods.json"
 const REGION_PATH := "res://data/economy/home_lakes.json"
 const FARM_PATH := "res://data/farm/farm.json"
 const MISSIONS_DIR := "res://data/missions"
+const SHIPS_PATH := "res://data/ships/ships.json"
 
 ## The silver at the start of a new voyage.
 const START_SILVER := 20
-
-## The crates which the small boat carries.
-const START_CAPACITY := 4
 
 ## Where the voyage is saved (the tests save elsewhere).
 var save_path := ""
@@ -48,8 +46,13 @@ var silver := START_SILVER
 ## "task:<mission>:<item>", see Missions) -> crates.
 var cargo := {}
 
-## How many crates (and animals) the boat carries.
-var capacity := START_CAPACITY
+## How many crates (and animals) the boat carries: the hold of the ship (see Ships).
+var capacity: int:
+    get:
+        return ships.hold()
+
+## The ships of the players.
+var ships := Ships.new()
 
 ## The day of the voyage, from 1.
 var day := 1
@@ -233,6 +236,9 @@ func _load_data() -> String:
     problem = farm.load_data(FARM_PATH)
     if problem != "":
         return problem
+    problem = ships.load_data(SHIPS_PATH, places)
+    if problem != "":
+        return problem
     missions.reset()
     return missions.load_data(MISSIONS_DIR, places, economy, farm)
 
@@ -241,7 +247,6 @@ func _load_data() -> String:
 func new_voyage() -> void:
     silver = START_SILVER
     cargo = {}
-    capacity = START_CAPACITY
     day = 1
     place = "home"
     price_book = {}
@@ -349,7 +354,7 @@ func save() -> bool:
         "updated": Time.get_datetime_string_from_system(),
         "silver": silver,
         "cargo": cargo,
-        "capacity": capacity,
+        "ships": ships.to_data(),
         "day": day,
         "place": place,
         "economy": economy.to_data(),
@@ -390,7 +395,7 @@ func load_voyage() -> bool:
     cargo = {}
     for item in data.get("cargo", {}).keys():
         cargo[item] = int(data["cargo"][item])
-    capacity = int(data.get("capacity", START_CAPACITY))
+    ships.restore(data.get("ships", {}), int(data.get("capacity", 4)))
     day = int(data.get("day", 1))
     place = str(data.get("place", "home"))
     economy.restore(data.get("economy", {}))

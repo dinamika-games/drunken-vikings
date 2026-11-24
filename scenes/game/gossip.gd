@@ -96,8 +96,8 @@ static func skipper(index: int) -> Dictionary:
 ## A piece of news from the skipper: {"text", "place", "good"}.
 static func news(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> Dictionary:
     var economy: Economy = state.economy
-    var kinds := ["deal", "cheap", "bad", "event", "farm", "fact", "task"]
-    var weights := [4, 3, 2, 3, 2, 1, 2]
+    var kinds := ["deal", "cheap", "bad", "event", "farm", "fact", "task", "ship"]
+    var weights := [4, 3, 2, 3, 2, 1, 2, 1]
     for attempt in range(8):
         var kind: String = kinds[_weighted(weights, rng)]
         var good := _pick_good(state, who, rng)
@@ -187,6 +187,25 @@ static func news(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> Di
                         "place": giver["place"],
                         "good": ""
                     }
+            "ship":
+                var ships: Ships = state.ships
+                for id in ships.ids:
+                    if not id in ships.owned:
+                        return {
+                            "text":
+                            (
+                                "%s in %s builds ships: a %s carries %d crates, for %d silver!"
+                                % [
+                                    ships.shipwright["name"],
+                                    state.place_name(ships.shipyard),
+                                    String(ships.kinds[id]["name"]).to_lower(),
+                                    int(ships.kinds[id]["hold"]),
+                                    int(ships.kinds[id]["price"])
+                                ]
+                            ),
+                            "place": ships.shipyard,
+                            "good": ""
+                        }
             "fact":
                 return {
                     "text": "Did you know? " + FACTS[rng.randi() % FACTS.size()],

@@ -78,6 +78,8 @@ func show_port(message := "") -> void:
     var text := message if message != "" else "Welcome! What would you like to do?"
     if message == "":
         text = " ".join([text] + _task_notes(id))
+        if id == _state.ships.shipyard:
+            text += " %s builds ships here." % _state.ships.shipwright["name"]
     var cards: Array = [
         {
             "title": "Sell",
@@ -95,6 +97,9 @@ func show_port(message := "") -> void:
     if ANIMALS_SOLD.has(place["kind"]):
         cards.append({"title": "Animals", "detail": "for your farm"})
         actions.append(_show_animals)
+    if id == _state.ships.shipyard:
+        cards.append({"title": "Shipyard", "detail": _state.ships.shipwright["name"].split(" ")[0]})
+        actions.append(_show_shipyard)
     cards.append(_tasks_card(id))
     actions.append(_show_tasks.bind(0))
     cards.append({"title": "Talk", "detail": "the news"})
@@ -719,3 +724,145 @@ func _show_task(id: String) -> void:
     var cards: Array = [{"title": "Back", "detail": ""}]
     var actions: Array[Callable] = [_show_tasks.bind(0)]
     _world.show_screen(missions.missions[id]["title"], missions.hint(_state, id), cards, actions)
+
+
+# ---------------------------------------------------------------------------
+# The shipyard
+# ---------------------------------------------------------------------------
+
+
+func _shipwright_face() -> Dictionary:
+    var who: Dictionary = _state.ships.shipwright
+    return {"hair": Color(str(who.get("hair", "8a5a2b"))), "braids": bool(who.get("braids", false))}
+
+
+## The ships of the shipwright, and the players' own.
+func _show_shipyard(message := "") -> void:
+    var ships: Ships = _state.ships
+    var cards: Array = []
+    var actions: Array[Callable] = []
+    for id in ships.ids:
+        var kind: Dictionary = ships.kinds[id]
+        var detail := "%d silver" % int(kind["price"])
+        if id == ships.current:
+            detail = "your ship now"
+        elif id in ships.owned:
+            detail = "yours"
+        (
+            cards
+            . append(
+                {
+                    "title": "%s, %d crates" % [kind["name"], ships.hold(id)],
+                    "detail": detail,
+                    "picture":
+                    ["longships", "hull_plain"] if kind.has("drawn") else ["rowboat", "hull"],
+                }
+            )
+        )
+        actions.append(_show_ship.bind(id))
+    cards.append({"title": "Back", "detail": ""})
+    actions.append(show_port)
+    var text := message
+    if text == "":
+        text = (
+            "Welcome to my shipyard! A bigger ship carries more, and its crew rows to your beat. "
+            + "A ship you buy stays yours: take any of them, any time. Silver: %d." % _state.silver
+        )
+    _world.show_screen(
+        "%s's shipyard" % ships.shipwright["name"].split(" ")[0],
+        text,
+        cards,
+        actions,
+        _shipwright_face()
+    )
+
+
+## How a share of the rowing boat reads, e.g., "faster" for 1.3.
+static func _compared(share: float, more: String, less: String) -> String:
+    if share >= 1.45:
+        return "much " + more
+    if share >= 1.1:
+        return more
+    if share <= 0.7:
+        return "much " + less
+    if share <= 0.9:
+        return less
+    return "as the rowing boat"
+
+
+func _show_ship(id: String) -> void:
+    var ships: Ships = _state.ships
+    var kind: Dictionary = ships.kinds[id]
+    var lines: Array[String] = [str(kind.get("about", ""))]
+    (
+        lines
+        . append(
+            (
+                "Hold: %d crates. Crew: %s. Speed: %s. Turns: %s. Glides: %s."
+                % [
+                    ships.hold(id),
+                    "%d rowers" % int(kind["crew"]) if int(kind["crew"]) > 0 else "just you",
+                    _compared(float(kind["top"]), "faster", "slower"),
+                    _compared(float(kind["turn"]), "quicker", "slower"),
+                    _compared(float(kind["glide"]), "longer", "shorter"),
+                ]
+            )
+        )
+    )
+    var cards: Array = []
+    var actions: Array[Callable] = []
+    if id == ships.current:
+        lines.append("You row her now.")
+    elif id in ships.owned:
+        var fits: bool = _state.load_count() <= ships.hold(id)
+        if not fits:
+            lines.append("Your cargo does not fit in her: sell or unload some first.")
+        cards.append({"title": "Take her", "detail": "free", "enabled": fits})
+        actions.append(_take_ship.bind(id))
+    else:
+        var price := int(kind["price"])
+        var fits: bool = _state.load_count() <= ships.hold(id)
+        (
+            cards
+            . append(
+                {
+                    "title": "Buy her",
+                    "detail": "%d silver" % price,
+                    "enabled": _state.silver >= price and fits,
+                }
+            )
+        )
+        actions.append(_buy_ship.bind(id))
+    cards.append({"title": "Back", "detail": ""})
+    actions.append(_show_shipyard.bind(""))
+    _world.show_screen(kind["name"], " ".join(lines), cards, actions, _shipwright_face())
+
+
+func _buy_ship(id: String) -> void:
+    var ships: Ships = _state.ships
+    if not ships.buy(_state, id):
+        return
+    ships.take(id, _state.load_count())
+    _world.refit()
+    _state.save()
+    _show_shipyard(
+        (
+            "She is yours! Your cargo is aboard, and %s rows to your beat. Fair winds! Silver: %d."
+            % [
+                (
+                    "her crew of %d" % int(ships.kinds[id]["crew"])
+                    if int(ships.kinds[id]["crew"]) > 0
+                    else "she"
+                ),
+                _state.silver
+            ]
+        )
+    )
+
+
+func _take_ship(id: String) -> void:
+    var ships: Ships = _state.ships
+    if ships.take(id, _state.load_count()):
+        _world.refit()
+        _state.save()
+        _show_shipyard("Your cargo goes over into the %s. She is ready!" % ships.kinds[id]["name"])

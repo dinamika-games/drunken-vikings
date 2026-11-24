@@ -37,6 +37,11 @@ const NPC_COUNT := 9
 var _map: LakeMap
 var _boat := RowBoat.new()
 var _rower: RowerView
+## The ship under the players, when they row a bigger one than the rowing
+## boat (see [method refit]); null in the rowing boat.
+var _ship_view: Longship
+## Where the players sit on the ship, behind its middle, in metres.
+var _stern := 0.0
 var _boat_wake: Wake
 var _splashes: Splashes
 var _camera: Camera2D
@@ -121,6 +126,7 @@ func _ready() -> void:
     _rower.map = _map
     _rower.pair = players() == 2
     add_child(_rower)
+    refit()
 
     for label in _map.labels:
         if label["kind"] == "place":
@@ -170,6 +176,38 @@ func _ready() -> void:
     _camera.rotation = _boat.heading
     _camera.position = _boat.position + Vector2.UP.rotated(_boat.heading) * LOOK_AHEAD
     _say("Day %d. Row to the settlements to trade; glide slowly to a jetty to dock." % _state.day)
+
+
+## Put the players on their ship (see GameState.ship): it rows as its data
+## says, and a bigger ship than the rowing boat is drawn under the players,
+## who row on its stern bench, with its crew rowing to their beat.
+func refit() -> void:
+    var data: Dictionary = _state.ships.data()
+    _boat.set_ship(data)
+    if _ship_view != null:
+        _ship_view.queue_free()
+        _ship_view = null
+    _stern = 0.0
+    _rower.scale = Vector2.ONE
+    _rower.show_hull = true
+    _boat_wake.width = 2.5
+    _boat_wake.spread = 8.0
+    if not data.has("drawn"):
+        return
+    var drawn: Dictionary = data["drawn"]
+    var size := float(drawn.get("size", 1.0))
+    _ship_view = Longship.new()
+    _ship_view.map = _map
+    _ship_view.has_sail = bool(drawn.get("sail", true))
+    _ship_view.scale = Vector2(size * float(drawn.get("width", 1.0)), size)
+    add_child(_ship_view)
+    move_child(_ship_view, _rower.get_index())
+    # The players sit on the stern bench, a little smaller than in their boat.
+    _stern = 10.0 * size
+    _rower.scale = Vector2.ONE * clampf(size * 0.6, 0.45, 0.8)
+    _rower.show_hull = false
+    _boat_wake.width = 2.5 + 5.0 * size * float(drawn.get("width", 1.0))
+    _boat_wake.spread = 8.0 + 10.0 * size
 
 
 func _add_label(text: String, kind: String, at: Vector2) -> void:
@@ -298,8 +336,12 @@ func _process(delta: float) -> void:
         if _autopilot:
             _autopilot_choose(delta)
     _boat.move(delta, _map)
-    _rower.position = _boat.position
+    _rower.position = _boat.position + Vector2(0, _stern).rotated(_boat.heading)
     _rower.rotation = _boat.heading
+    if _ship_view != null:
+        _ship_view.oars_swing = (_rower.swing_of(0) + _rower.swing_of(1)) / 2.0
+        _ship_view.oars_pulling = _rower.pulling[0] or _rower.pulling[1]
+        _ship_view.follow(delta, _boat.position, _boat.heading, _boat.speed)
     _rower.live_pull = _live_pull()
     _boat_wake.follow(_boat.position, delta, absf(_boat.speed))
     _splash_oars(delta)
@@ -349,6 +391,10 @@ func _splash_oars(delta: float) -> void:
     var drip := _drip >= 0.12
     if drip:
         _drip = 0.0
+    if _ship_view != null and (_rower.catches[0] or _rower.catches[1]):
+        # The crew dips its oars with the players.
+        for blade in _ship_view.blade_positions():
+            _splashes.splash(blade, 4.0, 1.4, 0.9)
     for side in [0, 1]:
         var blade := _rower.blade_position(side)
         if _rower.catches[side]:

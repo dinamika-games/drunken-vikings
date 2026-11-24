@@ -104,6 +104,10 @@ var boat: RowBoat
 var map: LakeMap
 
 ## Whether two players row, an oar each.
+## Whether the hull of the rowing boat shows: on a bigger ship, the players
+## row on its stern bench, and the ship is drawn under them (see world.gd).
+var show_hull := true
+
 var pair := false
 
 ## How far the player of each oar ([left, right]) is through the stroke, from
@@ -284,11 +288,12 @@ func _draw_painted(swings: Array, golden: bool) -> void:
     draw_set_transform(Vector2.ZERO, 0.0, Vector2(SCALE, SCALE))
     var hull: Texture2D = _pictures["hull"]
     var hull_width := HULL_LENGTH * hull.get_width() / hull.get_height()
-    draw_texture_rect(
-        hull,
-        Rect2(Vector2(-hull_width / 2.0, -HULL_LENGTH / 2.0), Vector2(hull_width, HULL_LENGTH)),
-        false
-    )
+    if show_hull:
+        draw_texture_rect(
+            hull,
+            Rect2(Vector2(-hull_width / 2.0, -HULL_LENGTH / 2.0), Vector2(hull_width, HULL_LENGTH)),
+            false
+        )
     for side in [0, 1]:
         var oar := _painted_oar(side, swings)
         var inboard: float = oar[2]

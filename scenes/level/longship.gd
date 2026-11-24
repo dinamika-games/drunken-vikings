@@ -84,6 +84,16 @@ var pirate := false
 ## Whether the captain of the pirates stands at the bow and shakes a fist.
 var shaking := false
 
+## Whether the ship has a sail (the færing of the players has none).
+var has_sail := true
+
+## The swing of the oars, from -1 to 1, when the crew rows to the beat of the
+## players (see [method follow]); NAN when the crew keeps its own beat.
+var oars_swing := NAN
+
+## Whether the oars of the crew pull now (with [member oars_swing]).
+var oars_pulling := false
+
 var _time := 0.0
 var _beat := 0.0
 
@@ -147,6 +157,18 @@ func drive(delta: float, target: Vector2, target_speed: float) -> void:
     queue_redraw()
 
 
+## Go with the players' boat for a frame: the ship of the players (see
+## world.gd), whose crew rows to their beat ([member oars_swing]).
+func follow(delta: float, at: Vector2, towards: float, boat_speed: float) -> void:
+    _time += delta
+    _ship_oars(delta)
+    position = at
+    heading = towards
+    rotation = towards
+    speed = boat_speed
+    queue_redraw()
+
+
 ## Over the land, the crew pulls in the oars of that side, and puts them out
 ## again over the water.
 func _ship_oars(delta: float) -> void:
@@ -161,6 +183,8 @@ func _ship_oars(delta: float) -> void:
 
 ## How far the oars are through their swing, from -1 to 1.
 func _swing() -> float:
+    if not is_nan(oars_swing):
+        return oars_swing
     return -cos(_beat * TAU) if speed > 0.5 else 0.3
 
 
@@ -363,7 +387,9 @@ func _draw_painted() -> void:
     # The blades pull in the water while the swing goes back, and come out
     # flat on the way forward (see OarDrawing); they rest half lifted.
     var lift := 0.5
-    if speed > 0.5:
+    if not is_nan(oars_swing):
+        lift = 0.0 if oars_pulling else 0.8
+    elif speed > 0.5:
         lift = clampf(0.5 - 0.9 * sin(_beat * TAU), 0.0, 1.0)
     var oar := Pictures.of("longships", "oar")
     for y: float in PAINTED_OARS_Y:
@@ -402,9 +428,17 @@ func _draw_painted() -> void:
             var wave := sin(_time * 5.0) * 0.04
             Pictures.draw(self, bride, Vector2(0, 7.6), 4.6, wave, base)
     var sail := "sail_%s_%s" % [kind, "full" if speed > 0.5 else "slack"]
-    Pictures.draw(
-        self, Pictures.of("longships", sail), Vector2(0, -3.8), 12.0, 0.0, base, Color.WHITE, 0.42
-    )
+    if has_sail:
+        Pictures.draw(
+            self,
+            Pictures.of("longships", sail),
+            Vector2(0, -3.8),
+            12.0,
+            0.0,
+            base,
+            Color.WHITE,
+            0.42
+        )
     var fist := Pictures.of("longships", "pirate_fist")
     if pirate and shaking and fist != null:
         Pictures.draw(self, fist, Vector2(0, -7.5), 5.0, sin(_time * 12.0) * 0.2, base)

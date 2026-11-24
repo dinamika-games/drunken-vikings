@@ -11,7 +11,7 @@
     "hair": "3a2a1a",
     "place": "market"
   },
-  "offer": "You brought the ale to my wedding, and now I can help you! Bring me two pots of tar from Helga in Ekvik, and I will make your boat wider: room for one more crate.",
+  "offer": "You brought the ale to my wedding, and now I can help you! Bring me two pots of tar from Helga in Ekvik, and I will make your hold wider: room for one more crate.",
   "items": {
     "tar": {
       "name": "Tar",
@@ -37,7 +37,7 @@
     {
       "do": "visit",
       "at": "market",
-      "say": "Good tar! A plank here, a rib there... Done: your boat takes five crates now."
+      "say": "Good tar! A plank here, a rib there... Done: your hold takes one more crate now."
     }
   ],
   "reward": {

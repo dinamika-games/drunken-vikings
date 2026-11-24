@@ -14,6 +14,10 @@ const _WATER := Color("3d6f9c")
 const _LAND := Color("5d6b3a")
 const _MINIMAP := Rect2(1700, 100, 200, 660)
 
+## Up to this many crates, the HUD shows every crate of the hold; a bigger
+## hold shows one crate for each kind of cargo, with how many.
+const CRATES_SHOWN := 12
+
 ## The world (see world.gd).
 var world: Node
 
@@ -57,6 +61,9 @@ func _draw_purse() -> void:
         _pop = 1.0 if _silver >= 0 else 0.0
         _silver = int(state.silver)
     CoinPurse.draw(self, Vector2(30, 70), _silver, _pop)
+    if int(state.capacity) > CRATES_SHOWN:
+        _draw_hold_grouped(state)
+        return
     var x := 30.0
     var items: Array = []
     for item in state.cargo.keys():
@@ -66,32 +73,57 @@ func _draw_purse() -> void:
         var rect := Rect2(Vector2(x, 172), Vector2(52, 44))
         draw_rect(rect.grow(3.0), _INK)
         if slot < items.size():
-            var item: String = items[slot]
-            var picture := _cargo_picture(item)
-            if picture != null:
-                draw_rect(rect, Color("e8d8b0"))
-                Pictures.draw(self, picture, rect.get_center(), 42.0)
-                draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-            elif Missions.is_item(item):
-                draw_rect(rect, state.missions.item_color(item))
-                draw_rect(rect, _GOLD, false, 3.0)
-            elif item.begins_with("animal:"):
-                draw_rect(rect, Color("7a8a4a"))
-                draw_circle(rect.get_center(), 14.0, Color("f1f0ea"))
-                draw_circle(rect.get_center() + Vector2(10, -6), 6.0, Color("e8e0d0"))
-            else:
-                draw_rect(rect, state.economy.goods[item]["color"])
-                draw_line(rect.position, rect.end, Color(0, 0, 0, 0.25), 2.0)
-                draw_line(
-                    Vector2(rect.end.x, rect.position.y),
-                    Vector2(rect.position.x, rect.end.y),
-                    Color(0, 0, 0, 0.25),
-                    2.0
-                )
-            _outlined(rect.position + Vector2(2, 62), state.good_name(item), 14)
+            _draw_crate(state, rect, items[slot])
+            _outlined(rect.position + Vector2(2, 62), state.good_name(items[slot]), 14)
         else:
             draw_rect(rect, Color(1, 1, 1, 0.08))
         x += 60.0
+
+
+## A big hold: one crate for each kind of cargo, with how many, and how full
+## the hold is.
+func _draw_hold_grouped(state: Node) -> void:
+    var x := 30.0
+    for item in state.cargo.keys():
+        var rect := Rect2(Vector2(x, 172), Vector2(52, 44))
+        draw_rect(rect.grow(3.0), _INK)
+        _draw_crate(state, rect, item)
+        _outlined(rect.position + Vector2(2, 62), state.good_name(item), 14)
+        _outlined(rect.end + Vector2(-22, -4), "%d" % int(state.cargo[item]), 22, _GOLD)
+        x += 60.0
+    var bar := Rect2(Vector2(x + 6, 182), Vector2(160, 24))
+    draw_rect(bar.grow(3.0), _INK)
+    draw_rect(bar, Color(1, 1, 1, 0.08))
+    var used := float(state.load_count()) / float(state.capacity)
+    draw_rect(Rect2(bar.position, Vector2(bar.size.x * used, bar.size.y)), Color("c8a878"))
+    _outlined(
+        bar.position + Vector2(8, 20), "%d of %d crates" % [state.load_count(), state.capacity], 18
+    )
+
+
+## A crate of the cargo in the [param rect]: painted, or drawn simply.
+func _draw_crate(state: Node, rect: Rect2, item: String) -> void:
+    var picture := _cargo_picture(item)
+    if picture != null:
+        draw_rect(rect, Color("e8d8b0"))
+        Pictures.draw(self, picture, rect.get_center(), 42.0)
+        draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+    elif Missions.is_item(item):
+        draw_rect(rect, state.missions.item_color(item))
+        draw_rect(rect, _GOLD, false, 3.0)
+    elif item.begins_with("animal:"):
+        draw_rect(rect, Color("7a8a4a"))
+        draw_circle(rect.get_center(), 14.0, Color("f1f0ea"))
+        draw_circle(rect.get_center() + Vector2(10, -6), 6.0, Color("e8e0d0"))
+    else:
+        draw_rect(rect, state.economy.goods[item]["color"])
+        draw_line(rect.position, rect.end, Color(0, 0, 0, 0.25), 2.0)
+        draw_line(
+            Vector2(rect.end.x, rect.position.y),
+            Vector2(rect.position.x, rect.end.y),
+            Color(0, 0, 0, 0.25),
+            2.0
+        )
 
 
 ## The painted picture of a crate in the boat: the good, or the animal.
