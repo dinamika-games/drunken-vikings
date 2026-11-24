@@ -1,0 +1,70 @@
+{
+  "number": 11,
+  "id": "the_lambs_in_the_cold_night",
+  "title": "The Lambs in the Cold Night",
+  "kind": "care",
+  "requires": [
+    "a_bigger_hold"
+  ],
+  "giver": {
+    "name": "Sten the shepherd",
+    "hair": "8a5a2b",
+    "place": "herders"
+  },
+  "offer": "A late frost tonight, and my ewes had their lambs today! Bring two warm blankets from Sæunn in Guldvik, and a jug of milk from the horse farm, before the night falls.",
+  "days": 1,
+  "items": {
+    "blanket": {
+      "name": "Blanket",
+      "color": "b8332a",
+      "picture": [
+        "goods",
+        "cloth"
+      ],
+      "one": "a blanket",
+      "many": "blankets"
+    },
+    "milk": {
+      "name": "Milk",
+      "color": "f1f0ea",
+      "one": "the jug of milk"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "blanket",
+      "count": 2,
+      "from": "weaver",
+      "to": "herders",
+      "from_who": {
+        "name": "Sæunn the weaver",
+        "picture": "weaver"
+      },
+      "load_say": "My thickest wool blankets. Wrap the little ones well!"
+    },
+    {
+      "do": "carry",
+      "item": "milk",
+      "count": 1,
+      "from": "horse_farm",
+      "to": "herders",
+      "from_who": {
+        "name": "Ragnfrid of the horse farm",
+        "picture": "horse_farm"
+      },
+      "load_say": "Warm milk for the lambs. Row fast, so it stays warm!"
+    },
+    {
+      "do": "visit",
+      "at": "herders",
+      "say": "Wrapped up and full of milk, the lambs sleep by the fire. Not one of them is cold. Thank you!"
+    }
+  ],
+  "reward": {
+    "goods": {
+      "wool": 2
+    }
+  },
+  "fact": "Lambs are born in spring; a cold night is the shepherd's biggest worry."
+}

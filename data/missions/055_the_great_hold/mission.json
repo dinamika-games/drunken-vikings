@@ -1,0 +1,55 @@
+{
+  "number": 55,
+  "id": "the_great_hold",
+  "title": "The Great Hold",
+  "kind": "build",
+  "requires": [
+    "barley_in_spring",
+    "the_lame_goat"
+  ],
+  "giver": {
+    "name": "Bjarne the boatwright",
+    "hair": "3a2a1a",
+    "place": "market"
+  },
+  "offer": "Now we make your boat great! Ten planks from Frosttorp, three crates of tools, and 30 silver. Then she takes ten crates. Ten planks are more than you can carry at once.",
+  "items": {
+    "plank": {
+      "name": "Plank",
+      "color": "c8a878",
+      "one": "a plank",
+      "many": "planks"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "plank",
+      "count": 10,
+      "from": "farm",
+      "to": "market",
+      "from_who": {
+        "name": "Arne of Frosttorp",
+        "hair": "a04a20"
+      },
+      "load_say": "Planks again? Bjarne is building you a ship!"
+    },
+    {
+      "do": "deliver",
+      "at": "market",
+      "item": "tools",
+      "count": 3,
+      "say": "Iron for the rivets. Now my wages."
+    },
+    {
+      "do": "pay",
+      "at": "market",
+      "silver": 30,
+      "say": "She is the biggest rowing boat on the lakes! Ten crates. Soon you will want a ship with a sail."
+    }
+  ],
+  "reward": {
+    "capacity": 2
+  },
+  "fact": "A knarr, the cargo ship of the vikings, could carry the load of twenty boats."
+}

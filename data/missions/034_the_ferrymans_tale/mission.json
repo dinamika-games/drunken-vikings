@@ -1,0 +1,51 @@
+{
+  "number": 34,
+  "id": "the_ferrymans_tale",
+  "title": "The Ferryman's Tale",
+  "kind": "explore",
+  "requires": [
+    "the_mill_turns"
+  ],
+  "giver": {
+    "name": "Orm the innkeeper",
+    "hair": "3a2a1a",
+    "place": "inn_2"
+  },
+  "offer": "Old Halvard told a story here last night: a hidden cove, where the swans of the lakes are born. He says: ask the potter, the miller and the old man of Svanetorp.",
+  "steps": [
+    {
+      "do": "visit",
+      "at": "potter",
+      "who": {
+        "name": "Dagny the potter",
+        "hair": "3a2a1a",
+        "braids": true
+      },
+      "say": "The cove? My grandmother said: it lies where the reeds grow tallest. Ask Astrid."
+    },
+    {
+      "do": "visit",
+      "at": "mill",
+      "who": {
+        "name": "Astrid of the mill",
+        "hair": "8a5a2b",
+        "braids": true
+      },
+      "say": "Reeds? The tallest ones grow south, by Svanetorp. Go to Grim."
+    },
+    {
+      "do": "visit",
+      "at": "farm_3",
+      "who": {
+        "name": "Old Grim of Svanetorp",
+        "hair": "d8d8d0"
+      },
+      "say": "So you found my secret. Behind my farm, in the reeds: the swan cove. Look, the cygnets! Grey and fluffy. Tell no one!"
+    }
+  ],
+  "reward": {
+    "silver": 12,
+    "gift": "the secret of the swan cove"
+  },
+  "fact": "Young swans are grey, not white; they are called cygnets."
+}

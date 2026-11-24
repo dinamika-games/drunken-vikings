@@ -4,7 +4,9 @@ extends RefCounted
 ## The screens of the ports and of the farm (see world.gd): the market (sell,
 ## buy, the animals, the news of the people), and at home the farm (plant,
 ## harvest, buy land), the unloading and the loading of the boat, and the
-## sleep which ends the day.
+## sleep which ends the day. In every port, the missions do what they ask
+## there first (see Missions), and the card "Tasks" shows the missions the
+## people offer there and those under way.
 
 ## What each kind of settlement is called on the screens.
 const KIND_NAMES := {
@@ -64,6 +66,8 @@ func place_title(id: String) -> String:
 
 
 func show_port(message := "") -> void:
+    if _run_tasks(show_port.bind(message)):
+        return
     var id: String = _state.place
     var place := _map.place(id)
     if place["kind"] == "home":
@@ -72,6 +76,8 @@ func show_port(message := "") -> void:
     var economy: Economy = _state.economy
     var sellable := _sellable(id)
     var text := message if message != "" else "Welcome! What would you like to do?"
+    if message == "":
+        text = " ".join([text] + _task_notes(id))
     var cards: Array = [
         {
             "title": "Sell",
@@ -89,6 +95,8 @@ func show_port(message := "") -> void:
     if ANIMALS_SOLD.has(place["kind"]):
         cards.append({"title": "Animals", "detail": "for your farm"})
         actions.append(_show_animals)
+    cards.append(_tasks_card(id))
+    actions.append(_show_tasks.bind(0))
     cards.append({"title": "Talk", "detail": "the news"})
     actions.append(_talk)
     cards.append({"title": "Row on", "detail": ""})
@@ -298,6 +306,8 @@ func _talk() -> void:
 
 
 func _show_home(message := "") -> void:
+    if _run_tasks(_show_home.bind(message)):
+        return
     var farm: Farm = _state.farm
     var text := message
     if text == "":
@@ -306,23 +316,30 @@ func _show_home(message := "") -> void:
             "Grandmother Åsa waves from the jetty. "
             + (reminders[0]["text"] if not reminders.is_empty() else "All is well on the farm.")
         )
+        text = " ".join([text] + _task_notes("home"))
     var cards: Array = [
         {"title": "The farm", "detail": _animals_line()},
         {
             "title": "Unload the boat",
-            "detail": "%d crates" % _state.load_count(),
-            "enabled": _state.load_count() > 0
+            "detail": "%d crates" % _unloadable(),
+            "enabled": _unloadable() > 0
         },
         {
             "title": "Load from the store",
             "detail": "",
             "enabled": not _store_goods().is_empty() and _state.has_room()
         },
+        _tasks_card("home"),
         {"title": "Sleep", "detail": "end the day"},
         {"title": "Row out", "detail": ""},
     ]
     var actions: Array[Callable] = [
-        _show_farm, _unload, _show_load.bind(0), _sleep, _world.undock.bind("home")
+        _show_farm,
+        _unload,
+        _show_load.bind(0),
+        _show_tasks.bind(0),
+        _sleep,
+        _world.undock.bind("home")
     ]
     _world.show_screen(place_title("home"), text, cards, actions, GRANDMOTHER)
 
@@ -473,6 +490,9 @@ func _unload() -> void:
     var parts: Array[String] = []
     for item in _state.cargo.keys():
         var count := int(_state.cargo[item])
+        if Missions.is_item(item):
+            # NOTE: The items of the missions belong elsewhere; they stay in the boat.
+            continue
         if item.begins_with("animal:"):
             var kind: String = item.trim_prefix("animal:")
             for i in range(count):
@@ -487,7 +507,7 @@ func _unload() -> void:
     var text := (
         "Unloaded: %s." % ", ".join(parts)
         if not parts.is_empty()
-        else "There is no room for the animals; buy more land."
+        else "Nothing to unload: no room for the animals, or only what your tasks carry."
     )
     _show_home(text)
 
@@ -545,3 +565,157 @@ func _sleep() -> void:
     ]
     var actions: Array[Callable] = [_world.undock.bind("home"), _world.quit, _show_farm]
     _world.show_screen("A new day", " ".join(lines), cards, actions, GRANDMOTHER)
+
+
+## How many crates of the boat can be unloaded at home (not the items of the missions).
+func _unloadable() -> int:
+    var count := 0
+    for item in _state.cargo.keys():
+        if not Missions.is_item(item):
+            count += int(_state.cargo[item])
+    return count
+
+
+# ---------------------------------------------------------------------------
+# The missions
+# ---------------------------------------------------------------------------
+
+
+## The face of who speaks for a mission (see Missions.arrive): their painted
+## face, or the face of the place.
+func _face(who: Dictionary, place: String) -> Dictionary:
+    if not who.is_empty():
+        return {
+            "picture": str(who.get("picture", "")),
+            "hair": Color(str(who.get("hair", "8a5a2b"))),
+            "braids": bool(who.get("braids", false)),
+        }
+    if place != "":
+        var kind: String = _map.place(place).get("kind", "")
+        if kind == "home":
+            return GRANDMOTHER
+        if Pictures.of("faces", kind) != null:
+            return {"picture": kind}
+    return {}
+
+
+## Do what the missions ask at the place of the boat; if anything happened,
+## show it, and then call [param then]. Return whether anything happened.
+func _run_tasks(then: Callable) -> bool:
+    var events: Array = _state.missions.arrive(_state, _state.place)
+    if events.is_empty():
+        return false
+    _state.save()
+    _show_events(events, 0, then)
+    return true
+
+
+## Show the screens of the [param events] (see Missions.arrive), one by one,
+## from the [param index], and then call [param then].
+func _show_events(events: Array, index: int, then: Callable) -> void:
+    if index >= events.size():
+        then.call()
+        return
+    var event: Dictionary = events[index]
+    var who: Dictionary = event["who"]
+    var text: String = event["text"]
+    if str(who.get("name", "")) != "":
+        text = '%s: "%s"' % [who["name"], text]
+    var cards: Array = [{"title": "Hooray!" if event["done"] else "Go on", "detail": ""}]
+    var actions: Array[Callable] = [_show_events.bind(events, index + 1, then)]
+    _world.show_screen(event["title"], text, cards, actions, _face(who, event["place"]))
+
+
+## What the missions ask at the [param place] and can not be done yet, and
+## who has a new task here.
+func _task_notes(place: String) -> Array[String]:
+    var notes: Array[String] = _state.missions.blocked_at(_state, place)
+    var offers: Array[String] = _state.missions.offers_at(place)
+    if not offers.is_empty():
+        var giver: Dictionary = _state.missions.missions[offers[0]]["giver"]
+        notes.append("%s has a task for you!" % giver["name"])
+    return notes
+
+
+func _tasks_card(place: String) -> Dictionary:
+    var offers: int = _state.missions.offers_at(place).size()
+    var detail := "%d under way" % _state.missions.active.size()
+    if offers > 0:
+        detail = "%d new!" % offers
+    return {"title": "Tasks", "detail": detail}
+
+
+## The missions offered here, and those under way.
+func _show_tasks(page: int, message := "") -> void:
+    var missions: Missions = _state.missions
+    var items: Array = []
+    var actions: Array[Callable] = []
+    for id in missions.offers_at(_state.place):
+        items.append({"title": missions.missions[id]["title"], "detail": "new task!"})
+        actions.append(_show_offer.bind(id))
+    for entry in missions.active:
+        var id: String = entry["id"]
+        var where: String = missions.target(_state, id)
+        (
+            items
+            . append(
+                {
+                    "title": missions.missions[id]["title"],
+                    "detail": _state.place_name(where) if where != "" else "on the lakes",
+                }
+            )
+        )
+        actions.append(_show_task.bind(id))
+    var text := message
+    if text == "":
+        var lines: Array[String] = []
+        if missions.active.is_empty():
+            lines.append("No task under way.")
+        var elsewhere: Array[String] = []
+        for id in missions.available():
+            var giver: Dictionary = missions.missions[id]["giver"]
+            if giver["place"] != _state.place:
+                elsewhere.append("%s in %s" % [giver["name"], _state.place_name(giver["place"])])
+        if not elsewhere.is_empty():
+            lines.append("Tasks wait for you: %s." % ", ".join(elsewhere.slice(0, 3)))
+        lines.append("Done: %d tasks, %d stars." % [missions.done.size(), missions.stars()])
+        text = " ".join(lines)
+    _show_list("Tasks", text, items, actions, page, _show_tasks)
+
+
+func _show_offer(id: String) -> void:
+    var missions: Missions = _state.missions
+    var mission: Dictionary = missions.missions[id]
+    var giver: Dictionary = mission["giver"]
+    var text := '%s: "%s"' % [giver["name"], mission["offer"]]
+    if mission.has("days"):
+        var days := int(mission["days"])
+        text += " (Three stars within %d day%s.)" % [days, "" if days == 1 else "s"]
+    var cards: Array = [
+        {
+            "title": "Yes, I will help!",
+            "detail": "" if missions.can_accept() else "first finish a task",
+            "enabled": missions.can_accept(),
+        },
+        {"title": "Not now", "detail": ""},
+    ]
+    var actions: Array[Callable] = [_accept.bind(id), _show_tasks.bind(0)]
+    _world.show_screen(mission["title"], text, cards, actions, _face(giver, giver["place"]))
+
+
+func _accept(id: String) -> void:
+    _state.missions.accept(id, _state.day)
+    _state.save()
+    var hint: String = _state.missions.hint(_state, id)
+    if _state.missions.target(_state, id) == _state.place:
+        # NOTE: The first step is right here: do it at once.
+        show_port()
+        return
+    show_port("Off you go! " + hint)
+
+
+func _show_task(id: String) -> void:
+    var missions: Missions = _state.missions
+    var cards: Array = [{"title": "Back", "detail": ""}]
+    var actions: Array[Callable] = [_show_tasks.bind(0)]
+    _world.show_screen(missions.missions[id]["title"], missions.hint(_state, id), cards, actions)

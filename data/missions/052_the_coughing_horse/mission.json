@@ -1,0 +1,59 @@
+{
+  "number": 52,
+  "id": "the_coughing_horse",
+  "title": "The Coughing Horse",
+  "kind": "heal",
+  "requires": [
+    "the_ice_breaks"
+  ],
+  "giver": {
+    "name": "Tova the healer",
+    "picture": "healer",
+    "place": "healer"
+  },
+  "offer": "Your first case as healers: Ragnfrid's old horse Bror coughs. Take him this syrup of thyme and honey, then come back to me after a night, to hear how he is.",
+  "items": {
+    "syrup": {
+      "name": "Syrup",
+      "color": "e8a830",
+      "picture": [
+        "goods",
+        "honey"
+      ],
+      "one": "the syrup"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "syrup",
+      "count": 1,
+      "from": "healer",
+      "to": "horse_farm",
+      "to_who": {
+        "name": "Ragnfrid of the horse farm",
+        "picture": "horse_farm"
+      },
+      "say": "Thyme and honey? Bror loves it. He licks the spoon!"
+    },
+    {
+      "do": "visit",
+      "at": "horse_farm",
+      "wait": 1,
+      "who": {
+        "name": "Ragnfrid of the horse farm",
+        "picture": "horse_farm"
+      },
+      "say": "He slept the whole night and coughs no more. Tell Tova: her apprentices are good!"
+    },
+    {
+      "do": "visit",
+      "at": "healer",
+      "say": "Well done! You listened, you waited, you looked. That is healing."
+    }
+  ],
+  "reward": {
+    "silver": 10
+  },
+  "fact": "Honey helps a sore throat, for horses as for people."
+}

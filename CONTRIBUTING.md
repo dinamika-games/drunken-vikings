@@ -39,7 +39,7 @@ $GODOT --path . [-- --players=2] [--new]
 ```
 
 The game starts with the start screen (`scenes/start/`): how many row, and which mode, the party (`scenes/level/level.tscn`: follow the wedding longship and pick up the treats it drops) or the practical mode, which opens the Home Lakes (`scenes/world/`): row to the settlements to trade (glide slowly to a jetty to dock), hail the boats on the lakes (glide slowly close to them), and row home to the farm, where a night's sleep ends the day and saves the voyage (`user://voyage.json`).
-The players row with their bodies and choose on the screens with their hands: a raised hand moves a cursor, which sticks to the cards, and holding it still for 2 s chooses (`HandCursor`, `DwellButton`, `ChoicePanel`; the hands come from the YOLOX hand detector, which runs only while a screen shows). The mouse clicks the cards, too. Escape quits.
+The players row with their bodies and choose on the screens with their hands: a raised hand moves a cursor, which sticks to the cards, and holding it still for 2 s chooses (`HandCursor`, `DwellButton`, `ChoicePanel`; the hands come from the YOLOX hand detector, which runs only while a screen shows). The mouse clicks the cards, too. **C** shows the map of the lakes with where the missions lead (the game waits). Escape quits.
 
 * `--players=2`: two players, each pulls the oar on their side; the boat turns away from the stronger rower.
 * `--new`: a new voyage instead of the saved one.
@@ -49,6 +49,8 @@ The players row with their bodies and choose on the screens with their hands: a 
   In the party, it also prints where the boat and the longship are and the nearest treats as seen from the boat (`next=[(metres ahead, metres to the right, bearing), ...]`), and every drop and pick, on the same clock (`t`) as the poses, to study where the player meant to go.
 
 The chase mode (`scenes/chase/`: row to a town before the pirates catch you; the pirates find their way on the grid of the water of the map, `LakeMap.water_path`) runs directly with `$GODOT --path . res://scenes/chase/chase.tscn`. The party mode runs directly with `$GODOT --path . res://scenes/level/level.tscn` (add `-- --record` to record the vision while playing, `-- --no-camera --autopilot` to let it play itself), and the practical mode with `$GODOT --path . res://scenes/world/world.tscn`.
+
+The missions (`data/missions/<nnn>_<id>/mission.json`, see DESIGN.md, section 10) are offered in the ports (the card "Tasks"); `Missions` (`scenes/game/missions.gd`) checks their data when the game starts, and `tests/godot/test_missions.gd` plays all of them through, in their order, as a careful player would.
 
 The map of the Home Lakes is made by `venv/bin/python dev/maps/make_lakes.py --name home_lakes` (the lakes, the islands, the settlements and the ways of the boats between them; `--plot out.png` draws it). The economy (`data/economy/`) and the farm (`data/farm/`) are plain data.
 

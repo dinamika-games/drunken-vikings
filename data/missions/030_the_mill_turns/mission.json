@@ -1,0 +1,32 @@
+{
+  "number": 30,
+  "id": "the_mill_turns",
+  "title": "The Mill Turns",
+  "kind": "deliver",
+  "requires": [
+    "herbs_for_the_lakes"
+  ],
+  "giver": {
+    "name": "Astrid of the mill",
+    "hair": "8a5a2b",
+    "braids": true,
+    "place": "mill"
+  },
+  "offer": "The harvest is in, and the mill wheel turns day and night! But the farmers are slow. Bring me six crates of grain to grind.",
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "mill",
+      "item": "grain",
+      "count": 6,
+      "say": "Six crates! Listen to the stones grind. Bjarne says hello, and here is your share."
+    }
+  ],
+  "reward": {
+    "silver": 18,
+    "goods": {
+      "grain": 2
+    }
+  },
+  "fact": "Most vikings ground their grain by hand with two stones; a water mill was a wonder."
+}

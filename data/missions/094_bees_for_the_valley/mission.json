@@ -1,0 +1,27 @@
+{
+  "number": 94,
+  "id": "bees_for_the_valley",
+  "title": "Bees for the Valley",
+  "kind": "fetch",
+  "requires": [
+    "the_green_valley"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "The valley is full of clover and heather. Bees would love it! Have three beehives on the farm, and we will have honey all year.",
+  "steps": [
+    {
+      "do": "have",
+      "animal": "bees",
+      "count": 3,
+      "say": "Hum, hum, hum! Three hives in the valley. Honey for us, and for mead."
+    }
+  ],
+  "reward": {
+    "silver": 10
+  },
+  "fact": "Heather honey is dark and strong; clover honey is light and mild."
+}

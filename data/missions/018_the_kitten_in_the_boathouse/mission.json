@@ -1,0 +1,56 @@
+{
+  "number": 18,
+  "id": "the_kitten_in_the_boathouse",
+  "title": "The Kitten in the Boathouse",
+  "kind": "find",
+  "requires": [
+    "midsummer_night"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "Your kitten is gone! She did not come for her milk this morning. Ask the boats on the lakes if anyone has seen her.",
+  "items": {
+    "kittens": {
+      "name": "Kittens",
+      "color": "b0a898",
+      "one": "the basket of kittens"
+    }
+  },
+  "steps": [
+    {
+      "do": "hail",
+      "count": 2,
+      "says": [
+        "A grey kitten? No... but cats love warm, quiet places with wood shavings."
+      ],
+      "say": "A grey kitten? I saw one jump off a boat at Kråkhamn, by the boathouse!"
+    },
+    {
+      "do": "visit",
+      "at": "market",
+      "who": {
+        "name": "Bjarne the boatwright",
+        "hair": "3a2a1a"
+      },
+      "say": "In my boathouse, in the wood shavings: your kitten! And four tiny kittens of her own! You can take them all home in a basket."
+    },
+    {
+      "do": "carry",
+      "item": "kittens",
+      "count": 1,
+      "from": "market",
+      "to": "home",
+      "to_who": {
+        "name": "Grandmother Åsa",
+        "picture": "grandmother"
+      }
+    }
+  ],
+  "reward": {
+    "gift": "a basket of kittens for the barn"
+  },
+  "fact": "Viking ships often carried a cat on board, to catch the mice and the rats."
+}

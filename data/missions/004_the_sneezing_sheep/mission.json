@@ -1,0 +1,59 @@
+{
+  "number": 4,
+  "id": "the_sneezing_sheep",
+  "title": "The Sneezing Sheep",
+  "kind": "heal",
+  "requires": [
+    "the_old_boat"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "Our sheep sneezes and sneezes. Row to the island of Laxön and ask Tova the healer what helps.",
+  "days": 3,
+  "items": {
+    "thyme": {
+      "name": "Thyme",
+      "color": "6a9a4a",
+      "picture": [
+        "goods",
+        "herbs"
+      ],
+      "one": "the bundle of thyme"
+    }
+  },
+  "steps": [
+    {
+      "do": "visit",
+      "at": "healer",
+      "who": {
+        "name": "Tova the healer",
+        "picture": "healer"
+      },
+      "say": "A sneezing sheep? It has a cold. Thyme helps: here is a bundle. Steam it in warm water and let her breathe it."
+    },
+    {
+      "do": "carry",
+      "item": "thyme",
+      "count": 1,
+      "from": "healer",
+      "to": "home"
+    },
+    {
+      "do": "visit",
+      "at": "home",
+      "who": {
+        "name": "Grandmother Åsa",
+        "picture": "grandmother"
+      },
+      "say": "She breathed the thyme steam, and look: no more sneezing! Tova says you have a good hand with animals."
+    }
+  ],
+  "reward": {
+    "silver": 5,
+    "gift": "Tova's friendship"
+  },
+  "fact": "The vikings knew many healing herbs: thyme, chamomile, yarrow and garlic."
+}

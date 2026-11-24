@@ -1,0 +1,65 @@
+{
+  "number": 67,
+  "id": "a_brooch_for_thora",
+  "title": "A Brooch for Thora",
+  "kind": "make",
+  "requires": [
+    "shearing_time"
+  ],
+  "giver": {
+    "name": "Thora, the chieftain's daughter",
+    "hair": "e8c25a",
+    "braids": true,
+    "place": "chieftain"
+  },
+  "offer": "I want a brooch like a dragon! Hrafn makes it, if he gets glass beads for the eyes from the market. And it costs 15 silver: I have saved them.",
+  "items": {
+    "beads": {
+      "name": "Beads",
+      "color": "4a9a6a",
+      "one": "the glass beads"
+    },
+    "brooch": {
+      "name": "Brooch",
+      "color": "f2c14e",
+      "one": "the brooch"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "beads",
+      "count": 1,
+      "from": "market",
+      "to": "smith",
+      "from_who": {
+        "name": "Ulf the market warden",
+        "picture": "market"
+      },
+      "to_who": {
+        "name": "Hrafn the smith",
+        "picture": "smith"
+      },
+      "load_say": "Green glass beads, from very far away. Small, but precious!",
+      "say": "Green eyes for a dragon. Come back tomorrow."
+    },
+    {
+      "do": "carry",
+      "item": "brooch",
+      "count": 1,
+      "from": "smith",
+      "to": "chieftain",
+      "wait": 1,
+      "from_who": {
+        "name": "Hrafn the smith",
+        "picture": "smith"
+      },
+      "load_say": "A dragon with green eyes, biting its tail. Careful, the pin is sharp!",
+      "say": "It is beautiful! Here, Father gave me 15 silver for you, and one is extra."
+    }
+  ],
+  "reward": {
+    "silver": 16
+  },
+  "fact": "Viking women wore two big brooches on their dresses, often with beads between them."
+}

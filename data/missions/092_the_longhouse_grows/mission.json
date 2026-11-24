@@ -1,0 +1,72 @@
+{
+  "number": 92,
+  "id": "the_longhouse_grows",
+  "title": "The Longhouse Grows",
+  "kind": "build",
+  "requires": [
+    "the_edge_of_the_forest"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "With so many animals and friends, our house is too small! Bring twelve logs from Frosttorp, two crates of tools and two pots of tar, and we make it longer.",
+  "items": {
+    "log": {
+      "name": "Log",
+      "color": "8a5a2b",
+      "one": "a log",
+      "many": "logs"
+    },
+    "tar": {
+      "name": "Tar",
+      "color": "3a2a1a",
+      "one": "a pot of tar",
+      "many": "pots of tar"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "log",
+      "count": 12,
+      "from": "farm",
+      "to": "home",
+      "from_who": {
+        "name": "Arne of Frosttorp",
+        "hair": "a04a20"
+      },
+      "load_say": "Twelve logs! Fill that big hold of yours."
+    },
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "tools",
+      "count": 2,
+      "say": "Axes and nails. Now the tar for the roof."
+    },
+    {
+      "do": "carry",
+      "item": "tar",
+      "count": 2,
+      "from": "fishers_2",
+      "to": "home",
+      "from_who": {
+        "name": "Helga the fisher",
+        "hair": "c9602a",
+        "braids": true
+      }
+    },
+    {
+      "do": "visit",
+      "at": "home",
+      "wait": 1,
+      "say": "Hammering all night with the neighbours... Our longhouse is twice as long! Room for a feast."
+    }
+  ],
+  "reward": {
+    "silver": 10
+  },
+  "fact": "A longhouse could be made longer by adding a piece at the end, like a train."
+}

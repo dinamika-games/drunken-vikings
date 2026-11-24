@@ -1,0 +1,56 @@
+{
+  "number": 28,
+  "id": "the_lost_lamb",
+  "title": "The Lost Lamb",
+  "kind": "find",
+  "requires": [
+    "bees_for_solby"
+  ],
+  "giver": {
+    "name": "Sten the shepherd",
+    "hair": "8a5a2b",
+    "place": "herders"
+  },
+  "offer": "One of the lambs from the cold night is gone! The little one with the black ear. Ask Freya and Liv, they paddle everywhere in their canoe.",
+  "items": {
+    "lamb": {
+      "name": "Lamb",
+      "color": "e8e0d0",
+      "picture": [
+        "farm",
+        "lamb"
+      ],
+      "one": "the lamb"
+    }
+  },
+  "steps": [
+    {
+      "do": "hail",
+      "skipper": "freya_and_liv",
+      "say": "A lamb with a black ear? We saw one on Laxön, eating Tova's flowers!"
+    },
+    {
+      "do": "carry",
+      "item": "lamb",
+      "count": 1,
+      "from": "healer",
+      "to": "herders",
+      "from_who": {
+        "name": "Tova the healer",
+        "picture": "healer"
+      },
+      "load_say": "She swam over! Can you imagine? She is wet but well. Take her home."
+    },
+    {
+      "do": "visit",
+      "at": "herders",
+      "say": "Black Ear! She runs to her mother. Keep the other lamb of that ewe: she likes you."
+    }
+  ],
+  "reward": {
+    "animals": {
+      "sheep": 1
+    }
+  },
+  "fact": "Sheep can swim, but they do not like it: their wool gets heavy."
+}

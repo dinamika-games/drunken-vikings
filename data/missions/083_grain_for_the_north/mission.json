@@ -1,0 +1,29 @@
+{
+  "number": 83,
+  "id": "grain_for_the_north",
+  "title": "Grain for the North",
+  "kind": "deliver",
+  "requires": [
+    "the_colt_in_the_mud"
+  ],
+  "giver": {
+    "name": "Chieftain Eirik",
+    "picture": "chieftain",
+    "place": "chieftain"
+  },
+  "offer": "My hunters send news: the summer in the north was cold, and their families have no grain. My ship leaves in three days: fill it with twelve crates!",
+  "days": 3,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "chieftain",
+      "item": "grain",
+      "count": 12,
+      "say": "Twelve crates! Nobody in the north goes hungry this winter. The whole valley thanks you."
+    }
+  ],
+  "reward": {
+    "silver": 40
+  },
+  "fact": "When the harvest failed, the farms helped each other: next year, it might be them."
+}

@@ -1,0 +1,33 @@
+{
+  "number": 3,
+  "id": "eggs_for_the_inn",
+  "title": "Eggs for the Inn",
+  "kind": "deliver",
+  "requires": [
+    "the_old_boat"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "Our hens lay more eggs than we can eat. Gudrun at the inn in Vargvik pays well for them. Load two crates of eggs from the store and bring them to her.",
+  "days": 3,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "inn",
+      "item": "eggs",
+      "count": 2,
+      "who": {
+        "name": "Gudrun the innkeeper",
+        "picture": "inn"
+      },
+      "say": "Fresh eggs! The guests will have pancakes tomorrow. Here is your silver, and come again."
+    }
+  ],
+  "reward": {
+    "silver": 8
+  },
+  "fact": "The inns by the sounds were where travellers slept and heard the news."
+}

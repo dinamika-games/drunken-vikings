@@ -1,0 +1,42 @@
+{
+  "number": 48,
+  "id": "geese_for_the_market",
+  "title": "Geese for the Market",
+  "kind": "deliver",
+  "requires": [
+    "the_tipsy_uncle"
+  ],
+  "giver": {
+    "name": "Ulf the market warden",
+    "picture": "market",
+    "place": "market"
+  },
+  "offer": "The geese of Frosttorp are the fattest on the lakes. I want six for the market! Each goose takes a crate, and they honk all the way.",
+  "items": {
+    "goose": {
+      "name": "Goose",
+      "color": "f1f0ea",
+      "one": "a goose",
+      "many": "geese"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "goose",
+      "count": 6,
+      "from": "farm",
+      "to": "market",
+      "from_who": {
+        "name": "Arne of Frosttorp",
+        "hair": "a04a20"
+      },
+      "load_say": "Honk! Honk! Hold on to your hats, girls.",
+      "say": "Six geese, and not one escaped! The market will be loud today."
+    }
+  ],
+  "reward": {
+    "silver": 20
+  },
+  "fact": "Geese were kept on viking farms for eggs, feathers and down for pillows."
+}

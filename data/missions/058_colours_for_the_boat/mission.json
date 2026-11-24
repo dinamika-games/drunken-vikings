@@ -1,0 +1,48 @@
+{
+  "number": 58,
+  "id": "colours_for_the_boat",
+  "title": "Colours for the Boat",
+  "kind": "make",
+  "requires": [
+    "eggs_for_the_spring_feast"
+  ],
+  "giver": {
+    "name": "Bjarne the boatwright",
+    "hair": "3a2a1a",
+    "place": "market"
+  },
+  "offer": "A great boat needs colours! Bring me three pots of paint from Dagny, and I paint your boat red and blue, with a dragon head on the prow.",
+  "items": {
+    "paint": {
+      "name": "Paint",
+      "color": "b8332a",
+      "one": "a pot of paint",
+      "many": "pots of paint"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "paint",
+      "count": 3,
+      "from": "potter",
+      "to": "market",
+      "from_who": {
+        "name": "Dagny the potter",
+        "hair": "3a2a1a",
+        "braids": true
+      },
+      "load_say": "Red ochre, blue woad and white chalk, ground fine in linseed oil."
+    },
+    {
+      "do": "visit",
+      "at": "market",
+      "wait": 1,
+      "say": "One night of painting. Look: red and blue stripes, and a dragon head with golden eyes. Everybody will know your boat!"
+    }
+  ],
+  "reward": {
+    "gift": "a painted boat with a dragon head"
+  },
+  "fact": "Viking ships were painted in bright colours, and their prows carved as dragons and snakes."
+}

@@ -1,0 +1,28 @@
+{
+  "number": 87,
+  "id": "a_cow_for_grim",
+  "title": "A Cow for Grim",
+  "kind": "deliver",
+  "requires": [
+    "news_for_everybody"
+  ],
+  "giver": {
+    "name": "Old Grim of Svanetorp",
+    "hair": "d8d8d0",
+    "place": "farm_3"
+  },
+  "offer": "I am old, and I would like fresh milk every morning. Bring me a cow from the horse farm. The swans will be jealous!",
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "farm_3",
+      "item": "animal:cow",
+      "count": 1,
+      "say": "A cow! I call her Swan, ha. Here, for your trouble, and for all the years you visited an old man."
+    }
+  ],
+  "reward": {
+    "silver": 50
+  },
+  "fact": "A good cow gave milk for ten years or more, and was part of the family."
+}

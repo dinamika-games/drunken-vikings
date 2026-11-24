@@ -1,0 +1,36 @@
+{
+  "number": 50,
+  "id": "the_first_snow",
+  "title": "The First Snow",
+  "kind": "fetch",
+  "requires": [
+    "the_runestone"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "Snowflakes! Winter is near. Our store needs feed for the animals: six crates of hay and four of grain. Your hold takes eight: think how to row it!",
+  "days": 3,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "hay",
+      "count": 6,
+      "say": "Hay for the sheep, the goats and Rosa. Now the grain."
+    },
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "grain",
+      "count": 4,
+      "say": "The store is full! Let the snow come. Come in, the soup is hot."
+    }
+  ],
+  "reward": {
+    "silver": 10
+  },
+  "fact": "In winter, the animals stayed in the barn for months and ate the hay of the summer."
+}

@@ -1,0 +1,29 @@
+{
+  "number": 69,
+  "id": "fish_for_the_hunters",
+  "title": "Fish for the Hunters",
+  "kind": "deliver",
+  "requires": [
+    "the_ducklings"
+  ],
+  "giver": {
+    "name": "Chieftain Eirik",
+    "picture": "chieftain",
+    "place": "chieftain"
+  },
+  "offer": "My hunters go north for the whole summer. They need dried fish: six crates. Bring them within three days, before they leave.",
+  "days": 3,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "chieftain",
+      "item": "fish",
+      "count": 6,
+      "say": "Six crates! The hunters say: this fish tastes better than the bear meat. Ha! Here is your silver."
+    }
+  ],
+  "reward": {
+    "silver": 30
+  },
+  "fact": "Dried fish kept for years, and was the bread of the travellers."
+}

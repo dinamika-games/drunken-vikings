@@ -1,0 +1,74 @@
+{
+  "number": 32,
+  "id": "honey_cakes",
+  "title": "Honey Cakes",
+  "kind": "deliver",
+  "requires": [
+    "the_mill_turns"
+  ],
+  "giver": {
+    "name": "Freya and Liv",
+    "picture": "freya_and_liv",
+    "place": "market"
+  },
+  "offer": "We want to sell honey cakes on the market! But we have no oven. Bring honey and grain to your grandmother; she bakes them overnight, and you bring us the cakes.",
+  "days": 3,
+  "items": {
+    "cakes": {
+      "name": "Cakes",
+      "color": "d8a050",
+      "picture": [
+        "goods",
+        "honey"
+      ],
+      "one": "a basket of honey cakes",
+      "many": "baskets of honey cakes"
+    }
+  },
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "honey",
+      "count": 1,
+      "who": {
+        "name": "Grandmother Åsa",
+        "picture": "grandmother"
+      },
+      "say": "Honey! Now the grain."
+    },
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "grain",
+      "count": 1,
+      "who": {
+        "name": "Grandmother Åsa",
+        "picture": "grandmother"
+      },
+      "say": "I bake them tonight. Come for them in the morning!"
+    },
+    {
+      "do": "carry",
+      "item": "cakes",
+      "count": 2,
+      "from": "home",
+      "to": "market",
+      "wait": 1,
+      "from_who": {
+        "name": "Grandmother Åsa",
+        "picture": "grandmother"
+      },
+      "load_say": "Still warm. Do not eat them all on the way!"
+    },
+    {
+      "do": "visit",
+      "at": "market",
+      "say": "They smell so good! Everybody comes to our stall. Here, half the silver is yours."
+    }
+  ],
+  "reward": {
+    "silver": 14
+  },
+  "fact": "Viking bread was flat and baked on hot stones; honey made it a treat."
+}

@@ -1,0 +1,35 @@
+{
+  "number": 1,
+  "id": "the_old_boat",
+  "title": "The Old Boat",
+  "kind": "visit",
+  "requires": [],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "This old boat was mine when I was young. Row it to Kråkhamn, the market village, and greet Ulf the warden. And bring me a crate of salt on the way back!",
+  "steps": [
+    {
+      "do": "visit",
+      "at": "market",
+      "who": {
+        "name": "Ulf the market warden",
+        "picture": "market"
+      },
+      "say": "So you are Åsa's girls! Welcome to Kråkhamn. Here you can buy and sell everything. Salt is cheap here: it comes from far away by ship."
+    },
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "salt",
+      "count": 1,
+      "say": "Salt! Now I can keep the butter and the fish. You rowed well. The boat is yours now."
+    }
+  ],
+  "reward": {
+    "silver": 5
+  },
+  "fact": "Vikings kept food with salt, smoke and drying: there was no ice in summer."
+}

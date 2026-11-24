@@ -1,0 +1,39 @@
+{
+  "number": 44,
+  "id": "ragnas_broken_oar",
+  "title": "Ragna's Broken Oar",
+  "kind": "rescue",
+  "requires": [
+    "sigvors_cheese"
+  ],
+  "giver": {
+    "name": "Tor the fisher",
+    "hair": "8a5a2b",
+    "place": "fishers"
+  },
+  "offer": "Ragna rowed out at dawn and is not back! I fear her oar broke. Find her on the lakes, then come back and fetch the spare oar for her.",
+  "steps": [
+    {
+      "do": "hail",
+      "skipper": "ragna",
+      "say": "Hello! Yes, my oar broke, and I drift with one. Tell Tor to give you the spare one!"
+    },
+    {
+      "do": "visit",
+      "at": "fishers",
+      "say": "She is well? Thank the gods. Here is the oar: bring it to her!"
+    },
+    {
+      "do": "hail",
+      "skipper": "ragna",
+      "say": "My oar! Now I can row again. Here, take some fish: the freshest on the lakes."
+    }
+  ],
+  "reward": {
+    "silver": 6,
+    "goods": {
+      "fish": 2
+    }
+  },
+  "fact": "Every viking boat carried spare oars: a broken oar was common."
+}

@@ -1,0 +1,41 @@
+{
+  "number": 5,
+  "id": "news_on_the_water",
+  "title": "News on the Water",
+  "kind": "find",
+  "requires": [
+    "eggs_for_the_inn"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "A good trader asks before she sells. Hail three boats on the lakes and ask about the price of wool. Then sell a crate of wool where it pays.",
+  "steps": [
+    {
+      "do": "hail",
+      "count": 3,
+      "says": [
+        "Wool? They always need it at the weaver in Guldvik.",
+        "The market in Kråkhamn buys wool too, they say."
+      ],
+      "say": "Now you know more than most traders! Sell your wool where they want it."
+    },
+    {
+      "do": "deliver",
+      "at": "weaver",
+      "item": "wool",
+      "count": 1,
+      "who": {
+        "name": "Sæunn the weaver",
+        "picture": "weaver"
+      },
+      "say": "Good soft wool! I will spin it into yarn and weave it into cloth. Thank you."
+    }
+  ],
+  "reward": {
+    "silver": 6
+  },
+  "fact": "News travelled with the boats: a skipper who knew the prices was worth a lot."
+}

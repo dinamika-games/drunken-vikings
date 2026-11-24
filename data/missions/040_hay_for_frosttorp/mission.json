@@ -1,0 +1,32 @@
+{
+  "number": 40,
+  "id": "hay_for_frosttorp",
+  "title": "Hay for Frosttorp",
+  "kind": "deliver",
+  "requires": [
+    "the_messengers_cold"
+  ],
+  "giver": {
+    "name": "Arne of Frosttorp",
+    "hair": "a04a20",
+    "place": "farm"
+  },
+  "offer": "My hay meadow was flooded, and the cows are hungry! I need eight crates of hay. Your big boat can do it in one trip.",
+  "days": 2,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "farm",
+      "item": "hay",
+      "count": 8,
+      "say": "Moo! Listen to them, they are happy. You saved my winter. Take this cheese."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "cheese": 2
+    },
+    "silver": 8
+  },
+  "fact": "Hay is dried grass; without enough of it, a farm could not keep its animals over winter."
+}

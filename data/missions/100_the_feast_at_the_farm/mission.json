@@ -1,0 +1,90 @@
+{
+  "number": 100,
+  "id": "the_feast_at_the_farm",
+  "title": "The Feast at the Farm",
+  "kind": "ferry",
+  "requires": [
+    "food_for_the_feast"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "The guests come! But some have no boat: bring Old Grim from Svanetorp, Old Halvard from Solby, and Tova from her island. Then the feast begins!",
+  "items": {
+    "grim": {
+      "name": "Grim",
+      "color": "d8d8d0",
+      "one": "Old Grim"
+    },
+    "halvard": {
+      "name": "Halvard",
+      "color": "d8d8d0",
+      "picture": [
+        "faces",
+        "halvard"
+      ],
+      "one": "Old Halvard"
+    },
+    "tova": {
+      "name": "Tova",
+      "color": "6a9a4a",
+      "picture": [
+        "faces",
+        "healer"
+      ],
+      "one": "Tova"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "grim",
+      "count": 1,
+      "from": "farm_3",
+      "to": "home",
+      "from_who": {
+        "name": "Old Grim of Svanetorp",
+        "hair": "d8d8d0"
+      },
+      "load_say": "A feast for an old man? I bring my cow's best butter!",
+      "say": "Welcome, Grim!"
+    },
+    {
+      "do": "carry",
+      "item": "halvard",
+      "count": 1,
+      "from": "farm_2",
+      "to": "home",
+      "from_who": {
+        "name": "Old Halvard the ferryman",
+        "picture": "halvard"
+      },
+      "load_say": "One more trip with my favourite skippers! Did I tell you about the sea serpent?",
+      "say": "Welcome, Halvard!"
+    },
+    {
+      "do": "carry",
+      "item": "tova",
+      "count": 1,
+      "from": "healer",
+      "to": "home",
+      "from_who": {
+        "name": "Tova the healer",
+        "picture": "healer"
+      },
+      "load_say": "My apprentices, healers now, and rowing me to a feast. I am proud of you."
+    },
+    {
+      "do": "visit",
+      "at": "home",
+      "say": "Everybody is here: the people and the animals of all the lakes, music and torches and songs. Look what you made of an old boat, three hens and a sheep."
+    }
+  ],
+  "reward": {
+    "silver": 50,
+    "gift": "the friendship of all the Home Lakes"
+  },
+  "fact": "Next spring, the way to the Long Lake opens: new lakes, new friends, new adventures."
+}

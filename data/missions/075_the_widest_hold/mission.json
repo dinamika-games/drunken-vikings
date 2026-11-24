@@ -1,0 +1,68 @@
+{
+  "number": 75,
+  "id": "the_widest_hold",
+  "title": "The Widest Hold",
+  "kind": "build",
+  "requires": [
+    "a_striped_sail"
+  ],
+  "giver": {
+    "name": "Bjarne the boatwright",
+    "hair": "3a2a1a",
+    "place": "market"
+  },
+  "offer": "Last time, I promise! Six oak branches from Frosttorp, four boxes of rivets from Hrafn, and 40 silver: your boat takes twelve crates, like a little knarr.",
+  "items": {
+    "oak": {
+      "name": "Oak",
+      "color": "6a4320",
+      "one": "an oak branch",
+      "many": "oak branches"
+    },
+    "rivets": {
+      "name": "Rivets",
+      "color": "6a7078",
+      "picture": [
+        "goods",
+        "tools"
+      ],
+      "one": "a box of rivets",
+      "many": "boxes of rivets"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "oak",
+      "count": 6,
+      "from": "farm",
+      "to": "market",
+      "from_who": {
+        "name": "Arne of Frosttorp",
+        "hair": "a04a20"
+      }
+    },
+    {
+      "do": "carry",
+      "item": "rivets",
+      "count": 4,
+      "from": "smith",
+      "to": "market",
+      "from_who": {
+        "name": "Hrafn the smith",
+        "picture": "smith"
+      },
+      "load_say": "Rivets for Bjarne? He must love you two."
+    },
+    {
+      "do": "pay",
+      "at": "market",
+      "silver": 40,
+      "say": "Twelve crates! She is the queen of the rowing boats. Now go and trade like the big ships."
+    }
+  ],
+  "reward": {
+    "capacity": 2
+  },
+  "fact": "A knarr was wide and deep, for the cargo; a longship was narrow and fast."
+}

@@ -1,0 +1,64 @@
+{
+  "number": 17,
+  "id": "midsummer_night",
+  "title": "Midsummer Night",
+  "kind": "deliver",
+  "requires": [
+    "a_dress_for_midsummer"
+  ],
+  "giver": {
+    "name": "Chieftain Eirik",
+    "picture": "chieftain",
+    "place": "chieftain"
+  },
+  "offer": "Midsummer night at my hall! We need two crates of mead, and garlands of flowers from Solby for the maypole. Come yourselves, in your new dresses!",
+  "days": 3,
+  "items": {
+    "garland": {
+      "name": "Garland",
+      "color": "e86a9a",
+      "picture": [
+        "goods",
+        "flowers"
+      ],
+      "one": "a garland",
+      "many": "garlands"
+    }
+  },
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "chieftain",
+      "item": "mead",
+      "count": 2,
+      "say": "Mead for the feast! Now the garlands."
+    },
+    {
+      "do": "carry",
+      "item": "garland",
+      "count": 2,
+      "from": "farm_2",
+      "to": "chieftain",
+      "from_who": {
+        "name": "Solveig of Solby",
+        "hair": "e8c25a",
+        "braids": true
+      },
+      "load_say": "We wove them all morning. They smell of summer!"
+    },
+    {
+      "do": "visit",
+      "at": "chieftain",
+      "who": {
+        "name": "Thora, the chieftain's daughter",
+        "hair": "e8c25a",
+        "braids": true
+      },
+      "say": "The garlands are up, the torches are lit, and everybody dances around the pole! Uncle Sven sings too loud. What a night!"
+    }
+  ],
+  "reward": {
+    "silver": 20
+  },
+  "fact": "Midsummer, the longest day, was a great feast in the north, with fires and dances."
+}

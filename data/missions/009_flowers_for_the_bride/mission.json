@@ -1,0 +1,87 @@
+{
+  "number": 9,
+  "id": "flowers_for_the_bride",
+  "title": "Flowers for the Bride",
+  "kind": "fetch",
+  "requires": [
+    "ale_for_the_wedding"
+  ],
+  "giver": {
+    "name": "Astrid of the mill",
+    "hair": "8a5a2b",
+    "braids": true,
+    "place": "mill"
+  },
+  "offer": "A bride needs a crown of flowers! Fetch a basket from the meadows of Solby and of Frosttorp, and the blue ribbon from Sæunn the weaver.",
+  "days": 3,
+  "items": {
+    "basket": {
+      "name": "Flowers",
+      "color": "e86a9a",
+      "picture": [
+        "goods",
+        "flowers"
+      ],
+      "one": "a basket of flowers",
+      "many": "baskets of flowers"
+    },
+    "ribbon": {
+      "name": "Ribbon",
+      "color": "2f5f8a",
+      "picture": [
+        "goods",
+        "cloth"
+      ],
+      "one": "the blue ribbon"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "basket",
+      "count": 1,
+      "from": "farm_2",
+      "to": "mill",
+      "from_who": {
+        "name": "Solveig of Solby",
+        "hair": "e8c25a",
+        "braids": true
+      },
+      "load_say": "Daisies and cornflowers from my meadow, for Astrid!"
+    },
+    {
+      "do": "carry",
+      "item": "basket",
+      "count": 1,
+      "from": "farm",
+      "to": "mill",
+      "from_who": {
+        "name": "Arne of Frosttorp",
+        "hair": "a04a20"
+      },
+      "load_say": "Bluebells and red clover. Do not let the goats eat them!"
+    },
+    {
+      "do": "carry",
+      "item": "ribbon",
+      "count": 1,
+      "from": "weaver",
+      "to": "mill",
+      "from_who": {
+        "name": "Sæunn the weaver",
+        "picture": "weaver"
+      },
+      "load_say": "Dyed blue with woad, the bluest ribbon on the lakes."
+    },
+    {
+      "do": "visit",
+      "at": "mill",
+      "say": "Oh, it is the most beautiful crown! Come, the music plays: dance with us at the wedding!"
+    }
+  ],
+  "reward": {
+    "silver": 10,
+    "gift": "a dance at the wedding"
+  },
+  "fact": "Viking brides wore a crown, sometimes of silver, often of flowers and straw."
+}

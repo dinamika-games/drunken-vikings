@@ -1,0 +1,32 @@
+{
+  "number": 22,
+  "id": "salt_for_stormvik",
+  "title": "Salt for Stormvik",
+  "kind": "deliver",
+  "requires": [
+    "fog_on_the_lakes"
+  ],
+  "giver": {
+    "name": "Tor the fisher",
+    "hair": "8a5a2b",
+    "place": "fishers"
+  },
+  "offer": "The herring came in! So many fish that we have no salt left to keep them. Bring us four crates of salt, quickly, before the catch spoils.",
+  "days": 2,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "fishers",
+      "item": "salt",
+      "count": 4,
+      "say": "Four crates! Now we salt the herring in barrels, and nobody goes hungry this winter."
+    }
+  ],
+  "reward": {
+    "silver": 14,
+    "goods": {
+      "fish": 2
+    }
+  },
+  "fact": "Salted herring kept for a whole winter; it was the food of the whole north."
+}

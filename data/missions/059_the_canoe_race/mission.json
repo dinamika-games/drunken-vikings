@@ -1,0 +1,55 @@
+{
+  "number": 59,
+  "id": "the_canoe_race",
+  "title": "The Canoe Race",
+  "kind": "race",
+  "requires": [
+    "eggs_for_the_spring_feast"
+  ],
+  "giver": {
+    "name": "Freya and Liv",
+    "picture": "freya_and_liv",
+    "place": "market"
+  },
+  "offer": "Race us! Whoever touches the jetties of Ålberga, Dimmberga and Svanetorp first and comes back here wins. Can you do it before the day ends?",
+  "days": 1,
+  "steps": [
+    {
+      "do": "visit",
+      "at": "herders",
+      "who": {
+        "name": "Sten the shepherd",
+        "hair": "8a5a2b"
+      },
+      "say": "Ålberga: touched! The canoe is right behind you!"
+    },
+    {
+      "do": "visit",
+      "at": "beekeeper",
+      "who": {
+        "name": "Alfhild the beekeeper",
+        "hair": "e8c25a",
+        "braids": true
+      },
+      "say": "Dimmberga! Row, row, they are close!"
+    },
+    {
+      "do": "visit",
+      "at": "farm_3",
+      "who": {
+        "name": "Old Grim of Svanetorp",
+        "hair": "d8d8d0"
+      },
+      "say": "Svanetorp! Now back to Kråkhamn!"
+    },
+    {
+      "do": "visit",
+      "at": "market",
+      "say": "You won! But only by a nose. Next time we win! Here, the prize: a honey cake each, and silver."
+    }
+  ],
+  "reward": {
+    "silver": 12
+  },
+  "fact": "Vikings loved contests: rowing, swimming, wrestling and running."
+}

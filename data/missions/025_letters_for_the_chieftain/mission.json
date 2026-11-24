@@ -1,0 +1,66 @@
+{
+  "number": 25,
+  "id": "letters_for_the_chieftain",
+  "title": "Letters for the Chieftain",
+  "kind": "deliver",
+  "requires": [
+    "fog_on_the_lakes"
+  ],
+  "giver": {
+    "name": "Gudrun the innkeeper",
+    "picture": "inn",
+    "place": "inn"
+  },
+  "offer": "Inga the messenger left a letter here for Chieftain Eirik, but she rowed off without it! Take it to Hjortingsala. The answer goes to Orm at the inn of Hallvik.",
+  "items": {
+    "letter": {
+      "name": "Letter",
+      "color": "f1e6cc",
+      "one": "the letter"
+    },
+    "answer": {
+      "name": "Answer",
+      "color": "f1e6cc",
+      "one": "the answer"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "letter",
+      "count": 1,
+      "from": "inn",
+      "to": "chieftain",
+      "to_who": {
+        "name": "Chieftain Eirik",
+        "picture": "chieftain"
+      },
+      "load_say": "Sealed with wax. Do not let it get wet!"
+    },
+    {
+      "do": "carry",
+      "item": "answer",
+      "count": 1,
+      "from": "chieftain",
+      "to": "inn_2",
+      "from_who": {
+        "name": "Chieftain Eirik",
+        "picture": "chieftain"
+      },
+      "to_who": {
+        "name": "Orm the innkeeper",
+        "hair": "3a2a1a"
+      },
+      "load_say": "Orm wants to brew for the autumn feast. Tell him: yes, and much!"
+    },
+    {
+      "do": "visit",
+      "at": "inn_2",
+      "say": "The chieftain says yes? Then I brew the biggest barrel of the lakes! Thank you, quick girls."
+    }
+  ],
+  "reward": {
+    "silver": 12
+  },
+  "fact": "Messages were often carved in runes on sticks of wood, or carried by heart."
+}

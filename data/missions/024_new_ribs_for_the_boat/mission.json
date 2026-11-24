@@ -1,0 +1,54 @@
+{
+  "number": 24,
+  "id": "new_ribs_for_the_boat",
+  "title": "New Ribs for the Boat",
+  "kind": "build",
+  "requires": [
+    "charcoal_for_the_smith"
+  ],
+  "giver": {
+    "name": "Bjarne the boatwright",
+    "hair": "3a2a1a",
+    "place": "market"
+  },
+  "offer": "Your boat could carry even more! Bring me three bent oak branches from Arne in Frosttorp and a crate of iron tools, and pay me 10 silver for the work.",
+  "items": {
+    "oak": {
+      "name": "Oak",
+      "color": "6a4320",
+      "one": "an oak branch",
+      "many": "oak branches"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "oak",
+      "count": 3,
+      "from": "farm",
+      "to": "market",
+      "from_who": {
+        "name": "Arne of Frosttorp",
+        "hair": "a04a20"
+      },
+      "load_say": "These oaks grew bent in the wind: just right for the ribs of a boat."
+    },
+    {
+      "do": "deliver",
+      "at": "market",
+      "item": "tools",
+      "count": 1,
+      "say": "Good iron. Now my wages."
+    },
+    {
+      "do": "pay",
+      "at": "market",
+      "silver": 10,
+      "say": "Done! New ribs, wider planks: your boat carries six crates now."
+    }
+  ],
+  "reward": {
+    "capacity": 1
+  },
+  "fact": "The ribs of a viking boat were cut from oaks which had grown in the right curve."
+}

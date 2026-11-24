@@ -1,0 +1,31 @@
+{
+  "number": 37,
+  "id": "barley_for_the_brewer",
+  "title": "Barley for the Brewer",
+  "kind": "deliver",
+  "requires": [
+    "the_chieftains_feast"
+  ],
+  "giver": {
+    "name": "Knut the brewer",
+    "hair": "c9602a",
+    "place": "brewer"
+  },
+  "offer": "Orm of Hallvik wants the biggest barrel of ale for the autumn feast. I need grain, five crates! Bring them, and you get two crates of my ale.",
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "brewer",
+      "item": "grain",
+      "count": 5,
+      "say": "Into the water with it, let it sprout... In a week, the best ale of the lakes!"
+    }
+  ],
+  "reward": {
+    "goods": {
+      "ale": 2
+    },
+    "silver": 6
+  },
+  "fact": "Ale was brewed from barley and water, often with herbs instead of hops."
+}

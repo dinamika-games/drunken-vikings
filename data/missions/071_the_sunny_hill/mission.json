@@ -1,0 +1,61 @@
+{
+  "number": 71,
+  "id": "the_sunny_hill",
+  "title": "The Sunny Hill",
+  "kind": "ferry",
+  "requires": [
+    "the_boat_procession"
+  ],
+  "giver": {
+    "name": "Arne of Frosttorp",
+    "hair": "a04a20",
+    "place": "farm"
+  },
+  "offer": "My old aunt Gerd moves to Solby, to her sister. She owns the sunny hill by your farm, and says: whoever rows me and my chests gets the hill! She has three chests.",
+  "items": {
+    "chest": {
+      "name": "Chest",
+      "color": "6a4320",
+      "one": "a chest",
+      "many": "chests"
+    },
+    "gerd": {
+      "name": "Gerd",
+      "color": "d8d8d0",
+      "one": "Aunt Gerd"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "chest",
+      "count": 3,
+      "from": "farm",
+      "to": "farm_2",
+      "to_who": {
+        "name": "Solveig of Solby",
+        "hair": "e8c25a",
+        "braids": true
+      },
+      "load_say": "Aunt Gerd: My chests! Careful, the blue one has my grandmother's spoons.",
+      "say": "Aunt Gerd's chests? Bring her too!"
+    },
+    {
+      "do": "carry",
+      "item": "gerd",
+      "count": 1,
+      "from": "farm",
+      "to": "farm_2",
+      "to_who": {
+        "name": "Aunt Gerd",
+        "hair": "d8d8d0",
+        "braids": true
+      },
+      "say": "My sister! And my chests! You are good girls. The sunny hill is yours: plant something beautiful on it."
+    }
+  ],
+  "reward": {
+    "plot": "hill"
+  },
+  "fact": "The land of a family passed from mother and father to the children; women could own land too."
+}

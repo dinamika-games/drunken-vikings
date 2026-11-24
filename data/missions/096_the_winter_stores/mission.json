@@ -1,0 +1,36 @@
+{
+  "number": 96,
+  "id": "the_winter_stores",
+  "title": "The Winter Stores",
+  "kind": "fetch",
+  "requires": [
+    "apples_for_the_market"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "Autumn again! Before the lakes freeze, fill the store: ten crates of hay and six of grain, within three days. You know how by now!",
+  "days": 3,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "hay",
+      "count": 10,
+      "say": "Hay for all our animals. Now the grain."
+    },
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "grain",
+      "count": 6,
+      "say": "The store is full to the roof! Not one animal will be hungry this winter."
+    }
+  ],
+  "reward": {
+    "silver": 15
+  },
+  "fact": "Autumn was the busiest time: everything for the long winter had to be in."
+}

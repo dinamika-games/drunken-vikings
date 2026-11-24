@@ -1,0 +1,30 @@
+{
+  "number": 31,
+  "id": "a_henhouse_full",
+  "title": "A Henhouse Full",
+  "kind": "fetch",
+  "requires": [
+    "the_mill_turns"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "Eggs sell so well! Let us have six hens. Buy hens at the market in Kråkhamn or the farm of Frosttorp, and bring them home.",
+  "steps": [
+    {
+      "do": "have",
+      "animal": "hen",
+      "count": 6,
+      "say": "Six hens! Cluck, cluck, scratch, scratch. Do not forget: they eat grain."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "grain": 3
+    },
+    "silver": 4
+  },
+  "fact": "Viking hens were small and laid fewer eggs than ours, but every farm had some."
+}

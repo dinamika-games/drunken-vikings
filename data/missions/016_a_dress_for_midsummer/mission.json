@@ -1,0 +1,66 @@
+{
+  "number": 16,
+  "id": "a_dress_for_midsummer",
+  "title": "A Dress for Midsummer",
+  "kind": "make",
+  "requires": [
+    "the_market_day",
+    "the_sick_calf"
+  ],
+  "giver": {
+    "name": "Sæunn the weaver",
+    "picture": "weaver",
+    "place": "weaver"
+  },
+  "offer": "Midsummer is coming, and you need dresses! Bring me two crates of wool, the red madder from Solby, and the silver clasp which Hrafn the smith makes for a few pieces of silver.",
+  "days": 4,
+  "items": {
+    "madder": {
+      "name": "Madder",
+      "color": "b8332a",
+      "one": "the madder roots"
+    }
+  },
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "weaver",
+      "item": "wool",
+      "count": 2,
+      "say": "Good wool. Now the red dye."
+    },
+    {
+      "do": "carry",
+      "item": "madder",
+      "count": 1,
+      "from": "farm_2",
+      "to": "weaver",
+      "from_who": {
+        "name": "Solveig of Solby",
+        "hair": "e8c25a",
+        "braids": true
+      },
+      "load_say": "Madder roots from my garden: they dye the wool red as a sunset."
+    },
+    {
+      "do": "pay",
+      "at": "smith",
+      "silver": 6,
+      "who": {
+        "name": "Hrafn the smith",
+        "picture": "smith"
+      },
+      "say": "A clasp shaped like a little bird. Mind it, it is silver!"
+    },
+    {
+      "do": "visit",
+      "at": "weaver",
+      "wait": 1,
+      "say": "One night of weaving, and here they are: two red dresses with silver clasps. You will be the prettiest at midsummer!"
+    }
+  ],
+  "reward": {
+    "gift": "two red midsummer dresses"
+  },
+  "fact": "Red dye came from the roots of madder, blue from woad, yellow from weld."
+}

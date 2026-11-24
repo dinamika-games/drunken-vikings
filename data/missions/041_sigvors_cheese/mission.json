@@ -1,0 +1,46 @@
+{
+  "number": 41,
+  "id": "sigvors_cheese",
+  "title": "Sigvor's Cheese",
+  "kind": "deliver",
+  "requires": [
+    "hay_for_frosttorp"
+  ],
+  "giver": {
+    "name": "Sigvor the goat woman",
+    "picture": "sigvor",
+    "place": "herders"
+  },
+  "offer": "My goats gave so much milk this summer! I made four big wheels of cheese for Orm's autumn feast in Hallvik, but my boat is full of goats. Will you carry them?",
+  "items": {
+    "wheel": {
+      "name": "Cheese",
+      "color": "f2c14e",
+      "picture": [
+        "goods",
+        "cheese"
+      ],
+      "one": "a wheel of cheese",
+      "many": "wheels of cheese"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "wheel",
+      "count": 4,
+      "from": "herders",
+      "to": "inn_2",
+      "to_who": {
+        "name": "Orm the innkeeper",
+        "hair": "3a2a1a"
+      },
+      "load_say": "Roll them in gently. And no nibbling!",
+      "say": "Sigvor's cheese! The guests will fight over it. Well, not fight: they will ask nicely."
+    }
+  ],
+  "reward": {
+    "silver": 16
+  },
+  "fact": "Cheese keeps the milk of the summer for the winter."
+}

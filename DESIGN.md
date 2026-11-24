@@ -231,40 +231,139 @@ The game is for **girls of seven to twelve**. The missions are about what they l
 | **Build** | Bring the timber, the iron and the tar for a new stable, a jetty, a bridge; the players see it grow. |
 | **Make** | Bring what a craftswoman needs to make something beautiful (dyes, wool, amber, silver), and get it as a reward: a dress, a brooch, a painted sail. |
 
-### Region 1: The Home Lakes (missions 1 to 20)
+### How the missions work
 
-The first region teaches the rowing, the trading, the farm and the animals, and makes the players Tova's helpers. The story: Ylva and Sigrid get Grandmother Åsa's old rowing boat and a small farm with three hens and a sheep, and want to make the farm a home for many animals.
+The people of the lakes offer the missions in their ports (the card "Tasks"; Grandmother Åsa's board at home tells where the others wait, and the skippers on the lakes say who looks for help). A mission unlocks when the missions it requires are done; the players carry out **at most three at a time**. A mission is a list of steps, done one after the other (`scenes/game/missions.gd`):
 
-| # | Title | Kind | Summary |
+| Step | What the players do |
+|---|---|
+| **visit** | Dock at a place (talk to someone). |
+| **carry** | Take the items of the mission (a passenger, a letter, barrels of wedding ale, logs, a lamb) at one place and bring them to another. |
+| **deliver** | Bring goods or animals which the players buy or make themselves (3 crates of salt, 2 goats); at home, they go into the store and onto the farm. |
+| **pay** | Pay silver at a place (the weaver's clasp, the boatwright's wages). |
+| **hail** | Hail a skipper on the lakes (a given one, or any). |
+| **have**, **plant** | Have so many animals on the farm; plant a crop. |
+
+Any step may wait some nights after the step before (the cloth is woven overnight, the horse rests a night).
+
+**The hold.** Every item of a mission takes the room of a crate in the boat, like the goods and the animals. When the boat is full, it takes what fits, and the rest waits at the jetty for the next trip; the players make room by selling, or by unloading at home (the items of the missions stay in the boat). So the hold matters: a small boat (4 crates) takes the six logs of the stable in two trips, and five missions make it bigger (to 5, 6, 8, 10 and 12 crates), for the hauls of the second year (twelve baskets of apples, twelve crates of grain for the north).
+
+**Where to go.** The HUD lists the missions under way with what to do next ("Bring 3 barrels of wedding ale to Mjödkvarn"), the minimap rings the places where they lead, and when such a place is off the screen, a golden arrow on a ring around the middle of the screen points to it, with its name and the mission (arrows which point nearly the same way become one). The key **C** shows the map of the whole region (`WorldChart`), with all the names, the gold rings of the missions and the boats; the game waits until C (or Esc) closes it.
+
+### The 100 missions
+
+For now, all of them play on the Home Lakes, over two years: the first (1 to 50) from the old boat to the first snow, the second (51 to 100) from the breaking of the ice, through the players becoming healers, to the feast at the farm. They move to their regions as the regions are built.
+
+| # | Title | Kind | Given by |
 |---|---|---|---|
-| 1 | Follow the Longship | Follow | The longship of the traders passes by; follow it to the market village, and learn to row and to steer. (The level which works now.) |
-| 2 | A Pet of My Own | Ferry | At the market, a girl has more kittens (or puppies, or little goats) than she can keep; choose one, name it, and row it home. |
-| 3 | Eggs for the Inn | Deliver | Sell the eggs of the hens to the inn by the sound; the first silver, and the first look at a market. |
-| 4 | The Sneezing Sheep | Heal | The sheep sneezes. Tova says: thyme from the island of the herbs. Fetch it, and the sheep is well; Tova asks for help with more animals. |
-| 5 | News on the Water | Find | Hail three boats on the lakes and ask about the best price for wool; sell the wool where it pays most. |
-| 6 | Two Goats for the Farm | Fetch | Buy two goats at the farm across the lake and row them home (they bleat all the way). Build them a pen. |
-| 7 | The Swan in the Net | Rescue | A swan is tangled in a fisher's old net in the reeds; row carefully between the reeds, free it, and the fisher gives you a fish trap. |
-| 8 | Ale for the Wedding | Deliver | Astrid of the mill marries Bjarne the boatwright. Bring the ale from the brewer in time, without spilling (row smoothly). |
-| 9 | Flowers for the Bride | Fetch | Gather the flowers for the bride's crown from three meadows by the lakes, and the blue dye for her ribbons. Dance at the wedding. |
-| 10 | The Lamb in the Cold Night | Care | A late frost; the farm on the north shore has newborn lambs. Bring blankets and warm milk before the night falls. |
-| 11 | Who Takes the Honey? | Find | The honey of the beekeeper disappears. Ask the boats, follow the paw prints on the shore: a bear cub! Bring him back to his mother on the far shore with a pot of honey. |
-| 12 | The Foal Is Coming | Care | The mare of the horse farm is about to foal; row Tova there quickly, and the foal is born. The family promises you a foal when it is grown. |
-| 13 | The Market Day | Race | The great market day on the island; be the first with the new honey and the cheese of the goats, ahead of the friendly rival Gunnhild, who becomes a friend. |
-| 14 | The Sick Calf | Heal | The calf of the inn's cow does not drink. Tova needs chamomile and a warm stone; bring both, and sit with the calf till it drinks. |
-| 15 | A Dress for Midsummer | Make | Bring wool, the red dye of the madder and a silver clasp to the weaver; she makes the players dresses for midsummer. |
-| 16 | Midsummer Night | Deliver | Bring the mead and the flowers for the midsummer feast on the island, row in the boat procession by torchlight, and see the dance. |
-| 17 | The Kitten in the Boathouse | Find | The pet is gone! Ask everybody on the lakes; it hid in the boathouse of the boatwright and has kittens of its own. |
-| 18 | The Stable | Build | Bring timber, nails from the smith and tar for a stable at the farm, ready for the foal. |
-| 19 | Fog on the Lakes | Rescue | A fog falls; the children of the inn rowed out to the islands. Find them in the fog (listen to their calls) and guide them home. |
-| 20 | The Foal Comes Home | Ferry | The foal is grown enough: bring it home on a raft from the horse farm, row gently, and the farm has its first horse. The way to the Long Lake opens. |
+| 1 | The Old Boat | Visit | Grandmother Åsa, Rimgården |
+| 2 | A Pet of My Own | Ferry | Freya and Liv, Kråkhamn |
+| 3 | Eggs for the Inn | Deliver | Grandmother Åsa, Rimgården |
+| 4 | The Sneezing Sheep | Heal | Grandmother Åsa, Rimgården |
+| 5 | News on the Water | Find | Grandmother Åsa, Rimgården |
+| 6 | Two Goats for the Farm | Fetch | Grandmother Åsa, Rimgården |
+| 7 | The Swan in the Net | Rescue | Old Grim of Svanetorp, Svanetorp |
+| 8 | Ale for the Wedding | Deliver | Astrid of the mill, Mjödkvarn |
+| 9 | Flowers for the Bride | Fetch | Astrid of the mill, Mjödkvarn |
+| 10 | A Bigger Hold | Build | Bjarne the boatwright, Kråkhamn |
+| 11 | The Lambs in the Cold Night | Care | Sten the shepherd, Ålberga |
+| 12 | Who Takes the Honey? | Find | Alfhild the beekeeper, Dimmberga |
+| 13 | The Foal Is Coming | Ferry | Ragnfrid of the horse farm, Torsgården |
+| 14 | The Market Day | Race | Ulf the market warden, Kråkhamn |
+| 15 | The Sick Calf | Heal | Gudrun the innkeeper, Vargvik |
+| 16 | A Dress for Midsummer | Make | Sæunn the weaver, Guldvik |
+| 17 | Midsummer Night | Deliver | Chieftain Eirik, Hjortingsala |
+| 18 | The Kitten in the Boathouse | Find | Grandmother Åsa, Rimgården |
+| 19 | The Stable | Build | Grandmother Åsa, Rimgården |
+| 20 | Fog on the Lakes | Rescue | Gudrun the innkeeper, Vargvik |
+| 21 | The Foal Comes Home | Ferry | Ragnfrid of the horse farm, Torsgården |
+| 22 | Salt for Stormvik | Deliver | Tor the fisher, Stormvik |
+| 23 | Charcoal for the Smith | Deliver | Hrafn the smith, Gäddarby |
+| 24 | New Ribs for the Boat | Build | Bjarne the boatwright, Kråkhamn |
+| 25 | Letters for the Chieftain | Deliver | Gudrun the innkeeper, Vargvik |
+| 26 | Clay for the Potter | Fetch | Dagny the potter, Bergö |
+| 27 | Bees for Solby | Deliver | Solveig of Solby, Solby |
+| 28 | The Lost Lamb | Find | Sten the shepherd, Ålberga |
+| 29 | Herbs for the Lakes | Deliver | Tova the healer, Laxön |
+| 30 | The Mill Turns | Deliver | Astrid of the mill, Mjödkvarn |
+| 31 | A Henhouse Full | Fetch | Grandmother Åsa, Rimgården |
+| 32 | Honey Cakes | Deliver | Freya and Liv, Kråkhamn |
+| 33 | The Chieftain's Feast | Deliver | Chieftain Eirik, Hjortingsala |
+| 34 | The Ferryman's Tale | Explore | Orm the innkeeper, Hallvik |
+| 35 | Wool for the Winter Cloth | Deliver | Sæunn the weaver, Guldvik |
+| 36 | Flax in the Field | Make | Sæunn the weaver, Guldvik |
+| 37 | Barley for the Brewer | Deliver | Knut the brewer, Lindtorp |
+| 38 | A Proper Hold | Build | Bjarne the boatwright, Kråkhamn |
+| 39 | The Messenger's Cold | Deliver | Inga the messenger, Vargvik |
+| 40 | Hay for Frosttorp | Deliver | Arne of Frosttorp, Frosttorp |
+| 41 | Sigvor's Cheese | Deliver | Sigvor the goat woman, Ålberga |
+| 42 | A Cow of Our Own | Fetch | Grandmother Åsa, Rimgården |
+| 43 | Pots for Ekvik | Deliver | Helga the fisher, Ekvik |
+| 44 | Ragna's Broken Oar | Rescue | Tor the fisher, Stormvik |
+| 45 | Torches for the Dark | Deliver | Orm the innkeeper, Hallvik |
+| 46 | The Autumn Feast | Deliver | Orm the innkeeper, Hallvik |
+| 47 | The Tipsy Uncle | Ferry | Orm the innkeeper, Hallvik |
+| 48 | Geese for the Market | Deliver | Ulf the market warden, Kråkhamn |
+| 49 | The Runestone | Build | Chieftain Eirik, Hjortingsala |
+| 50 | The First Snow | Fetch | Grandmother Åsa, Rimgården |
+| 51 | The Ice Breaks | Find | Grandmother Åsa, Rimgården |
+| 52 | The Coughing Horse | Heal | Tova the healer, Laxön |
+| 53 | The Lame Goat | Heal | Sigvor the goat woman, Ålberga |
+| 54 | Barley in Spring | Make | Grandmother Åsa, Rimgården |
+| 55 | The Great Hold | Build | Bjarne the boatwright, Kråkhamn |
+| 56 | Bjørn's Salt Run | Deliver | Bjørn the salt trader, Kråkhamn |
+| 57 | Eggs for the Spring Feast | Deliver | Gudrun the innkeeper, Vargvik |
+| 58 | Colours for the Boat | Make | Bjarne the boatwright, Kråkhamn |
+| 59 | The Canoe Race | Race | Freya and Liv, Kråkhamn |
+| 60 | Hild's Wedding | Deliver | Hrafn the smith, Gäddarby |
+| 61 | The Swarm | Rescue | Alfhild the beekeeper, Dimmberga |
+| 62 | The Cracked Kiln | Build | Dagny the potter, Bergö |
+| 63 | Hay for Ålberga | Deliver | Sten the shepherd, Ålberga |
+| 64 | The Ferryman's Last Trip | Ferry | Orm the innkeeper, Hallvik |
+| 65 | Shearing Time | Deliver | Sten the shepherd, Ålberga |
+| 66 | The Chieftain's Horse | Ferry | Chieftain Eirik, Hjortingsala |
+| 67 | A Brooch for Thora | Make | Thora, the chieftain's daughter, Hjortingsala |
+| 68 | The Ducklings | Rescue | Freya and Liv, Kråkhamn |
+| 69 | Fish for the Hunters | Deliver | Chieftain Eirik, Hjortingsala |
+| 70 | The Boat Procession | Deliver | Chieftain Eirik, Hjortingsala |
+| 71 | The Sunny Hill | Ferry | Arne of Frosttorp, Frosttorp |
+| 72 | A Flock of Our Own | Fetch | Grandmother Åsa, Rimgården |
+| 73 | The Bear Comes Back | Find | Alfhild the beekeeper, Dimmberga |
+| 74 | A Striped Sail | Make | Sæunn the weaver, Guldvik |
+| 75 | The Widest Hold | Build | Bjarne the boatwright, Kråkhamn |
+| 76 | A Wedding at Frosttorp | Ferry | Solveig of Solby, Solby |
+| 77 | Ale for Two Inns | Deliver | Knut the brewer, Lindtorp |
+| 78 | The Sleepy Hens | Heal | Grandmother Åsa, Rimgården |
+| 79 | The Smith's Bellows | Build | Hrafn the smith, Gäddarby |
+| 80 | Grandmother's Birthday | Fetch | Tova the healer, Laxön |
+| 81 | The Healers' Round | Heal | Tova the healer, Laxön |
+| 82 | The Colt in the Mud | Rescue | Ragnfrid of the horse farm, Torsgården |
+| 83 | Grain for the North | Deliver | Chieftain Eirik, Hjortingsala |
+| 84 | The Wool Fair | Deliver | Ulf the market warden, Kråkhamn |
+| 85 | The Goats on the Island | Rescue | Sigvor the goat woman, Ålberga |
+| 86 | News for Everybody | Deliver | Inga the messenger, Vargvik |
+| 87 | A Cow for Grim | Deliver | Old Grim of Svanetorp, Svanetorp |
+| 88 | Flowers on the Hill | Make | Grandmother Åsa, Rimgården |
+| 89 | The Pottery Market | Deliver | Dagny the potter, Bergö |
+| 90 | Gudrun's Ring | Find | Gudrun the innkeeper, Vargvik |
+| 91 | The Edge of the Forest | Deliver | Arne of Frosttorp, Frosttorp |
+| 92 | The Longhouse Grows | Build | Grandmother Åsa, Rimgården |
+| 93 | The Green Valley | Deliver | Chieftain Eirik, Hjortingsala |
+| 94 | Bees for the Valley | Fetch | Grandmother Åsa, Rimgården |
+| 95 | Apples for the Market | Deliver | Solveig of Solby, Solby |
+| 96 | The Winter Stores | Fetch | Grandmother Åsa, Rimgården |
+| 97 | Fish for Every Farm | Deliver | Tor the fisher, Stormvik |
+| 98 | Invitations | Find | Grandmother Åsa, Rimgården |
+| 99 | Food for the Feast | Fetch | Grandmother Åsa, Rimgården |
+| 100 | The Feast at the Farm | Ferry | Grandmother Åsa, Rimgården |
 
 ### The arc
 
-The missions tell, region by region, the story of the players' farm and trading house, which grow from a rowing boat, three hens and a sheep to a knarr which sails the sea and a farm full of animals, and of the people and the animals they help on the way. Tova's helpers become healers known on all the lakes. The last missions bring in the stores for the winter and end with a feast at the farm, to which all the friends from all the lakes come, with their animals.
+The missions tell the story of the players' farm, which grows from an old boat, three hens and a sheep to a farm with goats, a cow, a flock, bees, a filly, the sunny hill, the forest edge and the green valley, and of the people and the animals they help on the way. Tova's helpers become healers known on all the lakes. The last missions bring in the stores for the winter and end with a feast at the farm, to which all the friends from all the lakes come.
 
 ### Stars
 
-Each mission gives 1 to 3 stars, for the time and for doing it well (a delivery on time, the ale not spilled, the animal well again). Stars unlock some looks and parts of the farm, and are shown on the mission list; no other scores.
+Each mission gives 1 to 3 stars, by how many days it took against its "days" (3 stars without them): within the days, three; two days later, two; later still, one. Nothing ever fails. Stars are shown on the board of the tasks; no other scores.
 
 ## 11. The trips and the saves
 
@@ -288,7 +387,7 @@ Each mission gives 1 to 3 stars, for the time and for doing it well (a delivery 
 * **The NPC boats** follow their routes with the same boat physics as the players (`RowBoat`), and a small set of behaviours (sail, wait at a jetty, hail, offer a trade, need help).
 * **The farm** is plain data too (the animals, the plots, the buildings, the store), with a simulation by days (feed, goods, growth), unit-tested: no animal ever dies, whatever the numbers.
 * **The news** are made from templates and the state of the economy ("{good} sells for {price} in {place}"), so they are always true when told.
-* **The missions** are data (`data/missions/<nn>_<id>/`), built from the blocks of section 10, as in Bird Dog.
+* **The missions** are data (`data/missions/<nnn>_<id>/mission.json`), built from the steps of section 10, as in Bird Dog; `Missions` checks them when it loads them, and `tests/godot/test_missions.gd` plays all of them through.
 * **Translations** from the start (English, German, Swedish, ...), as in our other games.
 
 # Open questions

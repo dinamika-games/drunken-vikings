@@ -1,0 +1,36 @@
+{
+  "number": 14,
+  "id": "the_market_day",
+  "title": "The Market Day",
+  "kind": "race",
+  "requires": [
+    "the_foal_is_coming"
+  ],
+  "giver": {
+    "name": "Ulf the market warden",
+    "picture": "market",
+    "place": "market"
+  },
+  "offer": "The great market day is soon! The first trader with new honey and goat's cheese gets the best place. Gunnhild from the Long Lake wants it too. Can you beat her?",
+  "days": 2,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "market",
+      "item": "honey",
+      "count": 2,
+      "say": "Two crates of honey! Now the cheese."
+    },
+    {
+      "do": "deliver",
+      "at": "market",
+      "item": "cheese",
+      "count": 2,
+      "say": "Honey and cheese, and before Gunnhild! She laughs and says: next time I win. I think you two will be friends."
+    }
+  ],
+  "reward": {
+    "silver": 16
+  },
+  "fact": "On market days, traders came from far away; the best stalls went to the first."
+}

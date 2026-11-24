@@ -2,8 +2,9 @@ class_name WorldHud
 extends Control
 
 ## What the open world shows over the lakes: the day, the silver and the
-## cargo, what the farm reminds of, the last news, the map of the region with
-## the settlements and the boats, and, for two players, the pull of each oar.
+## cargo, the tasks under way, what the farm reminds of, the last news, the
+## map of the region with the settlements and the boats (and gold rings where
+## the tasks lead), and, for two players, the pull of each oar.
 
 const _PAPER := Color("f1f0ea")
 const _GOLD := Color("f2c14e")
@@ -36,6 +37,7 @@ func _draw() -> void:
     if world == null or world.map() == null or world.map().places.is_empty():
         return
     _draw_purse()
+    _draw_tasks()
     _draw_reminder()
     _draw_minimap()
     _draw_rowing()
@@ -70,6 +72,9 @@ func _draw_purse() -> void:
                 draw_rect(rect, Color("e8d8b0"))
                 Pictures.draw(self, picture, rect.get_center(), 42.0)
                 draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+            elif Missions.is_item(item):
+                draw_rect(rect, state.missions.item_color(item))
+                draw_rect(rect, _GOLD, false, 3.0)
             elif item.begins_with("animal:"):
                 draw_rect(rect, Color("7a8a4a"))
                 draw_circle(rect.get_center(), 14.0, Color("f1f0ea"))
@@ -91,10 +96,24 @@ func _draw_purse() -> void:
 
 ## The painted picture of a crate in the boat: the good, or the animal.
 func _cargo_picture(item: String) -> Texture2D:
+    if Missions.is_item(item):
+        var picture: Array = world.state().missions.item_picture(item)
+        return Pictures.of(picture[0], picture[1]) if picture.size() == 2 else null
     if item.begins_with("animal:"):
         var kind := item.trim_prefix("animal:")
         return Pictures.of("farm", "beehive" if kind == "bees" else kind)
     return Pictures.of("goods", item)
+
+
+## The tasks under way, and what to do next for each.
+func _draw_tasks() -> void:
+    var state: Node = world.state()
+    var y := 270.0
+    for entry in state.missions.active:
+        var id: String = entry["id"]
+        _outlined(Vector2(30, y), state.missions.missions[id]["title"], 26, _GOLD)
+        _outlined(Vector2(30, y + 30), state.missions.hint(state, id), 20)
+        y += 72.0
 
 
 ## What the farm reminds of, and what happened last.
@@ -161,6 +180,14 @@ func _draw_minimap() -> void:
             Pictures.draw(self, building, at, 20.0)
         else:
             draw_rect(Rect2(at - Vector2(4, 4), Vector2(8, 8)), _GOLD if home else _RED)
+    var state: Node = world.state()
+    for entry in state.missions.active:
+        var target: String = state.missions.target(state, entry["id"])
+        if target != "":
+            var place := map.place(target)
+            var ring: Vector2 = _MINIMAP.position + place["jetty"] * _minimap_scale
+            draw_arc(ring, 17.0, 0.0, TAU, 24, _INK, 6.0)
+            draw_arc(ring, 17.0, 0.0, TAU, 24, _GOLD, 3.0)
     for npc in world.npcs():
         var at: Vector2 = _MINIMAP.position + npc.position * _minimap_scale
         var skipper := Pictures.of("skippers", npc.skipper.get("picture", ""))

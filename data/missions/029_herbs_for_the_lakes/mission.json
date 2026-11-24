@@ -1,0 +1,75 @@
+{
+  "number": 29,
+  "id": "herbs_for_the_lakes",
+  "title": "Herbs for the Lakes",
+  "kind": "deliver",
+  "requires": [
+    "the_lost_lamb"
+  ],
+  "giver": {
+    "name": "Tova the healer",
+    "picture": "healer",
+    "place": "healer"
+  },
+  "offer": "Autumn comes, and the animals catch colds. Take my herbs to those who need them: two bundles to the horse farm, two to the herders, two to Gudrun's inn.",
+  "items": {
+    "herbs": {
+      "name": "Herbs",
+      "color": "6a9a4a",
+      "picture": [
+        "goods",
+        "herbs"
+      ],
+      "one": "a bundle of herbs",
+      "many": "bundles of herbs"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "herbs",
+      "count": 2,
+      "from": "healer",
+      "to": "horse_farm",
+      "to_who": {
+        "name": "Ragnfrid of the horse farm",
+        "picture": "horse_farm"
+      }
+    },
+    {
+      "do": "carry",
+      "item": "herbs",
+      "count": 2,
+      "from": "healer",
+      "to": "herders",
+      "to_who": {
+        "name": "Sten the shepherd",
+        "hair": "8a5a2b"
+      }
+    },
+    {
+      "do": "carry",
+      "item": "herbs",
+      "count": 2,
+      "from": "healer",
+      "to": "inn",
+      "to_who": {
+        "name": "Gudrun the innkeeper",
+        "picture": "inn"
+      },
+      "say": "Herbs from Tova! Now the cow and the calf stay well all winter."
+    },
+    {
+      "do": "visit",
+      "at": "healer",
+      "say": "All delivered? You are real helpers now. Take these herbs for your own animals."
+    }
+  ],
+  "reward": {
+    "silver": 10,
+    "goods": {
+      "herbs": 2
+    }
+  },
+  "fact": "Healers dried herbs in bundles under the roof, to have them all winter."
+}

@@ -1,0 +1,43 @@
+{
+  "number": 95,
+  "id": "apples_for_the_market",
+  "title": "Apples for the Market",
+  "kind": "deliver",
+  "requires": [
+    "bees_for_the_valley"
+  ],
+  "giver": {
+    "name": "Solveig of Solby",
+    "hair": "e8c25a",
+    "braids": true,
+    "place": "farm_2"
+  },
+  "offer": "Thanks to the bees, my trees are full of apples! Twelve baskets for the market in Kråkhamn. Only your boat can take them all at once.",
+  "items": {
+    "apples": {
+      "name": "Apples",
+      "color": "b8332a",
+      "one": "a basket of apples",
+      "many": "baskets of apples"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "apples",
+      "count": 12,
+      "from": "farm_2",
+      "to": "market",
+      "to_who": {
+        "name": "Ulf the market warden",
+        "picture": "market"
+      },
+      "load_say": "Red and green and yellow. Take one for the trip!",
+      "say": "Twelve baskets of apples! The whole market smells of autumn."
+    }
+  ],
+  "reward": {
+    "silver": 30
+  },
+  "fact": "The vikings ate wild apples, dried for the winter."
+}

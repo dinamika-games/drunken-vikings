@@ -1,0 +1,53 @@
+{
+  "number": 20,
+  "id": "fog_on_the_lakes",
+  "title": "Fog on the Lakes",
+  "kind": "rescue",
+  "requires": [
+    "the_stable"
+  ],
+  "giver": {
+    "name": "Gudrun the innkeeper",
+    "picture": "inn",
+    "place": "inn"
+  },
+  "offer": "A fog has fallen, and my children Ivar and Märta rowed out to the islands this morning! Old Halvard knows the islands best. Please find them!",
+  "days": 1,
+  "items": {
+    "child": {
+      "name": "Child",
+      "color": "e8c25a",
+      "one": "a child",
+      "many": "children"
+    }
+  },
+  "steps": [
+    {
+      "do": "hail",
+      "skipper": "halvard",
+      "say": "In this fog? Listen... I heard children's voices by Bergö, the island of the potter. Row there, slowly!"
+    },
+    {
+      "do": "carry",
+      "item": "child",
+      "count": 2,
+      "from": "potter",
+      "to": "inn",
+      "from_who": {
+        "name": "Dagny the potter",
+        "hair": "3a2a1a",
+        "braids": true
+      },
+      "load_say": "They were sitting by my kiln to keep warm. Here, take them home, they are not hurt, only cold."
+    },
+    {
+      "do": "visit",
+      "at": "inn",
+      "say": "Ivar! Märta! You are home! Thank you, thank you. You are the bravest girls on the lakes."
+    }
+  ],
+  "reward": {
+    "silver": 15
+  },
+  "fact": "In the fog, sailors listened for bells, voices and the surf on the shore."
+}

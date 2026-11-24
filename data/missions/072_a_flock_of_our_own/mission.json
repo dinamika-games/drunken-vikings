@@ -1,0 +1,29 @@
+{
+  "number": 72,
+  "id": "a_flock_of_our_own",
+  "title": "A Flock of Our Own",
+  "kind": "fetch",
+  "requires": [
+    "the_sunny_hill"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "The sunny hill has the best grass. Let us have a real flock: five sheep! Buy them at the market or from Sten's herders.",
+  "steps": [
+    {
+      "do": "have",
+      "animal": "sheep",
+      "count": 5,
+      "say": "Five sheep on the hill, like white clouds. We will have wool for the whole family!"
+    }
+  ],
+  "reward": {
+    "goods": {
+      "hay": 4
+    }
+  },
+  "fact": "Sheep gave wool, milk, meat and skins; nothing was wasted."
+}

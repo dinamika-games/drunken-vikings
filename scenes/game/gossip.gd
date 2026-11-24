@@ -96,8 +96,8 @@ static func skipper(index: int) -> Dictionary:
 ## A piece of news from the skipper: {"text", "place", "good"}.
 static func news(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> Dictionary:
     var economy: Economy = state.economy
-    var kinds := ["deal", "cheap", "bad", "event", "farm", "fact"]
-    var weights := [4, 3, 2, 3, 2, 1]
+    var kinds := ["deal", "cheap", "bad", "event", "farm", "fact", "task"]
+    var weights := [4, 3, 2, 3, 2, 1, 2]
     for attempt in range(8):
         var kind: String = kinds[_weighted(weights, rng)]
         var good := _pick_good(state, who, rng)
@@ -169,6 +169,22 @@ static func news(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> Di
                     return {
                         "text": "Your grandmother asked me to tell you: " + reminders[0]["text"],
                         "place": "home",
+                        "good": ""
+                    }
+            "task":
+                var offers: Array[String] = state.missions.available()
+                if not offers.is_empty():
+                    var mission: Dictionary = state.missions.missions[offers[
+                        rng.randi() % offers.size()
+                    ]]
+                    var giver: Dictionary = mission["giver"]
+                    return {
+                        "text":
+                        (
+                            "%s in %s is looking for help: %s."
+                            % [giver["name"], state.place_name(giver["place"]), mission["title"]]
+                        ),
+                        "place": giver["place"],
                         "good": ""
                     }
             "fact":

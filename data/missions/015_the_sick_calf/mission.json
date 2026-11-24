@@ -1,0 +1,67 @@
+{
+  "number": 15,
+  "id": "the_sick_calf",
+  "title": "The Sick Calf",
+  "kind": "heal",
+  "requires": [
+    "the_foal_is_coming"
+  ],
+  "giver": {
+    "name": "Gudrun the innkeeper",
+    "picture": "inn",
+    "place": "inn"
+  },
+  "offer": "The calf of our cow does not drink. Tova says she needs chamomile and a warm stone in her bed. The chamomile is with Tova, the stones are hot in Dagny's kiln on Bergö.",
+  "items": {
+    "chamomile": {
+      "name": "Chamomile",
+      "color": "f2e48a",
+      "picture": [
+        "goods",
+        "herbs"
+      ],
+      "one": "the chamomile"
+    },
+    "stone": {
+      "name": "Hot stone",
+      "color": "8a8070",
+      "one": "the hot stone"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "chamomile",
+      "count": 1,
+      "from": "healer",
+      "to": "inn",
+      "from_who": {
+        "name": "Tova the healer",
+        "picture": "healer"
+      },
+      "load_say": "Chamomile calms her tummy. Give it with warm water."
+    },
+    {
+      "do": "carry",
+      "item": "stone",
+      "count": 1,
+      "from": "potter",
+      "to": "inn",
+      "from_who": {
+        "name": "Dagny the potter",
+        "hair": "3a2a1a",
+        "braids": true
+      },
+      "load_say": "Hot from the kiln, wrapped in wool. It stays warm all night."
+    },
+    {
+      "do": "visit",
+      "at": "inn",
+      "say": "She drinks! She drinks! Look at her little tail wag. Supper is on the house tonight."
+    }
+  ],
+  "reward": {
+    "silver": 10
+  },
+  "fact": "People put hot stones in their beds to keep warm on cold nights."
+}

@@ -1,0 +1,59 @@
+{
+  "number": 70,
+  "id": "the_boat_procession",
+  "title": "The Boat Procession",
+  "kind": "deliver",
+  "requires": [
+    "fish_for_the_hunters"
+  ],
+  "giver": {
+    "name": "Chieftain Eirik",
+    "picture": "chieftain",
+    "place": "chieftain"
+  },
+  "offer": "Midsummer again! This year, all the boats row in a line with torches. Bring three crates of mead, and four torches from Orm in Hallvik: your boat leads the line!",
+  "days": 3,
+  "items": {
+    "torch": {
+      "name": "Torch",
+      "color": "e8a830",
+      "one": "a torch",
+      "many": "torches"
+    }
+  },
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "chieftain",
+      "item": "mead",
+      "count": 3,
+      "say": "Mead for after the procession. Now the torches."
+    },
+    {
+      "do": "carry",
+      "item": "torch",
+      "count": 4,
+      "from": "inn_2",
+      "to": "chieftain",
+      "from_who": {
+        "name": "Orm the innkeeper",
+        "hair": "3a2a1a"
+      },
+      "load_say": "My best tar torches, from the ones you helped me make!"
+    },
+    {
+      "do": "visit",
+      "at": "chieftain",
+      "who": {
+        "name": "Thora, the chieftain's daughter",
+        "hair": "e8c25a",
+        "braids": true
+      },
+      "say": "Twenty boats in a line, and you in front, with the dragon head! The torches shine on the water. The most beautiful night of the year."
+    }
+  ],
+  "reward": {
+    "silver": 30
+  },
+  "fact": "At midsummer, the sun barely sets in the north: the night stays light."
+}

@@ -20,6 +20,7 @@ const MAP_PATH := "res://data/world/home_lakes.json"
 const GOODS_PATH := "res://data/economy/goods.json"
 const REGION_PATH := "res://data/economy/home_lakes.json"
 const FARM_PATH := "res://data/farm/farm.json"
+const MISSIONS_DIR := "res://data/missions"
 
 ## The silver at the start of a new voyage.
 const START_SILVER := 20
@@ -43,7 +44,8 @@ var players := 1
 ## The silver, in pieces.
 var silver := START_SILVER
 
-## The cargo of the boat: good (or "animal:<kind>") -> crates.
+## The cargo of the boat: good (or "animal:<kind>", or an item of a mission,
+## "task:<mission>:<item>", see Missions) -> crates.
 var cargo := {}
 
 ## How many crates (and animals) the boat carries.
@@ -60,6 +62,9 @@ var economy := Economy.new()
 
 ## The farm.
 var farm := Farm.new()
+
+## The missions, done and under way.
+var missions := Missions.new()
 
 ## The places of the map: id -> {"kind", "name", "at", "jetty"}.
 var places := {}
@@ -225,7 +230,11 @@ func _load_data() -> String:
     var problem := economy.load_data(GOODS_PATH, REGION_PATH, data.get("places", []))
     if problem != "":
         return problem
-    return farm.load_data(FARM_PATH)
+    problem = farm.load_data(FARM_PATH)
+    if problem != "":
+        return problem
+    missions.reset()
+    return missions.load_data(MISSIONS_DIR, places, economy, farm)
 
 
 ## Start a new voyage.
@@ -249,6 +258,8 @@ func place_name(id: String) -> String:
 func good_name(good: String) -> String:
     if good.begins_with("animal:"):
         return farm.animal_kinds[good.trim_prefix("animal:")]["name"]
+    if Missions.is_item(good):
+        return missions.item_name(good)
     return economy.goods[good]["name"] if economy.goods.has(good) else good
 
 
@@ -343,6 +354,7 @@ func save() -> bool:
         "place": place,
         "economy": economy.to_data(),
         "farm": farm.to_data(),
+        "missions": missions.to_data(),
         "price_book": price_book,
         "news": news,
     }
@@ -383,6 +395,7 @@ func load_voyage() -> bool:
     place = str(data.get("place", "home"))
     economy.restore(data.get("economy", {}))
     farm.restore(data.get("farm", {}))
+    missions.restore(data.get("missions", {}))
     price_book = data.get("price_book", {})
     news = data.get("news", [])
     return true

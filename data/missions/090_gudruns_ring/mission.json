@@ -1,0 +1,47 @@
+{
+  "number": 90,
+  "id": "gudruns_ring",
+  "title": "Gudrun's Ring",
+  "kind": "find",
+  "requires": [
+    "the_pottery_market"
+  ],
+  "giver": {
+    "name": "Gudrun the innkeeper",
+    "picture": "inn",
+    "place": "inn"
+  },
+  "offer": "My mother's ring! It slipped from my finger into the lake, by the jetty. Gone forever... unless a fisher's net caught it? Ask Ragna.",
+  "items": {
+    "ring": {
+      "name": "Ring",
+      "color": "d8d8d0",
+      "one": "the ring"
+    }
+  },
+  "steps": [
+    {
+      "do": "hail",
+      "skipper": "ragna",
+      "say": "A ring? Wait... Tor found something shiny in our net yesterday! Ask him in Stormvik."
+    },
+    {
+      "do": "carry",
+      "item": "ring",
+      "count": 1,
+      "from": "fishers",
+      "to": "inn",
+      "from_who": {
+        "name": "Tor the fisher",
+        "hair": "8a5a2b"
+      },
+      "load_say": "This? Silver with a little red stone. I thought it was a fish's treasure!",
+      "say": "My mother's ring! Back from the lake! I can not thank you enough. Every meal at my inn is free for you."
+    }
+  ],
+  "reward": {
+    "silver": 20,
+    "gift": "free meals at the inn of Vargvik"
+  },
+  "fact": "Vikings sometimes gave silver to the lakes on purpose, as gifts to the gods."
+}

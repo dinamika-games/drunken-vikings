@@ -6,7 +6,8 @@ extends Node2D
 ## where a night's sleep ends the day (see DESIGN.md).
 ##
 ## The players row and choose only with their bodies (see HandCursor and RowingMeter); the
-## keyboard is never used, but Escape twice ends the journey (see EscapeGuard).
+## keyboard is never used, but Escape twice ends the journey (see EscapeGuard),
+## and C shows the map of the region (see WorldChart), while the game waits.
 ## Start with [code]-- --players=2[/code]
 ## for two players (an oar each), [code]-- --new[/code] for a new voyage, and
 ## [code]-- --autopilot[/code] to let the boat trade by itself (to try the
@@ -51,6 +52,9 @@ var _screens: PortScreens
 var _hud: WorldHud
 var _panel: ChoicePanel
 var _farm_view: FarmView
+var _arrows: TaskArrows
+var _chart_layer: CanvasLayer
+var _chart: WorldChart
 var _actions: Array[Callable] = []
 var _mode := "rowing"
 var _left_place := ""
@@ -138,6 +142,10 @@ func _ready() -> void:
     _hud.world = self
     _hud.set_anchors_preset(Control.PRESET_FULL_RECT)
     layer.add_child(_hud)
+    _arrows = TaskArrows.new()
+    _arrows.world = self
+    _arrows.set_anchors_preset(Control.PRESET_FULL_RECT)
+    layer.add_child(_arrows)
     var camera_panel := CameraPanel.new()
     camera_panel.service = _service
     camera_panel.position = Vector2(1560, 790)
@@ -152,6 +160,10 @@ func _ready() -> void:
     _panel.visible = false
     _panel.chosen.connect(_on_chosen)
     layer.add_child(_panel)
+
+    _chart_layer = CanvasLayer.new()
+    _chart_layer.layer = 50
+    add_child(_chart_layer)
 
     _screens = PortScreens.new(self, _state, _map)
     _undock(_state.place)
@@ -232,8 +244,36 @@ func to_screen(point: Vector2) -> Vector2:
 # ---------------------------------------------------------------------------
 
 
+## C opens and closes the map of the region; Escape closes it, too.
+func _input(event: InputEvent) -> void:
+    if not (event is InputEventKey and event.pressed and not event.echo):
+        return
+    if event.keycode == KEY_C or (event.keycode == KEY_ESCAPE and _chart != null):
+        get_viewport().set_input_as_handled()
+        _toggle_chart()
+
+
+func _toggle_chart() -> void:
+    if _chart != null:
+        _chart.queue_free()
+        _chart = null
+        _panel.process_mode = Node.PROCESS_MODE_INHERIT
+        return
+    if _map == null or _map.places.is_empty():
+        return
+    _chart = WorldChart.new()
+    _chart.world = self
+    _chart_layer.add_child(_chart)
+    # NOTE: The cards of a screen must not be chosen behind the map.
+    _panel.process_mode = Node.PROCESS_MODE_DISABLED
+
+
 func _process(delta: float) -> void:
     if _map == null or _map.places.is_empty():
+        return
+    if _chart != null:
+        # The game waits while the map shows; the strokes meanwhile do not row.
+        _skip_strokes()
         return
     _toast_left = maxf(0.0, _toast_left - delta)
     if _shots != "":
@@ -388,6 +428,7 @@ func _undock(id: String) -> void:
     _mode = "rowing"
     _panel.close()
     _farm_view.visible = false
+    _arrows.visible = true
     _autopilot_target = ""
 
 
@@ -418,6 +459,7 @@ func _show(title: String, text: String, cards: Array, actions: Array[Callable], 
         _farm_view.farm = _state.farm
         _farm_view.day = _state.day
     _panel.dim = 0.2 if home else ChoicePanel.DIM
+    _arrows.visible = false
     _panel.show_cards(title, text, cards, face)
     if _shots != "":
         _shoot.call_deferred()
@@ -471,6 +513,12 @@ func _hail(npc: NpcBoat) -> void:
     _talking_to = npc
     _mode = "skipper"
     var who: Dictionary = npc.skipper
+    var face := {"hair": who["hair"], "braids": who["braids"], "picture": who.get("picture", "")}
+    var events: Array = _state.missions.hail(_state, who.get("picture", ""))
+    if not events.is_empty():
+        _state.save()
+        _show_hail_events(events, 0, face)
+        return
     var news := Gossip.news(_state, who, _rng)
     _state.hear(news["text"], news["place"], news["good"])
     var deal := Gossip.offer(_state, who, _rng) if _rng.randf() < 0.7 else {}
@@ -500,6 +548,21 @@ func _hail(npc: NpcBoat) -> void:
     )
 
 
+## Show what the hail did for the missions (see Missions.hail), one screen
+## after the other.
+func _show_hail_events(events: Array, index: int, face: Dictionary) -> void:
+    if index >= events.size():
+        _part("")
+        return
+    var event: Dictionary = events[index]
+    var text: String = event["text"]
+    if str(event["who"].get("name", "")) != "":
+        text = '%s: "%s"' % [event["who"]["name"], text]
+    var cards: Array = [{"title": "Hooray!" if event["done"] else "Thank you!", "detail": ""}]
+    var actions: Array[Callable] = [_show_hail_events.bind(events, index + 1, face)]
+    _show(event["title"], text, cards, actions, {} if event["done"] else face)
+
+
 func _deal_detail(deal: Dictionary) -> String:
     match deal["kind"]:
         "buy":
@@ -519,6 +582,7 @@ func _part(message: String) -> void:
         _talking_to.cooldown = HAIL_COOLDOWN
         _talking_to = null
     _panel.close()
+    _arrows.visible = true
     _mode = "rowing"
     if message != "":
         _say(message)
