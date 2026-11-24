@@ -265,6 +265,16 @@ func _read_steer() -> float:
     return 0.0
 
 
+## Whether the players brake: any of them raised both hands above the head.
+func _read_brake() -> bool:
+    if _service == null or not _service.IsRunning():
+        return false
+    for player in range(players()):
+        if _service.GetBrake(player):
+            return true
+    return false
+
+
 func _read_strokes() -> void:
     if _service == null:
         return
@@ -285,6 +295,7 @@ func _read_strokes() -> void:
 func _process(delta: float) -> void:
     if _map == null or _map.route.is_empty():
         return
+    _boat.brake = _read_brake()
     _read_strokes()
     _boat.steer = _read_steer()
     if _autopilot:
@@ -345,6 +356,10 @@ func _splash_oars(delta: float) -> void:
             _splashes.splash(blade, 5.0, 1.6, 1.0)
         elif _rower.pulling[side] and drip:
             _splashes.splash(blade, 2.5, 0.9, 0.6)
+        elif _rower.holding(side) and drip:
+            # NOTE (mristin):
+            # Holding water: the blade drags, and the water swirls around it.
+            _splashes.splash(blade, 2.0 + 3.0 * clampf(_boat.speed / 6.0, 0.0, 1.0), 1.1, 0.7)
     if _ship.dipped:
         for blade in _ship.blade_positions():
             _splashes.splash(blade, 4.0, 1.3, 0.5)

@@ -3,8 +3,10 @@ extends Node2D
 
 ## The viking ship which the players follow: it sails the route of the map
 ## from the start village to the goal, and keeps ahead of the players, but
-## never too far: it waits for them when they fall behind, and hurries on when
-## they come too close. Nobody is ever lost; the ship always waits.
+## never too far: it slows down as they fall behind, so that it sails at
+## their pace and the treats it drops fall not far ahead of them, waits for
+## them when they fall far behind, and hurries on when they come too close.
+## Nobody is ever lost; the ship always waits.
 
 ## The speed at which the ship sails while the players keep up, in metres per second.
 const CRUISE := 8.0
@@ -12,9 +14,14 @@ const CRUISE := 8.0
 ## The speed at which the ship hurries on when the players come too close.
 const HURRY := 12.0
 
-## The ship keeps between these many metres ahead of the players along the route.
-const LEAD_NEAR := 70.0
-const LEAD_FAR := 220.0
+## The ship keeps between these many metres ahead of the players along the
+## route: it hurries on when closer than LEAD_NEAR, cruises up to LEAD_EASE,
+## slows down gently beyond, and waits from LEAD_FAR on. A player who rows
+## at half the cruise sails about midway between LEAD_EASE and LEAD_FAR
+## behind it.
+const LEAD_NEAR := 60.0
+const LEAD_EASE := 90.0
+const LEAD_FAR := 150.0
 
 ## How much larger than life we draw the ship, as the boats.
 const SCALE := 2.0
@@ -97,10 +104,14 @@ func sail(delta: float, players_progress: float) -> void:
     dipped = floorf(_beat) > floorf(before) and speed > 0.5
     var lead := progress - players_progress
     var target := CRUISE
-    if lead > LEAD_FAR:
-        target = 0.0
-    elif lead < LEAD_NEAR:
+    if lead < LEAD_NEAR:
         target = HURRY
+    elif lead > LEAD_EASE:
+        # NOTE (mristin):
+        # Slow down gently rather than stop all at once: the ship then
+        # settles at the pace of the players, a little farther ahead the
+        # slower they row.
+        target = CRUISE * clampf((LEAD_FAR - lead) / (LEAD_FAR - LEAD_EASE), 0.0, 1.0)
     waiting = target == 0.0
     speed = lerpf(speed, target, 1.0 - exp(-delta / 1.5))
     var length := map.route_length()

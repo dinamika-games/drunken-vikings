@@ -59,6 +59,7 @@ class PoseLine(pydantic.BaseModel):
     body_steer: float
     strokes: int
     pull: float
+    brake: bool = False
 
 
 class Seen(pydantic.BaseModel):
@@ -106,7 +107,7 @@ class PickLine(pydantic.BaseModel):
 NUM = r"(-?[0-9.]+|nan|[+-][0-9.]+)"
 POSE = re.compile(
     rf"^Pose: t={NUM} p=(\d) src=(\w+) head=\({NUM},{NUM}\) unit={NUM} home={NUM} shift={NUM}"
-    rf" tilt={NUM} level={NUM} steer={NUM} \(head {NUM}, body {NUM}\) strokes=(\d+) pull={NUM}$"
+    rf" tilt={NUM} level={NUM} steer={NUM} \(head {NUM}, body {NUM}\) strokes=(\d+) pull={NUM}(?: brake=(\d))?$"
 )
 BOAT = re.compile(
     rf"^Party: t={NUM} boat=\({NUM},{NUM}\) heading={NUM} speed={NUM} steer={NUM} strokes=(\d+)"
@@ -151,6 +152,7 @@ def parse(path: pathlib.Path) -> Log:
                     body_steer=number(g[12]),
                     strokes=int(g[13]),
                     pull=number(g[14]),
+                    brake=g[15] == "1",
                 )
             )
         elif m := BOAT.match(text):
@@ -229,6 +231,8 @@ def report_vision(log: Log) -> None:
     if gaps:
         print(f"The player was lost {len(gaps)} time(s) for over 1 s, the longest {max(gaps):.1f} s.")
     print(f"Strokes: {poses[-1].strokes - poses[0].strokes}.")
+    braking = [p for p in poses if p.brake]
+    print(f"The player braked (both hands above the head) in {len(braking)} of the pose lines.")
     print()
 
 

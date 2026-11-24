@@ -242,6 +242,7 @@ func _process(delta: float) -> void:
             _shot_clock = 0.0
             _shoot.call_deferred()
     if _mode == "rowing":
+        _boat.brake = _read_brake()
         _read_strokes()
         _boat.steer = _read_steer()
         if _autopilot:
@@ -253,6 +254,7 @@ func _process(delta: float) -> void:
         # The strokes in a port choose; they must not row once the boat is out.
         _skip_strokes()
         _boat.steer = 0.0
+        _boat.brake = false
         if _autopilot:
             _autopilot_choose(delta)
     _boat.move(delta, _map)
@@ -271,6 +273,16 @@ func _read_steer() -> float:
     if _service != null and _service.IsRunning() and players() == 1:
         return _service.GetSteer(0)
     return 0.0
+
+
+## Whether the players brake: any of them raised both hands above the head.
+func _read_brake() -> bool:
+    if _service == null or not _service.IsRunning():
+        return false
+    for player in range(players()):
+        if _service.GetBrake(player):
+            return true
+    return false
 
 
 func _read_strokes() -> void:
@@ -303,6 +315,10 @@ func _splash_oars(delta: float) -> void:
             _splashes.splash(blade, 5.0, 1.6, 1.0)
         elif _rower.pulling[side] and drip:
             _splashes.splash(blade, 2.5, 0.9, 0.6)
+        elif _rower.holding(side) and drip:
+            # NOTE (mristin):
+            # Holding water: the blade drags, and the water swirls around it.
+            _splashes.splash(blade, 2.0 + 3.0 * clampf(_boat.speed / 6.0, 0.0, 1.0), 1.1, 0.7)
 
 
 ## How far each oar's player is through the stroke, from the vision (see

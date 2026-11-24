@@ -223,6 +223,10 @@ func _build() -> void:
 
     var camera := CameraPanel.new()
     camera.service = _service
+    # NOTE (mristin):
+    # The experiment shows what the vision sees: the skeleton, not the dress.
+    camera.dress_up = false
+    camera.show_skeleton = true
     camera.position = Vector2(20, 90)
     camera.size = Vector2(1200, 900)
     screen.add_child(camera)

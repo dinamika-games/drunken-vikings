@@ -15,6 +15,10 @@ extends Node2D
 ## autopilot), each stroke plays a pull; a stroke which comes before the last
 ## pull is done speeds the oar up, but never makes it jump.
 ##
+## While the players brake (see RowBoat.brake), the rowers hold water: the
+## oars swing out square across the boat and their blades go down into the
+## water, where they swirl while the boat still moves ([method holding]).
+##
 ## The bow points up (-y); the rowers face the stern, as rowers do. The picture
 ## is larger than the boat would be (see [constant SCALE]), so that the players
 ## see the rowers well.
@@ -159,7 +163,7 @@ func _process(delta: float) -> void:
         for side in [0, 1]:
             _move_oar(side, delta)
             var resting := absf(float(_swing[side]) - REST) < 0.05
-            var wanted := 0.0 if pulling[side] else (0.4 if resting else 1.0)
+            var wanted := 0.0 if pulling[side] or boat.brake else (0.4 if resting else 1.0)
             _lift[side] = move_toward(_lift[side], wanted, delta / LIFT_SECONDS)
             # NOTE (mristin):
             # Over the land, the rower pulls the oar in along the hull, and
@@ -186,6 +190,15 @@ func _move_oar(side: int, delta: float) -> void:
     if since < _last_since[side]:
         _pending[side] += 1
     _last_since[side] = since
+
+    if boat.brake:
+        # NOTE (mristin):
+        # Holding water: the oar swings out square, and stays there.
+        _pending[side] = 0
+        _stage[side] = "rest"
+        _swing[side] = move_toward(_swing[side], 0.0, MAX_SPEED * 0.5 * delta)
+        pulling[side] = false
+        return
 
     var pull: float = live_pull[side]
     if pull >= 0.0:
@@ -218,6 +231,12 @@ func _move_oar(side: int, delta: float) -> void:
             if _swing[side] >= 1.0:
                 _stage[side] = "recover" if _pending[side] > 0 else "rest"
     pulling[side] = _stage[side] == "pull"
+
+
+## Whether the blade of the [param side] holds water: the rowers brake, the
+## blade is in the water, and the boat still moves (for the swirls).
+func holding(side: int) -> bool:
+    return boat != null and boat.brake and _shipped[side] == 0.0 and absf(boat.speed) > 0.3
 
 
 func _draw() -> void:

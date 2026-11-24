@@ -10,6 +10,10 @@ extends RefCounted
 ## away from its side, so the boat turns away from the stronger rower, and
 ## strokes in time cancel the kicks and push more.
 ##
+## Both hands raised high above the head brake ([member brake]): the rowers
+## hold the blades in the water, the boat slows down quickly, and strokes do
+## not count.
+##
 ## The boat never stops hard on the land: it slides along the shore, so that
 ## the players keep most of their way (see [method _slide]).
 
@@ -25,6 +29,9 @@ const MAX_SPEED := 16.0
 
 ## How long the boat glides: its speed falls to a third in this many seconds.
 const GLIDE_SECONDS := 6.0
+
+## While braking, the speed falls to a third in this many seconds.
+const BRAKE_SECONDS := 0.8
 
 ## How fast the boat turns at full steering, in degrees per second.
 const TURN_DEGREES := 90.0
@@ -64,6 +71,9 @@ var speed := 0.0
 ## The steering of the player, from -1 (left) to 1 (right).
 var steer := 0.0
 
+## Whether the rowers brake: the blades held in the water (see BrakeMeter).
+var brake := false
+
 ## Seconds since the last stroke (for the oars of the picture).
 var since_stroke := INF
 
@@ -86,6 +96,8 @@ var _slide_side := 1.0
 
 ## Row a stroke of the [param depth] (in units of the player).
 func stroke(depth := USUAL_DEPTH) -> void:
+    if brake:
+        return
     var strength := clampf(depth / USUAL_DEPTH, 0.6, 1.3)
     speed = minf(MAX_SPEED, speed + STROKE_PUSH * strength)
     since_stroke = 0.0
@@ -96,6 +108,8 @@ func stroke(depth := USUAL_DEPTH) -> void:
 ## (in units of the player): it pushes the boat, and kicks the bow away from
 ## the side; in time with the other side, it pushes more.
 func stroke_side(side: int, depth := USUAL_DEPTH) -> void:
+    if brake:
+        return
     var strength := clampf(depth / USUAL_DEPTH, 0.6, 1.3)
     var push := STROKE_PUSH * strength * PAIR_SHARE
     if since_side[1 - side] <= IN_TIME_SECONDS:
@@ -126,8 +140,9 @@ func move(delta: float, map: LakeMap) -> float:
     heading = wrapf(
         heading + (steer * deg_to_rad(TURN_DEGREES) * turning + yaw_rate) * delta, -PI, PI
     )
-    yaw_rate *= exp(-delta / KICK_SECONDS)
-    speed *= exp(-delta / GLIDE_SECONDS)
+    var slowing := BRAKE_SECONDS if brake else GLIDE_SECONDS
+    yaw_rate *= exp(-delta / minf(KICK_SECONDS, slowing))
+    speed *= exp(-delta / slowing)
     if speed < 0.05:
         speed = 0.0
 

@@ -44,6 +44,7 @@ The players row with their bodies and choose on the screens with their hands: a 
 * `--players=2`: two players, each pulls the oar on their side; the boat turns away from the stronger rower.
 * `--new`: a new voyage instead of the saved one.
 * `--no-camera --autopilot`: the boat trades by itself, to try the world without the camera; for the developers, `--dev-keys` lets the arrows and Space choose on the screens, and `--shots=<dir>` saves screenshots.
+* `--skeleton`: draw the key points of the pose over the camera picture, too (the players are dressed up as Ylva there, see `DressUp`; the rowing experiment shows only the skeleton).
 * `--log-pose[=<times a second>]`: print the head and the shoulders of the players and how they row and steer into the log (4 times a second by default), e.g., `Pose: t=12.34 p=0 src=RtmPose head=(330,200) unit=180 home=325 shift=-0.03 tilt=+2.1 level=-1.0 steer=+0.00 (head +0.00, body +0.00) strokes=5 pull=0.40`; only numbers, and nothing is recorded.
   In the party, it also prints where the boat and the longship are and the nearest treats as seen from the boat (`next=[(metres ahead, metres to the right, bearing), ...]`), and every drop and pick, on the same clock (`t`) as the poses, to study where the player meant to go.
 
@@ -101,4 +102,13 @@ venv/bin/python dev/rowing/analyze_party_log.py party.log
 venv/bin/black -l 110 dev/
 venv/bin/gdformat dev/ scenes/
 venv/bin/gdlint dev/ scenes/
+```
+
+## The dress in the camera picture
+
+The players are dressed up as Ylva in the camera picture (`scenes/camera_panel/dress_up.gd`): the hair by the eyes, the bodice from the shoulders to the waist, the skirt over the lap, the sleeves along the arms and the fists on the oar, painted with ChatGPT from the prompts of `~/Downloads/viking/dress/`. Cut them into `assets/pictures/dress/` (with their anchors in `dress.json`), and see how they sit on the poses of a recording (only the key points, no camera picture):
+
+```
+venv/bin/python dev/pictures/cut_dress.py [~/Downloads/viking/dress]
+$GODOT --path . --script dev/pictures/preview_dress.gd -- <recording.jsonl> <out dir> <t> [<t> ...] [--reach] [--skeleton]
 ```

@@ -99,6 +99,9 @@ public partial class VisionService : Node
     /// <summary>The strokes and the steering of each player.</summary>
     private readonly RowingMeter[] _meters = { new(), new() };
 
+    /// <summary>Whether each player brakes (both hands raised above the head).</summary>
+    private readonly BrakeMeter[] _brakes = { new(), new() };
+
     /// <summary>When each player was seen the last time.</summary>
     private readonly double[] _seenAt = { double.NegativeInfinity, double.NegativeInfinity };
 
@@ -194,8 +197,14 @@ public partial class VisionService : Node
     private Thread? _handThread;
     private volatile bool _running;
 
-    /// <summary>Whether the hand detector runs (only while a screen shows the hand cursor).</summary>
-    private volatile bool _handTracking;
+    /// <summary>Whether a screen shows the hand cursor, and needs the hands.</summary>
+    private volatile bool _handsForScreens;
+
+    /// <summary>Whether the camera picture dresses the players up, and needs their hands.</summary>
+    private volatile bool _handsForPicture;
+
+    /// <summary>Whether the hand detector runs: only while someone needs the hands.</summary>
+    private bool _handTracking => _handsForScreens || _handsForPicture;
 
     private readonly FrameSlot _handSlot = new();
 
@@ -280,6 +289,18 @@ public partial class VisionService : Node
             var head = pose?.Head(KeypointThreshold);
             _meters[i].Observe(
                 snapshot.Timestamp, head?.X ?? float.NaN, head?.Y ?? float.NaN, unit, _signals[i].ShoulderTilt);
+            float Y(BodyPart part) =>
+                pose != null && pose.Has(part, KeypointThreshold) ? pose[part].Y : float.NaN;
+            _brakes[i].Observe(
+                snapshot.Timestamp,
+                head?.Y ?? float.NaN,
+                Y(BodyPart.LeftWrist),
+                Y(BodyPart.RightWrist),
+                Y(BodyPart.LeftElbow),
+                Y(BodyPart.RightElbow),
+                Y(BodyPart.LeftShoulder),
+                Y(BodyPart.RightShoulder),
+                unit);
             if (pose != null)
             {
                 _seenAt[i] = snapshot.Timestamp;
@@ -334,7 +355,8 @@ public partial class VisionService : Node
             + $" tilt={Signed(meter.Tilt, 1)} level={Signed(meter.Level, 1)}"
             + $" steer={Signed(meter.Steer, 2)}"
             + $" (head {Signed(meter.HeadSteer, 2)}, body {Signed(meter.TiltSteer, 2)})"
-            + $" strokes={meter.Strokes} pull={Number(meter.Pull, "0.00")}");
+            + $" strokes={meter.Strokes} pull={Number(meter.Pull, "0.00")}"
+            + $" brake={(_brakes[i].Braking ? 1 : 0)}");
     }
 
     // ---------------------------------------------------------------------
@@ -429,7 +451,14 @@ public partial class VisionService : Node
     /// Run the hand detector (for the hand cursor of the screens) or stop it,
     /// so that it takes the processor only while a screen needs it.
     /// </summary>
-    public void SetHandTracking(bool on) => _handTracking = on;
+    public void SetHandTracking(bool on) => _handsForScreens = on;
+
+    /// <summary>
+    /// Run the hand detector for the camera picture, which puts the fists of
+    /// the dress on the hands (see DressUp), or stop it; independent of
+    /// <see cref="SetHandTracking"/>.
+    /// </summary>
+    public void SetHandsForPicture(bool on) => _handsForPicture = on;
 
     /// <summary>
     /// The hands which the hand detector found lately (of all the players), as
@@ -487,6 +516,9 @@ public partial class VisionService : Node
         return float.IsNaN(pull) ? -1f : pull;
     }
 
+    /// <summary>Whether the player brakes: both hands raised high above the head (see <see cref="BrakeMeter"/>).</summary>
+    public bool GetBrake(int player) => _brakes[Index(player)].Braking;
+
     /// <summary>How far the head of the player is to their right of home, in units.</summary>
     public float GetShift(int player) => _meters[Index(player)].Shift;
 
@@ -503,6 +535,7 @@ public partial class VisionService : Node
         {
             _scales[i].Reset();
             _meters[i].Reset();
+            _brakes[i].Reset();
             _signals[i] = RowingSignals.Unknown;
             _seenAt[i] = double.NegativeInfinity;
         }

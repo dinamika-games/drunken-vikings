@@ -96,6 +96,7 @@ func _initialize() -> void:
         "Alone, the head steers: %f" % alone.heading
     )
 
+    _check_brake(map)
     _check_oars(map)
     # NOTE (mristin):
     # The map is a node, not counted by references: free it, or it outlives
@@ -109,6 +110,29 @@ func _initialize() -> void:
 
 ## The oars never jump: strokes faster than the pull speed the oar up, and the
 ## oars which follow the players move smoothly with them.
+## Both hands raised brake: the boat slows down quickly, and strokes do not push.
+func _check_brake(map: LakeMap) -> void:
+    var gliding := _boat()
+    var braking := _boat()
+    for boat in [gliding, braking]:
+        boat.stroke()
+        boat.stroke()
+    braking.brake = true
+    for _i in range(60):
+        gliding.move(DELTA, map)
+        braking.move(DELTA, map)
+    _check(
+        braking.speed < gliding.speed * 0.5,
+        "Braking slows the boat quickly: %f against %f" % [braking.speed, gliding.speed]
+    )
+    var before := braking.speed
+    braking.stroke()
+    _check(braking.speed == before, "While braking, a stroke does not push")
+    braking.brake = false
+    braking.stroke()
+    _check(braking.speed > before, "After the brake, the strokes push again")
+
+
 func _check_oars(map: LakeMap) -> void:
     for pair in [false, true]:
         var boat := _boat()

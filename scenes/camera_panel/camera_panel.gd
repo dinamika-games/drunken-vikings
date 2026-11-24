@@ -2,7 +2,9 @@ class_name CameraPanel
 extends Control
 
 ## The camera picture, mirrored (as the players see themselves in a mirror),
-## with the skeletons of the players.
+## with the players dressed up as Ylva (see [DressUp]), or with their
+## skeletons: where the dress is not painted, for the rowing experiment, or
+## with [code]-- --skeleton[/code].
 
 const _BONES := [
     [5, 6],
@@ -30,10 +32,47 @@ const PLAYER_COLORS := [Color("f2c14e"), Color("5ec8f2")]
 var service: Node
 
 ## Whether to draw the skeletons.
-var show_skeleton := true
+var show_skeleton := "--skeleton" in OS.get_cmdline_user_args()
+
+## Whether to dress the players up (if the dress is painted).
+var dress_up := true
+
+var _dress := DressUp.new()
+var _time := 0.0
 
 
-func _process(_delta: float) -> void:
+func _init() -> void:
+    # NOTE (mristin):
+    # The dress follows the body, also where it leaves the picture (e.g., the
+    # skirt below it): show only what lies within the camera picture.
+    clip_contents = true
+
+
+## The fists of the dress go on the hands: the hand detector runs while the
+## camera picture shows.
+func _enter_tree() -> void:
+    if service != null and dress_up and DressUp.available():
+        service.SetHandsForPicture(true)
+
+
+func _exit_tree() -> void:
+    if service != null:
+        service.SetHandsForPicture(false)
+
+
+func _process(delta: float) -> void:
+    _time += delta
+    if service != null and dress_up and DressUp.available():
+        for player in range(service.GetPlayerCount()):
+            _dress.observe(
+                player,
+                service.GetKeypoints(player),
+                service.GetKeypointScores(player),
+                service.GetHands(),
+                size,
+                delta,
+                _time
+            )
     queue_redraw()
 
 
@@ -55,7 +94,11 @@ func _draw() -> void:
         draw_dashed_line(
             Vector2(size.x / 2.0, 0), Vector2(size.x / 2.0, size.y), Color("9aa0ad"), 2.0, 10.0
         )
-    if not show_skeleton:
+    var dressed := dress_up and DressUp.available()
+    if dressed:
+        for player in range(count):
+            _dress.draw(self, player, service.GetPull(player))
+    if dressed and not show_skeleton:
         return
     var width := maxf(2.0, size.x / 240.0)
     for player in range(count):
