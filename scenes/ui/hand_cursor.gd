@@ -70,6 +70,9 @@ var _hands: Array[Hand] = []
 ## DwellButton), also when the game runs faster (e.g., in the tests).
 var _clock := 0.0
 
+## Whether the cursor showed on the last frame.
+var _shown := false
+
 
 ## Where the hands point.
 static func points() -> Array[Vector2]:
@@ -87,9 +90,16 @@ func _ready() -> void:
 func _process(delta: float) -> void:
     _clock += delta
     if not is_visible_in_tree():
-        cursors.clear()
-        by_hand = false
+        # NOTE (mristin):
+        # The cursors are shared: a hidden cursor clears them once, when it
+        # hides, and leaves them to the cursors which show (e.g., of How to
+        # play over the hidden screen of the start).
+        if _shown:
+            _shown = false
+            cursors.clear()
+            by_hand = false
         return
+    _shown = true
     _follow_hands()
     var screen := get_viewport_rect().size
     cursors.clear()

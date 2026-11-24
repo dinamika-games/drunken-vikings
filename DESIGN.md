@@ -146,6 +146,8 @@ NPC boats sail across the lakes on their own errands, along routes between the s
 * **The farm** (section 7a).
 * **Bigger ships** (section 8).
 
+**The balance.** Not everything can be bought after a few missions, nor should the shipyard stay out of reach: the missions pay twice what they did at first (2174 silver in all), so that a child who does the missions one after the other, trading only when short of silver, gets the færing after about 30 missions (some 7 hours of play), the karve after about 65 and the knarr near the end; the longship and the last plots are the goal of those who also trade or grow the farm (who get everything after about 27 hours). Pure trading still pays, but no better than the missions. `dev/balance/balance.gd` plays the rules with bots of these strategies and reports it (see CONTRIBUTING.md).
+
 ## 7a. The farm
 
 The players' farm lies on the shore of the home lakes, with its own jetty. Grandmother Åsa keeps it while they are away, and every time they row home, they see it and run it with the hand cursor (a short, calm screen between the trips).
@@ -167,6 +169,7 @@ The players' farm lies on the shore of the home lakes, with its own jetty. Grand
 * **Without feed, no animal dies or suffers harm.** It only stops giving (no eggs, no milk) and looks sad, until the players bring feed; Grandmother Åsa reminds them gently. (The game is for children: no animal ever comes to harm.)
 * The animals **give goods** every day of the trips (eggs, wool, milk, honey), which wait in the farm's store; the players take them on the next trip and sell them, or use them for missions.
 * The young (lambs, piglets, calves) grow up over some days and can be **sold** at the markets as living animals (they go to other farms, never to the butcher in the game).
+* The players can **sell** their animals where such animals are dealt in (the screen "Animals"), from the boat or fetched from the farm, for half their price (to other farms, never to the butcher): a full pasture never keeps a mission which asks for more animals from being done.
 
 ### The land
 

@@ -15,7 +15,9 @@ pictures become opaque (see ``Sheet.alpha``). The textures of the ground are
 cut edge to edge and made opaque.
 
 The seamless textures of the ground are scaled to 512 x 512, and the painting
-of the start screen to 1920 x 1080 (saved as a JPEG).
+of the start screen to 1920 x 1080 (saved as a JPEG). The rowers of How to
+play are cut figure by figure (the sheet is no exact grid) onto canvases of
+the same size, and the room behind them is scaled to 1440 x 1080.
 
 Run with the development tools (see CONTRIBUTING.md):
 
@@ -250,7 +252,38 @@ SHEETS = {
         ],
         alpha=(64, 240),
     ),
+    "how_to_jetty": Sheet("how-to/sheet_how_to_jetty.png", [["jetty", "shore"]], folder="how_to"),
 }
+
+#: The rowers of How to play, from the front (see HowToFigure), relative to
+#: SHEETS_DIR: the figures in the order of the sheet (by their bottom, then from
+#: the left), "" skips one.
+FIGURES = "how-to/sheet_how_to_rowers.png"
+FIGURE_NAMES = [
+    "ylva_rest",
+    "ylva_reach",
+    "ylva_pull",
+    "ylva_hold",
+    "",
+    "ylva_up",
+    "ylva_point",
+    "sigrid_rest",
+    "sigrid_reach",
+    "sigrid_pull",
+    "sigrid_up",
+]
+
+#: Every figure goes on a canvas of this size, its lap at the bottom middle,
+#: so that the game swaps the poses in place.
+FIGURE_CANVAS = (400, 560)
+
+#: The figures are scaled so that the first (sitting ready) is this high, as
+#: the game expects (see HowToFigure.PAINTED_SCALE), whatever the sheet.
+FIGURE_HEIGHT = 415
+
+#: The room behind the rowers of How to play, and its size in the game.
+BACKDROP = "how-to/backdrop_camera.png"
+BACKDROP_SIZE = (1440, 1080)
 
 #: The seamless textures of the ground, relative to SHEETS_DIR, and their
 #: names in assets/pictures/ground/.
@@ -338,6 +371,58 @@ def cut(name: str, sheet: Sheet) -> int:
     return 0
 
 
+def cut_figures() -> int:
+    """
+    Cut the rowers of How to play: each figure (what is painted and touches)
+    onto a canvas of FIGURE_CANVAS, the middle of its lap (the bottom rows) at
+    the bottom middle; the sheet is no exact grid, the figures reach into
+    each other's columns.
+    """
+    image = np.asarray(Image.open(SHEETS_DIR / FIGURES).convert("RGBA"))
+    alpha = image[..., 3]
+    count, labels, stats, _ = cv2.connectedComponentsWithStats((alpha > 32).astype(np.uint8), connectivity=8)
+    figures = [label for label in range(1, count) if stats[label, cv2.CC_STAT_AREA] > 2000]
+    if len(figures) != len(FIGURE_NAMES):
+        print(f"Found {len(figures)} figures in {FIGURES}, expected {len(FIGURE_NAMES)}.")
+        return 1
+
+    def bottom(label: int) -> int:
+        return int(stats[label, cv2.CC_STAT_TOP] + stats[label, cv2.CC_STAT_HEIGHT])
+
+    # NOTE (mristin):
+    # By rows (the bottoms of a row lie within a few pixels), then from the left.
+    figures.sort(key=lambda label: (round(bottom(label) / 50.0), stats[label, cv2.CC_STAT_LEFT]))
+    out = OUT / "how_to"
+    out.mkdir(parents=True, exist_ok=True)
+    width, height = FIGURE_CANVAS
+    scale = FIGURE_HEIGHT / float(stats[figures[0], cv2.CC_STAT_HEIGHT])
+    for label, name in zip(figures, FIGURE_NAMES):
+        if name == "":
+            continue
+        x, y, w, h = (int(v) for v in stats[label, :4])
+        figure = image[y : y + h, x : x + w].copy()
+        figure[labels[y : y + h, x : x + w] != label] = 0
+        lap = np.flatnonzero(figure[-30:, :, 3].max(axis=0) > 128)
+        middle = (lap[0] + lap[-1]) / 2.0 * scale
+        scaled = Image.fromarray(figure).resize((round(w * scale), round(h * scale)), Image.LANCZOS)
+        left = int(round(width / 2.0 - middle))
+        if left < 0 or left + scaled.width > width or scaled.height > height:
+            print(
+                f"The figure {name} ({scaled.width} x {scaled.height}) does not fit the canvas {width} x {height}."
+            )
+            return 1
+        canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        canvas.alpha_composite(scaled, (left, height - scaled.height))
+        target = out / f"{name}.png"
+        canvas.save(target, optimize=True)
+        print(f"{target.relative_to(REPO)}: {width} x {height} (the figure {scaled.width} x {scaled.height})")
+    backdrop = Image.open(SHEETS_DIR / BACKDROP).convert("RGB").resize(BACKDROP_SIZE, Image.LANCZOS)
+    target = out / "backdrop.jpg"
+    backdrop.save(target, quality=88, optimize=True)
+    print(f"{target.relative_to(REPO)}: {BACKDROP_SIZE[0]} x {BACKDROP_SIZE[1]}")
+    return 0
+
+
 def cut_start() -> None:
     """Scale the painting of the start screen to the screen."""
     painting = Image.open(SHEETS_DIR / START).convert("RGB").resize((1920, 1080), Image.LANCZOS)
@@ -362,7 +447,7 @@ def cut_ground() -> None:
 
 
 def main() -> int:
-    wanted = sys.argv[1:] or list(SHEETS) + ["ground", "start"]
+    wanted = sys.argv[1:] or list(SHEETS) + ["ground", "start", "how_to_rowers"]
     for name in wanted:
         if name == "ground":
             cut_ground()
@@ -372,11 +457,17 @@ def main() -> int:
             continue
         if name == "start":
             cut_start()
+        elif name == "how_to_rowers":
+            if not (SHEETS_DIR / FIGURES).exists():
+                print(f"Skipping the rowers of How to play: {FIGURES} is not there yet.")
+            elif cut_figures() != 0:
+                return 1
         elif name in SHEETS:
             if cut(name, SHEETS[name]) != 0:
                 return 1
         else:
-            print(f"Unknown sheet {name!r}; the sheets are: {', '.join(list(SHEETS) + ['ground', 'start'])}")
+            names = list(SHEETS) + ["ground", "start", "how_to_rowers"]
+            print(f"Unknown sheet {name!r}; the sheets are: {', '.join(names)}")
             return 1
     return 0
 

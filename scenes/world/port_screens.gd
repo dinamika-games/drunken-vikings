@@ -264,6 +264,26 @@ func _show_animals(message := "") -> void:
             )
         )
         actions.append(_buy_animal.bind(kind))
+    # NOTE (mristin):
+    # The animals which the place deals in can be sold here, too, from the
+    # boat or (fetched) from the farm: a full pasture never keeps a task from
+    # being done (see dev/balance/balance.gd).
+    for kind in ANIMALS_SOLD.get(place["kind"], []):
+        var owned := _animals_owned(kind)
+        if owned == 0:
+            continue
+        var animal: Dictionary = _state.farm.animal_kinds[kind]
+        (
+            items
+            . append(
+                {
+                    "title": "Sell a %s" % String(animal["name"]).to_lower(),
+                    "detail": "+%d silver" % sale_price(kind),
+                    "picture": ["farm", "beehive" if kind == "bees" else kind],
+                }
+            )
+        )
+        actions.append(_sell_animal.bind(kind))
     var text := (
         message
         if message != ""
@@ -292,6 +312,32 @@ func _buy_animal(kind: String) -> void:
             % String(_state.farm.animal_kinds[kind]["name"]).to_lower()
         )
     )
+
+
+## What a place pays for an animal of the [param kind]: half its price.
+func sale_price(kind: String) -> int:
+    return maxi(1, int(_state.farm.animal_kinds[kind]["price"]) / 2)
+
+
+## How many animals of the [param kind] the players have, in the boat and on
+## the farm.
+func _animals_owned(kind: String) -> int:
+    return int(_state.cargo.get("animal:" + kind, 0)) + int(_state.farm.animals.get(kind, 0))
+
+
+func _sell_animal(kind: String) -> void:
+    var name := String(_state.farm.animal_kinds[kind]["name"]).to_lower()
+    var text := ""
+    if _state.remove_cargo("animal:" + kind) == 1:
+        text = "You sold the %s from your boat for %d silver."
+    elif _state.farm.remove_animal(kind):
+        text = "You sold a %s from your farm for %d silver; they fetch it tomorrow."
+    else:
+        _show_animals()
+        return
+    _state.silver += sale_price(kind)
+    Audio.play("coins")
+    _show_animals(text % [name, sale_price(kind)] + " Silver: %d." % _state.silver)
 
 
 func _talk() -> void:

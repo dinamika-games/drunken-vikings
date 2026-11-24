@@ -3,7 +3,8 @@ extends Control
 ## The first screen: the players choose with their hands (see ChoicePanel)
 ## their journey (see GameState): go on with the last one, open another
 ## recent one, start a new one (then they choose how many row: one, or two
-## with an oar each), or delete one (in three steps). Then they choose what
+## with an oar each, and see how to play, see HowTo), or delete one (in three
+## steps). Then they choose what
 ## they play: the party mode for the smaller children (follow the wedding
 ## longship and pick up what falls into the water), the chase mode (row to a
 ## town before the pirates catch you), or the farm and the trading on the
@@ -138,7 +139,23 @@ func _start_journey(count: int) -> void:
     if _state != null:
         _state.new_journey(count)
     _apply_players()
-    _ask_mode()
+    _how_to()
+
+
+## Show how to play (see HowTo), then what to play.
+func _how_to() -> void:
+    _panel.close()
+    var how := HowTo.new()
+    how.players = _state.players if _state != null else 1
+    # NOTE: Out of the tree first, so that it lets go of the hands before the
+    # next screen asks for them.
+    how.done.connect(
+        func() -> void:
+            remove_child(how)
+            how.queue_free()
+            _ask_mode()
+    )
+    add_child(how)
 
 
 ## Tell the camera how many players to follow, as the journey says.
@@ -179,7 +196,7 @@ func _delete(id: String) -> void:
 
 
 func _ask_mode() -> void:
-    _actions = [_party, _chase, _go_on, _ask_journey]
+    _actions = [_party, _chase, _go_on, _how_to, _ask_journey]
     var name: String = _state.journey_name if _state != null else ""
     (
         _panel
@@ -194,6 +211,7 @@ func _ask_mode() -> void:
                 {"title": "Party!", "detail": "follow the wedding"},
                 {"title": "Chase!", "detail": "flee the pirates"},
                 {"title": "The farm", "detail": "trade and farm"},
+                {"title": "How to play", "detail": "row and steer", "picture": ["icons", "help"]},
                 {"title": "Back", "detail": name},
             ],
             YLVA

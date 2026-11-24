@@ -4,14 +4,14 @@ extends "res://tests/godot/end2end/lakes_bot.gd"
 ## contracts on every frame (see contracts.gd): a property-based test, whose
 ## random choices come from a seed.
 ##
-## 1. A new journey with one rower: the party behind the wedding longship,
-##    to its end, and then to the farm.
+## 1. A new journey with one rower: How to play, then the party behind the
+##    wedding longship, to its end, and then to the farm.
 ## 2. The Home Lakes: the bot does the first tasks, one after the other (see
 ##    lakes_bot.gd), with its detours; then Escape twice ends the journey.
-## 3. The journey goes on with the chase: the bot rows away from the pirates
-##    to the town, and back to the start.
-## 4. A second journey with two rowers, who row an oar each, does its first
-##    task; then the players delete it, in three steps.
+## 3. The journey goes on with How to play again, then the chase: the bot rows
+##    away from the pirates to the town, and back to the start.
+## 4. A second journey with two rowers, who row an oar each, sees How to play
+##    for two, does its first task; then the players delete it, in three steps.
 ## 5. The first journey goes on: the voyage comes back from the disk as it
 ##    was left, and the bot does one more task (or rows home, if all are done).
 ##
@@ -43,6 +43,9 @@ const CHASE_SECONDS := 600.0
 const HEARD := [
     "click", "oar", "dock", "coins", "hooray", "bell", "horn", "pickup", "coin", "pirates", "jingle"
 ]
+
+## How long the players watch How to play, in seconds of the game.
+const HOW_TO_SECONDS := 20.0
 
 ## How often the players try the chase before they make it.
 const CHASES := 3
@@ -98,6 +101,7 @@ func _new_journey() -> void:
     )
     await choose("One rower")
     check(fake.players == 1, "the camera follows one player")
+    await _how_to(1)
     party_silver = voyage().silver
     await choose("Party!")
     await _party()
@@ -116,6 +120,9 @@ func _lakes() -> void:
 func _chase_phase() -> void:
     print("3. The chase")
     await _go_on(_first)
+    # A detour: How to play again, from the choice of what to play.
+    await choose("How to play")
+    await _how_to(1)
     await choose("Chase!")
     await _chase()
     _left = _snapshot(voyage())
@@ -127,6 +134,7 @@ func _second_journey() -> void:
     await choose("+ New journey")
     await choose("Two rowers")
     check(fake.players == 2, "the camera follows two players")
+    await _how_to(2)
     await choose("The farm")
     if aborted() or not await wait_for_scene(WORLD):
         return
@@ -157,6 +165,33 @@ func _back() -> void:
     else:
         await play_lakes(state.missions.done.size() + 1)
     await _leave_lakes()
+
+
+## How to play shows for the [param players]: watch some of its parts, then
+## hold the hand on Ready!.
+func _how_to(players: int) -> void:
+    if aborted():
+        return
+    await frame()
+    var found := current_scene.find_children("*", "HowTo", true, false)
+    check(found.size() == 1, "how to play shows")
+    if found.is_empty():
+        return
+    var how: HowTo = found[0]
+    check(how.players == players, "how to play shows the parts for %d rowers" % players)
+    var parts := {}
+    var until := clock + HOW_TO_SECONDS
+    while clock < until and not aborted():
+        parts[how.part] = true
+        await frame()
+    check(parts.size() > 2, "how to play goes from part to part")
+    tally("how to play")
+    await choose("Ready!")
+    await play_for(0.5)
+    check(
+        panel() != null and panel().title == "What do you play?",
+        "after how to play, the players choose what they play"
+    )
 
 
 ## Remove the [param directory] with everything in it.

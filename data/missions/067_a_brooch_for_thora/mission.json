@@ -58,11 +58,11 @@
         "picture": "smith"
       },
       "load_say": "A dragon with green eyes, biting its tail. Careful, the pin is sharp!",
-      "say": "It is beautiful! Here, Father gave me 15 silver for you, and one is extra."
+      "say": "It is beautiful! Here, Father gave me 30 silver for you, and two are extra."
     }
   ],
   "reward": {
-    "silver": 16
+    "silver": 32
   },
   "fact": "Viking women wore two big brooches on their dresses, often with beads between them."
 }

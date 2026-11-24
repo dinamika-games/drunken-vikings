@@ -39,6 +39,7 @@ $GODOT --path . [-- --players=2] [--new]
 ```
 
 The game starts with the start screen (`scenes/start/`): how many row, and which mode, the party (`scenes/level/level.tscn`: follow the wedding longship and pick up the treats it drops) or the practical mode, which opens the Home Lakes (`scenes/world/`): row to the settlements to trade (glide slowly to a jetty to dock), hail the boats on the lakes (glide slowly close to them), and row home to the farm, where a night's sleep ends the day and saves the voyage (`user://voyage.json`).
+A new journey first shows **How to play** (`scenes/how_to/`, also from the card "How to play" when choosing what to play): the parts of `data/how_to/how_to.json`, one after the other, until a hand holds Ready!; on the left the players in the camera picture (`HowToFigure`), on the right the boat of the game rowed by the same strokes; one rower learns to steer by leaning, two rowers to row together and turn with the oars. The rowers, the room behind them and the jetty are painted (`assets/pictures/how_to/`, cut by `venv/bin/python dev/pictures/cut_sheets.py how_to_rowers how_to_jetty` from the sheets of `~/Downloads/viking/how-to/`: the rowers figure by figure, onto canvases of the same size, their laps at the bottom middle), and drawn in code when missing. `tests/godot/test_how_to.gd` checks that every part shows what its line says, and `venv/bin/python dev/how_to/make_svgs.py` draws the parts into SVGs (`~/Downloads/viking/how-to/all_svgs/`, with the prompts to paint them in `~/Downloads/viking/how-to/PROMPT.md`).
 The players row with their bodies and choose on the screens with their hands: a raised hand moves a cursor, which sticks to the cards, and holding it still for 2 s chooses (`HandCursor`, `DwellButton`, `ChoicePanel`; the hands come from the YOLOX hand detector, which runs only while a screen shows). The mouse clicks the cards, too. **C** shows the map of the lakes with where the missions lead (the game waits). Escape quits.
 
 * `--players=2`: two players, each pulls the oar on their side; the boat turns away from the stronger rower.
@@ -70,8 +71,16 @@ It starts a new journey with one rower, follows the wedding to its end, does the
 All the way, it checks the contracts of the game on every frame (`contracts.gd`, in the tests only): e.g., every screen lets the players go on, the cards fit the screen and their texts fit the cards, the boat never leaves the water nor crosses the land, the boat rows exactly while no screen shows, the silver never goes below zero, the cargo fits the hold, nothing of a finished task stays aboard, and the save on the disk is the voyage in memory whenever the boat docks.
 It fails on any error which the game logs (`error_log.gd`), and whenever the players get stuck: a card which the hand holds is not chosen, the boat comes no closer to its jetty, or a task is not done within 40 legs.
 
-It runs as fast as the computer can: `--fixed-fps 60` makes every frame 1/60 s of the game however fast it is computed, the game runs 8 times faster than that, and what redraws on every frame (the boats, the wakes, the HUD) is drawn only on every 8th frame, so that about six hours of the game take some two and a half minutes (about 1000 frames a second).
+It runs as fast as the computer can: `--fixed-fps 60` makes every frame 1/60 s of the game however fast it is computed, the game runs 10 times faster than that, and what redraws on every frame (the boats, the wakes, the HUD) is drawn only on every 8th frame, so that about five hours of the game take some three minutes (about 700 frames a second).
 The random choices come from a seed; try others with `-- --seed=<n>`, and more tasks with `-- --tasks=<n>` (all 100 take some seven minutes: `-- --tasks=100 --wall-seconds=600`); `-- --trace` prints every choice and where the bot rows.
+
+**The balance** of the farm and the trading is checked by a bot which plays the rules of the game (`GameState`, `Economy`, `Farm`, `Missions`, `Ships`) without rowing, a trip taking the length of its route at the speed of the ship, many times with several strategies (a careful child doing the tasks, the tasks with trading on the way, a pure trader, a farmer, and a random fuzzer), and reports when the players can buy the ships and the land, in hours of play and in tasks done, and whether any run gets stuck:
+
+```
+$GODOT --headless --path . --script dev/balance/balance.gd -- --no-camera [--runs=20] [--hours=50] [--speed=8] [--strategies=tasks,mixed,trader,farmer,random] [--ship-prices=80,220,450,800] [--reward-scale=1.0]
+```
+
+With the rewards of the tasks as they are, a careful child gets the færing after about 30 tasks (7 hours of play at 8 m/s), the karve after about 65 and the knarr near the end; the longship is a goal for those who also trade or farm.
 
 ## The rowing experiment
 

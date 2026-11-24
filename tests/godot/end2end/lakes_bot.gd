@@ -49,6 +49,7 @@ const SLEEP_CHANCE := 0.2
 const CHART_CHANCE := 0.1
 const ESCAPE_CHANCE := 0.05
 const SHIP_CHANCE := 0.5
+const SELL_ANIMAL_CHANCE := 0.15
 
 ## What the bot did, by what: how often.
 var did := {}
@@ -60,6 +61,8 @@ var party_silver := 0
 var _trade := {}
 ## Whether the bot must sleep at home (for the farm to make goods).
 var _must_sleep := false
+## The kind of animal to sell for room on the pasture, or "".
+var _sell_kind := ""
 var _last_mode := ""
 var _watched_scene := 0
 var _legs := 0
@@ -112,6 +115,9 @@ func _watch() -> void:
 ## Play on the lakes until [param tasks] tasks are done in all (or the test
 ## stops), then stay on the water.
 func play_lakes(tasks: int) -> void:
+    if _scene() != WORLD:
+        fail("the players are on the lakes, not on %s" % _scene(), true)
+        return
     var world := current_scene
     contracts.restart(voyage().day)
     _last_mode = ""
@@ -242,8 +248,29 @@ func _pasture_plan(id: String) -> Dictionary:
         if not plot["id"] in state.farm.plots and int(plot["pasture"]) > 0:
             price = mini(price, int(plot["price"]))
     if price == 1 << 30:
-        fail("the farm has no room for the animals of %s, and no land is left to buy" % id, true)
-        return {"go": "home", "why": "no land"}
+        # NOTE: No land is left: sell the animal which takes the most room
+        # where such animals are dealt in (see PortScreens._show_animals).
+        var keep: String = state.missions.current_step(id).get("animal", "")
+        for kind in state.farm.animals:
+            if (
+                kind != keep
+                and (
+                    _sell_kind == ""
+                    or (
+                        float(state.farm.animal_kinds[kind]["room"])
+                        > float(state.farm.animal_kinds[_sell_kind]["room"])
+                    )
+                )
+            ):
+                _sell_kind = kind
+        if _sell_kind == "":
+            fail("the farm has no room for the animals of %s, and nothing to sell" % id, true)
+            return {"go": "home", "why": "no land"}
+        var places: Array[String] = []
+        for place in world_map().places:
+            if _sell_kind in PortScreens.ANIMALS_SOLD.get(place["kind"], []):
+                places.append(place["id"])
+        return {"go": _nearest(places), "why": "sell a %s for room for %s" % [_sell_kind, id]}
     if state.silver >= price:
         return {"go": "home", "why": "buy land for %s" % id}
     return _earn(price)
@@ -610,6 +637,7 @@ func _at_market() -> void:
         _trade["from"] = ""
     if id == state.ships.shipyard:
         await _shipyard()
+    await _sell_animals(id)
     if rng.randf() < TALK_CHANCE:
         await _settle()
         tally("talks")
@@ -617,6 +645,32 @@ func _at_market() -> void:
         await choose("Thank you!")
     if rng.randf() < LOOK_CHANCE and not state.missions.active.is_empty():
         await _look_at_tasks()
+
+
+## Sell the animal which the pasture needs gone (see [method _pasture_plan]),
+## or now and then a spare one, if this place deals in it.
+func _sell_animals(id: String) -> void:
+    var state := voyage()
+    var dealt: Array = PortScreens.ANIMALS_SOLD.get(world_map().place(id)["kind"], [])
+    var kind := _sell_kind
+    if kind == "" and rng.randf() < SELL_ANIMAL_CHANCE:
+        var needed := _needed()
+        for animal in dealt:
+            if int(state.farm.animals.get(animal, 0)) > 1 and not needed.has("animal:" + animal):
+                kind = animal
+    if kind == "" or not kind in dealt:
+        return
+    var name := "Sell a %s" % String(state.farm.animal_kinds[kind]["name"]).to_lower()
+    await _settle()
+    await choose("Animals")
+    var found: bool = await _find(name)
+    if found:
+        var silver: int = state.silver
+        await choose(name)
+        tally("animals sold")
+        check(state.silver > silver, "selling an animal pays")
+    _sell_kind = ""
+    await _settle()
 
 
 ## Sell what no task needs (the goods of a trade only where it sells).

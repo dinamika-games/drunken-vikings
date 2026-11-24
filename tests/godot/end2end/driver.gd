@@ -8,7 +8,7 @@ extends SceneTree
 ##
 ## Speed: the test runs with [code]--fixed-fps 60[/code], so that every frame
 ## plays 1/60 s of the game however fast it is computed, and the game runs
-## [member time_scale] times faster than that. Most of a frame goes into
+## [member time_scale] times faster than that (10 by default). Most of a frame goes into
 ## drawing (even headless), so what redraws on every frame (the boats, their
 ## wakes, the HUD) is drawn only on every [member draw_every]-th frame; the
 ## map is drawn once, as in the game, and the screens of choices on every
@@ -21,7 +21,7 @@ const Contracts := preload("res://tests/godot/end2end/contracts.gd")
 const ErrorLog := preload("res://tests/godot/end2end/error_log.gd")
 
 const DEFAULT_SEED := 20261124
-const DEFAULT_TIME_SCALE := 8.0
+const DEFAULT_TIME_SCALE := 10.0
 const DEFAULT_DRAW_EVERY := 8
 
 ## The test fails if it takes longer than this, in seconds of the wall clock.
@@ -327,6 +327,8 @@ func choose(title: String, prefix := false) -> bool:
         return false
     var shown := panel()
     var index := card(title, prefix)
+    if (shown == null or index < 0) and loose_button(title) != null:
+        return await _hold(loose_button(title))
     if shown == null or index < 0:
         fail(
             (
@@ -372,6 +374,43 @@ func choose(title: String, prefix := false) -> bool:
     fake.point_at(Vector2.INF, SCREEN)
     await frame()
     return _chosen == index
+
+
+## The card of the [param title] which shows outside the screens of choices
+## (e.g., Ready! of HowTo), or null.
+func loose_button(title: String) -> DwellButton:
+    if current_scene == null:
+        return null
+    for node in current_scene.find_children("*", "DwellButton", true, false):
+        var button := node as DwellButton
+        if (
+            button.is_visible_in_tree()
+            and not button.get_parent() is ChoicePanel
+            and str(button.card.get("title", "")) == title
+        ):
+            return button
+    return null
+
+
+## Hold a raised hand on the [param button] until it is pressed, then lower
+## the hand; return whether it worked.
+func _hold(button: DwellButton) -> bool:
+    var title := str(button.card.get("title", ""))
+    seen[title] = int(seen.get(title, 0)) + 1
+    if tracing:
+        print("  [%.0f s] %s" % [clock, title])
+    var pressed := [false]
+    button.pressed.connect(func() -> void: pressed[0] = true)
+    fake.point_at(button.get_global_rect().get_center(), SCREEN)
+    var since := clock
+    while not pressed[0] and not _aborted:
+        await frame()
+        if clock - since > CHOOSE_SECONDS:
+            fail("the card '%s' is chosen by holding the hand on it" % title)
+            break
+    fake.point_at(Vector2.INF, SCREEN)
+    await frame()
+    return pressed[0]
 
 
 ## Press a key and let it go, as on the keyboard.
