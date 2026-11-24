@@ -16,16 +16,14 @@
     "chamomile": {
       "name": "Chamomile",
       "color": "f2e48a",
-      "picture": [
-        "goods",
-        "herbs"
-      ],
+      "picture": ["items", "chamomile"],
       "one": "the chamomile"
     },
     "stone": {
       "name": "Hot stone",
       "color": "8a8070",
-      "one": "the hot stone"
+      "one": "the hot stone",
+      "picture": ["items", "hot_stone"]
     }
   },
   "steps": [
@@ -50,7 +48,8 @@
       "from_who": {
         "name": "Dagny the potter",
         "hair": "3a2a1a",
-        "braids": true
+        "braids": true,
+        "picture": "dagny"
       },
       "load_say": "Hot from the kiln, wrapped in wool. It stays warm all night."
     },

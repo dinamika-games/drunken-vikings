@@ -9,7 +9,8 @@
   "giver": {
     "name": "Arne of Frosttorp",
     "hair": "a04a20",
-    "place": "farm"
+    "place": "farm",
+    "picture": "arne"
   },
   "offer": "My hay meadow was flooded, and the cows are hungry! I need eight crates of hay. Your big boat can do it in one trip.",
   "days": 2,

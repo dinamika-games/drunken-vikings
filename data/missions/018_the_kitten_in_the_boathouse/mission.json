@@ -16,7 +16,8 @@
     "kittens": {
       "name": "Kittens",
       "color": "b0a898",
-      "one": "the basket of kittens"
+      "one": "the basket of kittens",
+      "picture": ["items", "kittens"]
     }
   },
   "steps": [
@@ -33,7 +34,8 @@
       "at": "market",
       "who": {
         "name": "Bjarne the boatwright",
-        "hair": "3a2a1a"
+        "hair": "3a2a1a",
+        "picture": "bjarne"
       },
       "say": "In my boathouse, in the wood shavings: your kitten! And four tiny kittens of her own! You can take them all home in a basket."
     },

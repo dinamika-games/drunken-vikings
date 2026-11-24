@@ -17,10 +17,7 @@
     "cakes": {
       "name": "Cakes",
       "color": "d8a050",
-      "picture": [
-        "goods",
-        "honey"
-      ],
+      "picture": ["items", "honey_cakes"],
       "one": "a basket of honey cakes",
       "many": "baskets of honey cakes"
     }

@@ -9,7 +9,8 @@
   "giver": {
     "name": "Bjarne the boatwright",
     "hair": "3a2a1a",
-    "place": "market"
+    "place": "market",
+    "picture": "bjarne"
   },
   "offer": "Last time, I promise! Six oak branches from Frosttorp, four boxes of rivets from Hrafn, and 40 silver: your hold takes two more crates, whatever ship you row.",
   "items": {
@@ -17,15 +18,13 @@
       "name": "Oak",
       "color": "6a4320",
       "one": "an oak branch",
-      "many": "oak branches"
+      "many": "oak branches",
+      "picture": ["items", "oak"]
     },
     "rivets": {
       "name": "Rivets",
       "color": "6a7078",
-      "picture": [
-        "goods",
-        "tools"
-      ],
+      "picture": ["items", "rivets"],
       "one": "a box of rivets",
       "many": "boxes of rivets"
     }
@@ -39,7 +38,8 @@
       "to": "market",
       "from_who": {
         "name": "Arne of Frosttorp",
-        "hair": "a04a20"
+        "hair": "a04a20",
+        "picture": "arne"
       }
     },
     {

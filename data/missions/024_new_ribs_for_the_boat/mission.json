@@ -9,7 +9,8 @@
   "giver": {
     "name": "Bjarne the boatwright",
     "hair": "3a2a1a",
-    "place": "market"
+    "place": "market",
+    "picture": "bjarne"
   },
   "offer": "Your hold could carry even more! Bring me three bent oak branches from Arne in Frosttorp and a crate of iron tools, and pay me 10 silver for the work.",
   "items": {
@@ -17,7 +18,8 @@
       "name": "Oak",
       "color": "6a4320",
       "one": "an oak branch",
-      "many": "oak branches"
+      "many": "oak branches",
+      "picture": ["items", "oak"]
     }
   },
   "steps": [
@@ -29,7 +31,8 @@
       "to": "market",
       "from_who": {
         "name": "Arne of Frosttorp",
-        "hair": "a04a20"
+        "hair": "a04a20",
+        "picture": "arne"
       },
       "load_say": "These oaks grew bent in the wind: just right for the ribs of a boat."
     },

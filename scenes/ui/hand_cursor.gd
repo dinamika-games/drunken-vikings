@@ -216,6 +216,23 @@ func _exit_tree() -> void:
 
 ## A cursor: a viking glove of leather with a gold cuff.
 func _draw() -> void:
+    var glove := Pictures.of("ui", "glove")
+    if glove != null:
+        for hand in _hands:
+            if is_instance_valid(hand.stuck) and hand.stuck.progress > 0.0:
+                _draw_ring(hand.cursor, hand.stuck.progress)
+        for point in cursors:
+            Pictures.draw(
+                self,
+                glove,
+                point + Vector2(3, 5),
+                72.0,
+                0.0,
+                Transform2D.IDENTITY,
+                Color(0, 0, 0, 0.35)
+            )
+            Pictures.draw(self, glove, point, 72.0)
+        return
     for point in cursors:
         draw_circle(point + Vector2(3, 4), 30.0, Color(0, 0, 0, 0.35))
         draw_circle(point, 30.0, Color("8a5a2b"))
@@ -224,6 +241,26 @@ func _draw() -> void:
             draw_circle(point + Vector2(-15.0 + 10.0 * k, -26.0), 8.0, Color("8a5a2b"))
         draw_circle(point + Vector2(-30, 2), 9.0, Color("8a5a2b"))
         draw_circle(point, 6.0, Color("f2c14e"))
+
+
+## The rope ring around the cursor at [param at], which fills clockwise from
+## the top while the hand holds still over a card ([param progress] from 0 to 1).
+func _draw_ring(at: Vector2, progress: float) -> void:
+    var ring := Pictures.of("ui", "rope_ring")
+    if ring == null:
+        return
+    var radius := 56.0
+    var square := Rect2(at - Vector2(radius, radius), Vector2(radius, radius) * 2.0)
+    draw_texture_rect(ring, square, false, Color(1, 1, 1, 0.3))
+    # A slice of the ring, as far as the hand got, reaching past the corners.
+    var points := PackedVector2Array([at])
+    var uvs := PackedVector2Array([Vector2(0.5, 0.5)])
+    var steps := maxi(2, int(64 * progress))
+    for k in range(steps + 1):
+        var direction := Vector2.from_angle(-PI / 2.0 + TAU * progress * k / steps) * 1.5
+        points.append(at + direction * radius)
+        uvs.append(Vector2(0.5, 0.5) + direction * 0.5)
+    draw_colored_polygon(points, Color.WHITE, uvs, ring)
 
 
 ## A raised hand which we follow, and its cursor.

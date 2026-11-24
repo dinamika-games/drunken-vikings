@@ -10,7 +10,8 @@
   "giver": {
     "name": "Sten the shepherd",
     "hair": "8a5a2b",
-    "place": "herders"
+    "place": "herders",
+    "picture": "sten"
   },
   "offer": "So many lambs this spring! The ewes eat and eat, and my hay is gone. Bring me eight crates of hay within two days.",
   "days": 2,

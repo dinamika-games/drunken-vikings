@@ -17,7 +17,8 @@
       "name": "Charcoal",
       "color": "2a2a2a",
       "one": "a sack of charcoal",
-      "many": "sacks of charcoal"
+      "many": "sacks of charcoal",
+      "picture": ["items", "charcoal"]
     }
   },
   "steps": [
@@ -29,7 +30,8 @@
       "to": "smith",
       "from_who": {
         "name": "Old Grim of Svanetorp",
-        "hair": "d8d8d0"
+        "hair": "d8d8d0",
+        "picture": "grim"
       },
       "load_say": "Black as night and light as a feather. Mind your dresses!"
     },

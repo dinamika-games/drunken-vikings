@@ -16,24 +16,19 @@
     "grim": {
       "name": "Grim",
       "color": "d8d8d0",
-      "one": "Old Grim"
+      "one": "Old Grim",
+      "picture": ["faces", "grim"]
     },
     "halvard": {
       "name": "Halvard",
       "color": "d8d8d0",
-      "picture": [
-        "faces",
-        "halvard"
-      ],
+      "picture": ["faces", "halvard"],
       "one": "Old Halvard"
     },
     "tova": {
       "name": "Tova",
       "color": "6a9a4a",
-      "picture": [
-        "faces",
-        "healer"
-      ],
+      "picture": ["faces", "healer"],
       "one": "Tova"
     }
   },
@@ -46,7 +41,8 @@
       "to": "home",
       "from_who": {
         "name": "Old Grim of Svanetorp",
-        "hair": "d8d8d0"
+        "hair": "d8d8d0",
+        "picture": "grim"
       },
       "load_say": "A feast for an old man? I bring my cow's best butter!",
       "say": "Welcome, Grim!"

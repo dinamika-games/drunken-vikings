@@ -19,7 +19,8 @@
       "at": "herders",
       "who": {
         "name": "Sten the shepherd",
-        "hair": "8a5a2b"
+        "hair": "8a5a2b",
+        "picture": "sten"
       },
       "say": "Ålberga: touched! The canoe is right behind you!"
     },
@@ -29,7 +30,8 @@
       "who": {
         "name": "Alfhild the beekeeper",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "alfhild"
       },
       "say": "Dimmberga! Row, row, they are close!"
     },
@@ -38,7 +40,8 @@
       "at": "farm_3",
       "who": {
         "name": "Old Grim of Svanetorp",
-        "hair": "d8d8d0"
+        "hair": "d8d8d0",
+        "picture": "grim"
       },
       "say": "Svanetorp! Now back to Kråkhamn!"
     },

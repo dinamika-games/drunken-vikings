@@ -10,7 +10,8 @@
   "giver": {
     "name": "Bjarne the boatwright",
     "hair": "3a2a1a",
-    "place": "market"
+    "place": "market",
+    "picture": "bjarne"
   },
   "offer": "Now we make your boat great! Ten planks from Frosttorp, three crates of tools, and 30 silver. Then she takes two more crates. Ten planks are more than you can carry at once.",
   "items": {
@@ -18,7 +19,8 @@
       "name": "Plank",
       "color": "c8a878",
       "one": "a plank",
-      "many": "planks"
+      "many": "planks",
+      "picture": ["items", "plank"]
     }
   },
   "steps": [
@@ -30,7 +32,8 @@
       "to": "market",
       "from_who": {
         "name": "Arne of Frosttorp",
-        "hair": "a04a20"
+        "hair": "a04a20",
+        "picture": "arne"
       },
       "load_say": "Planks again? Bjarne is building you a ship!"
     },

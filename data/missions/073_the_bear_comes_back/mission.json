@@ -10,17 +10,15 @@
     "name": "Alfhild the beekeeper",
     "hair": "e8c25a",
     "braids": true,
-    "place": "beekeeper"
+    "place": "beekeeper",
+    "picture": "alfhild"
   },
   "offer": "Honey is missing again! But this time, the paw prints are BIG. Ask Inga the messenger, she rows past the woods every day.",
   "items": {
     "honey": {
       "name": "Honey",
       "color": "e8a830",
-      "picture": [
-        "goods",
-        "honey"
-      ],
+      "picture": ["goods", "honey"],
       "one": "a pot of honey",
       "many": "pots of honey"
     }
@@ -40,12 +38,14 @@
       "from_who": {
         "name": "Alfhild the beekeeper",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "alfhild"
       },
       "to_who": {
         "name": "Thora, the chieftain's daughter",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "thora"
       },
       "load_say": "Then he gets honey of his own, far from my hives. Take him two pots.",
       "say": "I put the pots by the old oak. Look! He comes out of the bushes and sniffs. He remembers you!"

@@ -139,8 +139,9 @@ func _draw() -> void:
     var font := ThemeDB.fallback_font
     var width := 1100.0
     var box := Rect2(Vector2((size.x - width) / 2.0, 60.0), Vector2(width, 300.0))
-    draw_rect(box.grow(10.0), _WOOD)
-    draw_rect(box, Color(_PAPER, 0.95))
+    if not Pictures.draw_frame(self, "board", box.grow(14.0), 44.0):
+        draw_rect(box.grow(10.0), _WOOD)
+        draw_rect(box, Color(_PAPER, 0.95))
     var left := box.position.x + 40.0
     if not face.is_empty():
         _draw_face(box.position + Vector2(90, 110), 60.0)

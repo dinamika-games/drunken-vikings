@@ -37,7 +37,8 @@
       "at": "herders",
       "who": {
         "name": "Sten the shepherd",
-        "hair": "8a5a2b"
+        "hair": "8a5a2b",
+        "picture": "sten"
       },
       "say": "A feast! I will bring my flute. Thank you!"
     }

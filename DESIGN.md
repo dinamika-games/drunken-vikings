@@ -196,6 +196,7 @@ The players' farm lies on the shore of the home lakes, with its own jetty. Grand
 
 * **The crew rows with the players.** Each stroke of the players is the beat for the whole crew: their oars swing with the players' oars, so a stroke of a bigger ship pushes more, and the sail keeps it gliding longer. So the exercise never stops mattering: without strokes, every ship slows down.
 * **The players row on the stern bench** of a bigger ship (their own oars still follow their bodies), with the crew on the benches before them; the bow of a ship stays on the water (it slides along the shores like the small boat).
+* **Each ship is painted** (hull, crew, oars, sail and the knarr's cargo); `ships.json` places the parts on the hull picture ("drawn", see `Longship.look`). Signe's slipway, with a ship half built, and her timber stand on the shore of Ekvik.
 * **The boatwright's crates** (Bjarne, in the missions) widen whatever ship the players row: they go with the players from ship to ship.
 * A big hold shows on the HUD as one crate for each kind of cargo, with how many, and how full the hold is.
 * Later: the crew is paid a little silver per trip, the sail needs the wind, and the small boat fits the narrow rivers where the knarr does not.

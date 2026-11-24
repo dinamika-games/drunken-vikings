@@ -9,7 +9,8 @@
   "giver": {
     "name": "Bjarne the boatwright",
     "hair": "3a2a1a",
-    "place": "market"
+    "place": "market",
+    "picture": "bjarne"
   },
   "offer": "A great boat needs colours! Bring me three pots of paint from Dagny, and I paint your boat red and blue, with a dragon head on the prow.",
   "items": {
@@ -17,7 +18,8 @@
       "name": "Paint",
       "color": "b8332a",
       "one": "a pot of paint",
-      "many": "pots of paint"
+      "many": "pots of paint",
+      "picture": ["items", "paint"]
     }
   },
   "steps": [
@@ -30,7 +32,8 @@
       "from_who": {
         "name": "Dagny the potter",
         "hair": "3a2a1a",
-        "braids": true
+        "braids": true,
+        "picture": "dagny"
       },
       "load_say": "Red ochre, blue woad and white chalk, ground fine in linseed oil."
     },

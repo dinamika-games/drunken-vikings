@@ -9,7 +9,8 @@
   "giver": {
     "name": "Sten the shepherd",
     "hair": "8a5a2b",
-    "place": "herders"
+    "place": "herders",
+    "picture": "sten"
   },
   "offer": "A late frost tonight, and my ewes had their lambs today! Bring two warm blankets from Sæunn in Guldvik, and a jug of milk from the horse farm, before the night falls.",
   "days": 1,
@@ -17,17 +18,15 @@
     "blanket": {
       "name": "Blanket",
       "color": "b8332a",
-      "picture": [
-        "goods",
-        "cloth"
-      ],
+      "picture": ["items", "blanket"],
       "one": "a blanket",
       "many": "blankets"
     },
     "milk": {
       "name": "Milk",
       "color": "f1f0ea",
-      "one": "the jug of milk"
+      "one": "the jug of milk",
+      "picture": ["items", "milk"]
     }
   },
   "steps": [

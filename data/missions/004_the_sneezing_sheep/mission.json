@@ -17,10 +17,7 @@
     "thyme": {
       "name": "Thyme",
       "color": "6a9a4a",
-      "picture": [
-        "goods",
-        "herbs"
-      ],
+      "picture": ["items", "thyme"],
       "one": "the bundle of thyme"
     }
   },

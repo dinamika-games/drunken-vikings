@@ -9,7 +9,8 @@
   "giver": {
     "name": "Orm the innkeeper",
     "hair": "3a2a1a",
-    "place": "inn_2"
+    "place": "inn_2",
+    "picture": "orm"
   },
   "offer": "The nights grow long. The guests of the autumn feast need light: bring me tar for torches, two pots from Ekvik, and two crates of flax for the wicks.",
   "items": {
@@ -17,7 +18,8 @@
       "name": "Tar",
       "color": "3a2a1a",
       "one": "a pot of tar",
-      "many": "pots of tar"
+      "many": "pots of tar",
+      "picture": ["items", "tar"]
     }
   },
   "steps": [
@@ -30,7 +32,8 @@
       "from_who": {
         "name": "Helga the fisher",
         "hair": "c9602a",
-        "braids": true
+        "braids": true,
+        "picture": "helga"
       },
       "load_say": "Tar for torches? They burn bright and long."
     },

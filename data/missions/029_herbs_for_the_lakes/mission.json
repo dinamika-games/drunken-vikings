@@ -16,10 +16,7 @@
     "herbs": {
       "name": "Herbs",
       "color": "6a9a4a",
-      "picture": [
-        "goods",
-        "herbs"
-      ],
+      "picture": ["goods", "herbs"],
       "one": "a bundle of herbs",
       "many": "bundles of herbs"
     }
@@ -44,7 +41,8 @@
       "to": "herders",
       "to_who": {
         "name": "Sten the shepherd",
-        "hair": "8a5a2b"
+        "hair": "8a5a2b",
+        "picture": "sten"
       }
     },
     {

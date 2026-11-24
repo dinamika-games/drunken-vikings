@@ -28,7 +28,8 @@
       "who": {
         "name": "Thora, the chieftain's daughter",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "thora"
       },
       "say": "Father says it at the Thing, in front of everybody: the green valley belongs to Ylva and Sigrid!"
     }

@@ -17,12 +17,14 @@
       "name": "Log",
       "color": "8a5a2b",
       "one": "a log",
-      "many": "logs"
+      "many": "logs",
+      "picture": ["items", "log"]
     },
     "tar": {
       "name": "Tar",
       "color": "3a2a1a",
-      "one": "the pot of tar"
+      "one": "the pot of tar",
+      "picture": ["items", "tar"]
     }
   },
   "steps": [
@@ -34,7 +36,8 @@
       "to": "home",
       "from_who": {
         "name": "Arne of Frosttorp",
-        "hair": "a04a20"
+        "hair": "a04a20",
+        "picture": "arne"
       },
       "load_say": "Good straight pine. Load what fits, and come back for the rest."
     },
@@ -54,7 +57,8 @@
       "from_who": {
         "name": "Helga the fisher",
         "hair": "c9602a",
-        "braids": true
+        "braids": true,
+        "picture": "helga"
       }
     },
     {

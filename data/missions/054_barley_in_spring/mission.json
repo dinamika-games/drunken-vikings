@@ -25,7 +25,8 @@
       "count": 2,
       "who": {
         "name": "Orm the innkeeper",
-        "hair": "3a2a1a"
+        "hair": "3a2a1a",
+        "picture": "orm"
       },
       "say": "Eggs! I make my famous egg cake. Here, good silver for good eggs."
     }

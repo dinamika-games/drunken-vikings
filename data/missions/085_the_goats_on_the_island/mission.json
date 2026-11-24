@@ -16,10 +16,7 @@
     "goat": {
       "name": "Goat",
       "color": "e8e0d0",
-      "picture": [
-        "farm",
-        "goat"
-      ],
+      "picture": ["farm", "goat"],
       "one": "a goat",
       "many": "goats"
     }
@@ -34,7 +31,8 @@
       "from_who": {
         "name": "Dagny the potter",
         "hair": "3a2a1a",
-        "braids": true
+        "braids": true,
+        "picture": "dagny"
       },
       "load_say": "Take them, take them! They ate my flowers and a basket and a shoe!",
       "say": "My naughty goats! Tomorrow I build a higher fence. Here, my best cheese."

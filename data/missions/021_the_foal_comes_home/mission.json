@@ -16,10 +16,7 @@
     "foal": {
       "name": "Foal",
       "color": "8a5a2b",
-      "picture": [
-        "farm",
-        "foal"
-      ],
+      "picture": ["farm", "foal"],
       "one": "the foal"
     }
   },

@@ -9,7 +9,8 @@
   "giver": {
     "name": "Orm the innkeeper",
     "hair": "3a2a1a",
-    "place": "inn_2"
+    "place": "inn_2",
+    "picture": "orm"
   },
   "offer": "The autumn feast is tomorrow! Knut's ale is ready, five barrels. Bring them from Lindtorp, and bring three crates of fish for the soup too.",
   "days": 2,
@@ -17,10 +18,7 @@
     "ale": {
       "name": "Ale",
       "color": "a8743c",
-      "picture": [
-        "goods",
-        "ale"
-      ],
+      "picture": ["goods", "ale"],
       "one": "a barrel of ale",
       "many": "barrels of ale"
     }
@@ -34,7 +32,8 @@
       "to": "inn_2",
       "from_who": {
         "name": "Knut the brewer",
-        "hair": "c9602a"
+        "hair": "c9602a",
+        "picture": "knut"
       },
       "load_say": "The biggest batch I ever brewed! Five barrels for Orm.",
       "say": "The ale! Now the fish."

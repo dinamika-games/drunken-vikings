@@ -10,7 +10,8 @@
     "name": "Dagny the potter",
     "hair": "3a2a1a",
     "braids": true,
-    "place": "potter"
+    "place": "potter",
+    "picture": "dagny"
   },
   "offer": "My island has no clay left! The best clay is on the shore of Ekvik. Bring me four baskets, and you get two crates of my pots.",
   "items": {
@@ -18,7 +19,8 @@
       "name": "Clay",
       "color": "8a8070",
       "one": "a basket of clay",
-      "many": "baskets of clay"
+      "many": "baskets of clay",
+      "picture": ["items", "clay"]
     }
   },
   "steps": [
@@ -31,7 +33,8 @@
       "from_who": {
         "name": "Helga the fisher",
         "hair": "c9602a",
-        "braids": true
+        "braids": true,
+        "picture": "helga"
       },
       "load_say": "Grey, sticky clay from the shore. Heavy too!"
     },

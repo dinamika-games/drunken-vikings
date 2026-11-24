@@ -44,6 +44,7 @@ func _draw() -> void:
     _draw_tasks()
     _draw_reminder()
     _draw_minimap()
+    _draw_minimap_frame()
     _draw_rowing()
 
 
@@ -71,11 +72,15 @@ func _draw_purse() -> void:
             items.append(item)
     for slot in range(state.capacity):
         var rect := Rect2(Vector2(x, 172), Vector2(52, 44))
-        draw_rect(rect.grow(3.0), _INK)
         if slot < items.size():
             _draw_crate(state, rect, items[slot])
             _outlined(rect.position + Vector2(2, 62), state.good_name(items[slot]), 14)
+        elif Pictures.of("ui", "crate") != null:
+            draw_texture_rect(
+                Pictures.of("ui", "crate"), rect.grow(4.0), false, Color(1, 1, 1, 0.5)
+            )
         else:
+            draw_rect(rect.grow(3.0), _INK)
             draw_rect(rect, Color(1, 1, 1, 0.08))
         x += 60.0
 
@@ -86,7 +91,6 @@ func _draw_hold_grouped(state: Node) -> void:
     var x := 30.0
     for item in state.cargo.keys():
         var rect := Rect2(Vector2(x, 172), Vector2(52, 44))
-        draw_rect(rect.grow(3.0), _INK)
         _draw_crate(state, rect, item)
         _outlined(rect.position + Vector2(2, 62), state.good_name(item), 14)
         _outlined(rect.end + Vector2(-22, -4), "%d" % int(state.cargo[item]), 22, _GOLD)
@@ -104,6 +108,13 @@ func _draw_hold_grouped(state: Node) -> void:
 ## A crate of the cargo in the [param rect]: painted, or drawn simply.
 func _draw_crate(state: Node, rect: Rect2, item: String) -> void:
     var picture := _cargo_picture(item)
+    var crate := Pictures.of("ui", "crate_task" if Missions.is_item(item) else "crate")
+    if picture != null and crate != null:
+        # The thing in its crate; the things of the tasks in a golden one.
+        draw_texture_rect(crate, rect.grow(4.0), false)
+        Pictures.draw(self, picture, rect.get_center(), 40.0)
+        return
+    draw_rect(rect.grow(3.0), _INK)
     if picture != null:
         draw_rect(rect, Color("e8d8b0"))
         Pictures.draw(self, picture, rect.get_center(), 42.0)
@@ -247,6 +258,12 @@ func _draw_minimap() -> void:
         ),
         _GOLD
     )
+
+
+## The wooden frame over the edge of the small map.
+func _draw_minimap_frame() -> void:
+    var box := Rect2(_MINIMAP.position, world.map().size_m * _minimap_scale)
+    Pictures.draw_frame(self, "minimap_frame", box.grow(16.0), 40.0)
 
 
 ## How the players row as a pair: the pull of each oar.

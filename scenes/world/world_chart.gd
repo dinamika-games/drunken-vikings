@@ -12,6 +12,7 @@ const _GOLD := Color("f2c14e")
 const _INK := Color(0.05, 0.07, 0.1, 0.85)
 const _WATER := Color("3d6f9c")
 const _LAND := Color("6b7a45")
+const _BROWN := Color("4a2e14")
 
 ## Where the map goes; the title stands on its left, the legend on its right.
 const _AREA := Rect2(560, 20, 800, 1040)
@@ -99,7 +100,11 @@ func _draw() -> void:
     var state: Node = world.state()
     _taken.clear()
     draw_rect(Rect2(Vector2.ZERO, size), Color("10161c"))
-    draw_rect(Rect2(_origin, map.size_m * _scale).grow(8.0), Color("4a3a22"))
+    var parchment := Pictures.of("chart", "parchment")
+    if parchment != null:
+        draw_texture_rect(parchment, Rect2(_origin, map.size_m * _scale).grow(46.0), false)
+    else:
+        draw_rect(Rect2(_origin, map.size_m * _scale).grow(8.0), Color("4a3a22"))
     draw_rect(Rect2(_origin, map.size_m * _scale), _LAND)
     for polygon in _polygons:
         draw_colored_polygon(polygon["outer"], _WATER)
@@ -116,6 +121,9 @@ func _draw() -> void:
             var pulse := 1.0 + 0.12 * sin(Time.get_ticks_msec() / 200.0)
             draw_arc(ring, 22.0 * pulse, 0.0, TAU, 32, _INK, 8.0)
             draw_arc(ring, 22.0 * pulse, 0.0, TAU, 32, _GOLD, 4.0)
+            var flag := Pictures.of("chart", "flag")
+            if flag != null:
+                Pictures.draw(self, flag, ring + Vector2(10, -26), 44.0 * pulse)
 
     for place in map.places:
         var at := _at(place["jetty"])
@@ -132,43 +140,20 @@ func _draw() -> void:
             name += " (home)"
         _label(at, place["at"] - place["jetty"], name)
 
-    for npc in world.npcs():
-        var skipper := Pictures.of("skippers", npc.skipper.get("picture", ""))
-        if skipper != null:
-            Pictures.draw(self, skipper, _at(npc.position), 22.0, npc.heading)
-    var boat: RowBoat = world.boat()
-    var hull := Pictures.of("rowboat", "hull")
-    var at := _at(boat.position)
-    draw_arc(at, 16.0, 0.0, TAU, 24, _GOLD, 3.0)
-    if hull != null:
-        Pictures.draw(self, hull, at, 28.0, boat.heading)
-    else:
-        draw_circle(at, 6.0, _GOLD)
+    _draw_boats()
+    _draw_title(state)
 
     var font := ThemeDB.fallback_font
-    draw_multiline_string(
-        font,
-        Vector2(30, 120),
-        "The Home Lakes",
-        HORIZONTAL_ALIGNMENT_CENTER,
-        _SIDE - 60,
-        56,
-        -1,
-        _GOLD
-    )
-    draw_multiline_string(
-        font,
-        Vector2(30, 260),
-        "Day %d. You are in the gold ring with the boat." % state.day,
-        HORIZONTAL_ALIGNMENT_LEFT,
-        _SIDE - 60,
-        30,
-        -1,
-        _PAPER
-    )
-    var x := size.x - _SIDE + 40.0
-    var y := 120.0
-    _outlined(Vector2(x, y), "Your tasks", 40, _GOLD)
+    var x := size.x - _SIDE + 70.0
+    var y := 185.0
+    # The tasks on a scroll, if it is painted.
+    var scroll := Rect2(Vector2(x - 80.0, 40.0), Vector2(_SIDE - 10.0, 900.0))
+    var on_scroll := Pictures.draw_frame(self, "scroll", scroll, 90.0, Color.WHITE, "chart")
+    var ink := _BROWN if on_scroll else _PAPER
+    if on_scroll:
+        draw_string(font, Vector2(x, y), "Your tasks", HORIZONTAL_ALIGNMENT_LEFT, -1, 40, _BROWN)
+    else:
+        _outlined(Vector2(x, y), "Your tasks", 40, _GOLD)
     y += 60.0
     if leads.is_empty():
         draw_multiline_string(
@@ -176,22 +161,83 @@ func _draw() -> void:
             Vector2(x, y),
             "No task leads anywhere now. Ask for tasks in the ports!",
             HORIZONTAL_ALIGNMENT_LEFT,
-            _SIDE - 60,
+            _SIDE - 170,
             28,
             -1,
-            _PAPER
+            ink
         )
+    var flag := Pictures.of("chart", "flag")
     for lead in leads:
-        draw_arc(Vector2(x + 14, y - 10), 13.0, 0.0, TAU, 24, _GOLD, 4.0)
+        if flag != null:
+            Pictures.draw(self, flag, Vector2(x + 14, y - 14), 40.0)
+        else:
+            draw_arc(Vector2(x + 14, y - 10), 13.0, 0.0, TAU, 24, _GOLD, 4.0)
         draw_multiline_string(
             font,
             Vector2(x + 44, y),
             "%s: to %s" % [lead[1], state.place_name(lead[0])],
             HORIZONTAL_ALIGNMENT_LEFT,
-            _SIDE - 100,
+            _SIDE - 210,
             28,
             -1,
-            _PAPER
+            ink
         )
         y += 110.0
     _outlined(Vector2(x, size.y - 60), "C closes the map", 30)
+
+
+## The skippers on the lakes, and the players' boat, glowing.
+func _draw_boats() -> void:
+    var painted := Pictures.of("chart", "skipper")
+    for npc in world.npcs():
+        var skipper := painted
+        if skipper == null:
+            skipper = Pictures.of("skippers", npc.skipper.get("picture", ""))
+        if skipper != null:
+            Pictures.draw(self, skipper, _at(npc.position), 26.0, npc.heading)
+    var boat: RowBoat = world.boat()
+    var at := _at(boat.position)
+    var you := Pictures.of("chart", "you")
+    if you != null:
+        Pictures.draw(self, you, at, 44.0, boat.heading)
+        return
+    var hull := Pictures.of("rowboat", "hull")
+    draw_arc(at, 16.0, 0.0, TAU, 24, _GOLD, 3.0)
+    if hull != null:
+        Pictures.draw(self, hull, at, 28.0, boat.heading)
+    else:
+        draw_circle(at, 6.0, _GOLD)
+
+
+## The name of the region on a banner, where the players are, the compass
+## rose and the sea serpent, left of the map.
+func _draw_title(state: Node) -> void:
+    var font := ThemeDB.fallback_font
+    var banner := Pictures.of("chart", "banner")
+    if banner != null:
+        Pictures.draw(self, banner, Vector2(_SIDE / 2.0, 110), _SIDE - 40.0)
+    draw_string(
+        font,
+        Vector2(30, 122),
+        "The Home Lakes",
+        HORIZONTAL_ALIGNMENT_CENTER,
+        _SIDE - 60,
+        34,
+        _BROWN if banner != null else _GOLD
+    )
+    draw_multiline_string(
+        font,
+        Vector2(30, 260),
+        "Day %d. You are the glowing boat; the flags show where your tasks lead." % state.day,
+        HORIZONTAL_ALIGNMENT_LEFT,
+        _SIDE - 60,
+        30,
+        -1,
+        _PAPER
+    )
+    var compass := Pictures.of("chart", "compass")
+    if compass != null:
+        Pictures.draw(self, compass, Vector2(_SIDE / 2.0, 600), 240.0)
+    var serpent := Pictures.of("chart", "serpent")
+    if serpent != null:
+        Pictures.draw(self, serpent, Vector2(_SIDE / 2.0, 900), 300.0)

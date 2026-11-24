@@ -10,7 +10,8 @@
   "giver": {
     "name": "Bjarne the boatwright",
     "hair": "3a2a1a",
-    "place": "market"
+    "place": "market",
+    "picture": "bjarne"
   },
   "offer": "You are real traders now: you need a real hold! Bring me eight planks from Frosttorp and two crates of iron tools, and pay 20 silver. Then your hold takes two more crates.",
   "items": {
@@ -18,7 +19,8 @@
       "name": "Plank",
       "color": "c8a878",
       "one": "a plank",
-      "many": "planks"
+      "many": "planks",
+      "picture": ["items", "plank"]
     }
   },
   "steps": [
@@ -30,7 +32,8 @@
       "to": "market",
       "from_who": {
         "name": "Arne of Frosttorp",
-        "hair": "a04a20"
+        "hair": "a04a20",
+        "picture": "arne"
       },
       "load_say": "Planks of pine, split with wedges. Stack them well!"
     },

@@ -17,7 +17,8 @@
     "ducklings": {
       "name": "Ducklings",
       "color": "f2e48a",
-      "one": "the basket of ducklings"
+      "one": "the basket of ducklings",
+      "picture": ["items", "ducklings"]
     }
   },
   "steps": [
@@ -29,11 +30,13 @@
       "to": "farm_3",
       "from_who": {
         "name": "Tor the fisher",
-        "hair": "8a5a2b"
+        "hair": "8a5a2b",
+        "picture": "tor"
       },
       "to_who": {
         "name": "Old Grim of Svanetorp",
-        "hair": "d8d8d0"
+        "hair": "d8d8d0",
+        "picture": "grim"
       },
       "load_say": "Peep, peep! They are in a basket with some straw. Hurry!",
       "say": "Look: the duck swims to them, and they all paddle after her in a line. Seven! Ha!"

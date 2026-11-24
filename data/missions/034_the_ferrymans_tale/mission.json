@@ -9,7 +9,8 @@
   "giver": {
     "name": "Orm the innkeeper",
     "hair": "3a2a1a",
-    "place": "inn_2"
+    "place": "inn_2",
+    "picture": "orm"
   },
   "offer": "Old Halvard told a story here last night: a hidden cove, where the swans of the lakes are born. He says: ask the potter, the miller and the old man of Svanetorp.",
   "steps": [
@@ -19,7 +20,8 @@
       "who": {
         "name": "Dagny the potter",
         "hair": "3a2a1a",
-        "braids": true
+        "braids": true,
+        "picture": "dagny"
       },
       "say": "The cove? My grandmother said: it lies where the reeds grow tallest. Ask Astrid."
     },
@@ -29,7 +31,8 @@
       "who": {
         "name": "Astrid of the mill",
         "hair": "8a5a2b",
-        "braids": true
+        "braids": true,
+        "picture": "astrid"
       },
       "say": "Reeds? The tallest ones grow south, by Svanetorp. Go to Grim."
     },
@@ -38,7 +41,8 @@
       "at": "farm_3",
       "who": {
         "name": "Old Grim of Svanetorp",
-        "hair": "d8d8d0"
+        "hair": "d8d8d0",
+        "picture": "grim"
       },
       "say": "So you found my secret. Behind my farm, in the reeds: the swan cove. Look, the cygnets! Grey and fluffy. Tell no one!"
     }

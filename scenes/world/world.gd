@@ -34,6 +34,34 @@ const HAIL_COOLDOWN := 90.0
 ## How many boats sail the lakes.
 const NPC_COUNT := 9
 
+## The painted pictures of the cards which show no good, animal or crop (see
+## dev/pictures/: the sheet "icons"), by their titles, so that the children
+## who can not read yet see what a card does.
+const CARD_ICONS := {
+    "Sell": "sell",
+    "Buy": "buy",
+    "Animals": "animals",
+    "Shipyard": "shipyard",
+    "Talk": "talk",
+    "Row on": "row",
+    "Row out": "row",
+    "Tasks": "tasks",
+    "More": "more",
+    "Go on": "more",
+    "Back": "back",
+    "Thank you!": "thanks",
+    "The farm": "farm",
+    "Unload the boat": "unload",
+    "Load from the store": "load",
+    "Sleep": "sleep",
+    "Plant": "plant",
+    "Harvest": "harvest",
+    "Buy land": "buy_land",
+    "Stop for today": "stop",
+    "Yes, I will help!": "help",
+    "Not now": "not_now",
+}
+
 var _map: LakeMap
 var _boat := RowBoat.new()
 var _rower: RowerView
@@ -105,6 +133,7 @@ func _ready() -> void:
     if error != "":
         push_error(error)
         return
+    _add_shipyard()
 
     _splashes = Splashes.new()
     add_child(_splashes)
@@ -194,20 +223,44 @@ func refit() -> void:
     _boat_wake.spread = 8.0
     if not data.has("drawn"):
         return
-    var drawn: Dictionary = data["drawn"]
-    var size := float(drawn.get("size", 1.0))
     _ship_view = Longship.new()
     _ship_view.map = _map
-    _ship_view.has_sail = bool(drawn.get("sail", true))
-    _ship_view.scale = Vector2(size * float(drawn.get("width", 1.0)), size)
+    _ship_view.look = data["drawn"]
     add_child(_ship_view)
     move_child(_ship_view, _rower.get_index())
     # The players sit on the stern bench, a little smaller than in their boat.
-    _stern = 10.0 * size
+    var size := float(data["drawn"]["length"]) / 37.5
+    _stern = _ship_view.stern_offset()
     _rower.scale = Vector2.ONE * clampf(size * 0.6, 0.45, 0.8)
     _rower.show_hull = false
-    _boat_wake.width = 2.5 + 5.0 * size * float(drawn.get("width", 1.0))
+    _boat_wake.width = 2.5 + 0.35 * _ship_view.beam()
     _boat_wake.spread = 8.0 + 10.0 * size
+
+
+## Signe's slipway with a ship half built, and her timber and tar, on the shore
+## of the shipyard beside its jetty (see Ships).
+func _add_shipyard() -> void:
+    var place := _map.place(_state.ships.shipyard)
+    if place.is_empty():
+        return
+    var at: Vector2 = place["at"]
+    var toward := (Vector2(place["jetty"]) - at).normalized()
+    var side := toward.orthogonal()
+    # The bow of the ship on the slipway points to the water.
+    var things := [
+        ["slipway", at + toward * 8.0 + side * 24.0, toward.angle() + PI / 2.0, 30.0],
+        ["timber", at + toward * 4.0 - side * 26.0, toward.angle() - PI / 2.0, 22.0],
+    ]
+    for thing in things:
+        var picture := Pictures.of("ships", thing[0])
+        if picture == null:
+            continue
+        var sprite := Sprite2D.new()
+        sprite.texture = picture
+        sprite.position = thing[1]
+        sprite.rotation = thing[2]
+        sprite.scale = Vector2.ONE * (thing[3] / maxf(picture.get_width(), picture.get_height()))
+        add_child(sprite)
 
 
 func _add_label(text: String, kind: String, at: Vector2) -> void:
@@ -497,6 +550,10 @@ func quit() -> void:
 
 func _show(title: String, text: String, cards: Array, actions: Array[Callable], face := {}) -> void:
     _actions = actions
+    for card: Dictionary in cards:
+        var icon := str(CARD_ICONS.get(card.get("title", ""), ""))
+        if icon != "" and not card.has("picture") and not card.has("stars"):
+            card["picture"] = ["icons", icon]
     # NOTE (mristin):
     # At home, the screens show the farm behind them, dimmed less.
     var home: bool = _mode == "port" and _state.place == "home"
@@ -605,6 +662,8 @@ func _show_hail_events(events: Array, index: int, face: Dictionary) -> void:
     if str(event["who"].get("name", "")) != "":
         text = '%s: "%s"' % [event["who"]["name"], text]
     var cards: Array = [{"title": "Hooray!" if event["done"] else "Thank you!", "detail": ""}]
+    if event["done"]:
+        cards[0]["stars"] = int(event.get("stars", 0))
     var actions: Array[Callable] = [_show_hail_events.bind(events, index + 1, face)]
     _show(event["title"], text, cards, actions, {} if event["done"] else face)
 

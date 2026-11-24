@@ -16,10 +16,7 @@
     "garlic": {
       "name": "Garlic",
       "color": "f1f0ea",
-      "picture": [
-        "goods",
-        "herbs"
-      ],
+      "picture": ["items", "garlic"],
       "one": "the garlic"
     }
   },

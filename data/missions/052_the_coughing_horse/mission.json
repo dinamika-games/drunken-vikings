@@ -16,10 +16,7 @@
     "syrup": {
       "name": "Syrup",
       "color": "e8a830",
-      "picture": [
-        "goods",
-        "honey"
-      ],
+      "picture": ["items", "syrup"],
       "one": "the syrup"
     }
   },

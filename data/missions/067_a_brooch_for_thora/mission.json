@@ -10,19 +10,22 @@
     "name": "Thora, the chieftain's daughter",
     "hair": "e8c25a",
     "braids": true,
-    "place": "chieftain"
+    "place": "chieftain",
+    "picture": "thora"
   },
   "offer": "I want a brooch like a dragon! Hrafn makes it, if he gets glass beads for the eyes from the market. And it costs 15 silver: I have saved them.",
   "items": {
     "beads": {
       "name": "Beads",
       "color": "4a9a6a",
-      "one": "the glass beads"
+      "one": "the glass beads",
+      "picture": ["items", "beads"]
     },
     "brooch": {
       "name": "Brooch",
       "color": "f2c14e",
-      "one": "the brooch"
+      "one": "the brooch",
+      "picture": ["items", "brooch"]
     }
   },
   "steps": [

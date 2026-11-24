@@ -9,17 +9,15 @@
   "giver": {
     "name": "Sten the shepherd",
     "hair": "8a5a2b",
-    "place": "herders"
+    "place": "herders",
+    "picture": "sten"
   },
   "offer": "One of the lambs from the cold night is gone! The little one with the black ear. Ask Freya and Liv, they paddle everywhere in their canoe.",
   "items": {
     "lamb": {
       "name": "Lamb",
       "color": "e8e0d0",
-      "picture": [
-        "farm",
-        "lamb"
-      ],
+      "picture": ["farm", "lamb"],
       "one": "the lamb"
     }
   },

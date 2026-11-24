@@ -16,12 +16,14 @@
     "letter": {
       "name": "Letter",
       "color": "f1e6cc",
-      "one": "the letter"
+      "one": "the letter",
+      "picture": ["items", "letter"]
     },
     "answer": {
       "name": "Answer",
       "color": "f1e6cc",
-      "one": "the answer"
+      "one": "the answer",
+      "picture": ["items", "rune_stick"]
     }
   },
   "steps": [
@@ -49,7 +51,8 @@
       },
       "to_who": {
         "name": "Orm the innkeeper",
-        "hair": "3a2a1a"
+        "hair": "3a2a1a",
+        "picture": "orm"
       },
       "load_say": "Orm wants to brew for the autumn feast. Tell him: yes, and much!"
     },

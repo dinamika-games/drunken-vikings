@@ -72,6 +72,23 @@ func _draw() -> void:
 func _draw_arrow(center: Vector2, direction: Vector2, name: String, title: String) -> void:
     var tip := center + direction * RING
     var pulse := 1.0 + 0.1 * sin(Time.get_ticks_msec() / 150.0)
+    var painted := Pictures.of("ui", "arrow")
+    if painted != null:
+        Pictures.draw(self, painted, tip - direction * 5.0, 96.0 * pulse, direction.angle())
+    else:
+        _draw_plain_arrow(tip, direction, pulse)
+    var font := ThemeDB.fallback_font
+    var label_at := tip - direction * 150 + Vector2(-200, -4)
+    for line in [[name, 32, 0.0], [title, 22, 30.0]]:
+        var where: Vector2 = label_at + Vector2(0, line[2])
+        draw_string_outline(
+            font, where, line[0], HORIZONTAL_ALIGNMENT_CENTER, 400, line[1], 8, _INK
+        )
+        draw_string(font, where, line[0], HORIZONTAL_ALIGNMENT_CENTER, 400, line[1], _GOLD)
+
+
+## The arrow drawn simply, when its picture is missing.
+func _draw_plain_arrow(tip: Vector2, direction: Vector2, pulse: float) -> void:
     var side := direction.orthogonal()
     var arrow := PackedVector2Array(
         [
@@ -88,11 +105,3 @@ func _draw_arrow(center: Vector2, direction: Vector2, name: String, title: Strin
     var outline := arrow.duplicate()
     outline.append(arrow[0])
     draw_polyline(outline, _INK, 3.0, true)
-    var font := ThemeDB.fallback_font
-    var label_at := tip - direction * 150 + Vector2(-200, -4)
-    for line in [[name, 32, 0.0], [title, 22, 30.0]]:
-        var where: Vector2 = label_at + Vector2(0, line[2])
-        draw_string_outline(
-            font, where, line[0], HORIZONTAL_ALIGNMENT_CENTER, 400, line[1], 8, _INK
-        )
-        draw_string(font, where, line[0], HORIZONTAL_ALIGNMENT_CENTER, 400, line[1], _GOLD)

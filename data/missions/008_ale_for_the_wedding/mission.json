@@ -10,7 +10,8 @@
     "name": "Astrid of the mill",
     "hair": "8a5a2b",
     "braids": true,
-    "place": "mill"
+    "place": "mill",
+    "picture": "astrid"
   },
   "offer": "I am marrying Bjarne the boatwright in two days! But the wedding ale is still at Knut the brewer's in Lindtorp. Three barrels: will they fit in your boat?",
   "days": 2,
@@ -18,10 +19,7 @@
     "ale": {
       "name": "Ale",
       "color": "a8743c",
-      "picture": [
-        "goods",
-        "ale"
-      ],
+      "picture": ["goods", "ale"],
       "one": "a barrel of wedding ale",
       "many": "barrels of wedding ale"
     }
@@ -35,7 +33,8 @@
       "to": "mill",
       "from_who": {
         "name": "Knut the brewer",
-        "hair": "c9602a"
+        "hair": "c9602a",
+        "picture": "knut"
       },
       "load_say": "The wedding ale for Astrid! Row smoothly, girls, and do not taste it on the way."
     },

@@ -16,10 +16,7 @@
     "salt": {
       "name": "Salt",
       "color": "ffffff",
-      "picture": [
-        "goods",
-        "salt"
-      ],
+      "picture": ["goods", "salt"],
       "one": "a sack of salt",
       "many": "sacks of salt"
     }
@@ -34,7 +31,8 @@
       "to_who": {
         "name": "Helga the fisher",
         "hair": "c9602a",
-        "braids": true
+        "braids": true,
+        "picture": "helga"
       },
       "load_say": "Eight sacks of the best salt from the sea. Keep them dry!",
       "say": "Bjørn's salt, brought by you? Then I pay you, not him. Ha!"

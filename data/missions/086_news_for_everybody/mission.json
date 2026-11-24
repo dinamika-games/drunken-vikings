@@ -28,7 +28,8 @@
       "at": "fishers",
       "who": {
         "name": "Tor the fisher",
-        "hair": "8a5a2b"
+        "hair": "8a5a2b",
+        "picture": "tor"
       },
       "say": "New lakes, new fish! Thank you for telling us."
     },
@@ -37,7 +38,8 @@
       "at": "inn_2",
       "who": {
         "name": "Orm the innkeeper",
-        "hair": "3a2a1a"
+        "hair": "3a2a1a",
+        "picture": "orm"
       },
       "say": "Guests from far away! I must brew more. Thank you, girls!"
     }

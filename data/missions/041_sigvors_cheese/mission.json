@@ -16,10 +16,7 @@
     "wheel": {
       "name": "Cheese",
       "color": "f2c14e",
-      "picture": [
-        "goods",
-        "cheese"
-      ],
+      "picture": ["items", "cheese"],
       "one": "a wheel of cheese",
       "many": "wheels of cheese"
     }
@@ -33,7 +30,8 @@
       "to": "inn_2",
       "to_who": {
         "name": "Orm the innkeeper",
-        "hair": "3a2a1a"
+        "hair": "3a2a1a",
+        "picture": "orm"
       },
       "load_say": "Roll them in gently. And no nibbling!",
       "say": "Sigvor's cheese! The guests will fight over it. Well, not fight: they will ask nicely."

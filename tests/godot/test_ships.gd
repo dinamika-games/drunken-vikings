@@ -90,13 +90,44 @@ func _run() -> void:
         if float(kind["turn"]) < 1.0:
             _check(rowed["turn"] < small["turn"], "the %s turns slower" % id)
 
-    # The scripts of the world, which sell and draw the ships, compile.
+    # Every ship is painted: the players sit on its stern bench, behind the
+    # middle and on the hull, and the crew pulls an oar on each side.
+    for id in ships.ids:
+        var kind: Dictionary = ships.kinds[id]
+        if not kind.has("drawn"):
+            continue
+        var ship := Longship.new()
+        ship.look = kind["drawn"]
+        var length := float(kind["drawn"]["length"])
+        _check(ship._painted(), "the pictures of the %s are there" % id)
+        _check(
+            ship.stern_offset() > 0.0 and ship.stern_offset() < length / 2.0,
+            "the players sit on the stern bench of the %s" % id
+        )
+        _check(ship.beam() > 0.0 and ship.beam() < length, "the %s is longer than wide" % id)
+        _check(
+            ship.blade_positions().size() == 2 * int(kind["drawn"]["pairs"]),
+            "the crew of the %s pulls its oars" % id
+        )
+        ship.free()
+
+    # The scripts of the world and of the screens, which sell and draw the ships
+    # and the painted pictures, compile.
     for path in [
         "res://scenes/world/world.gd",
         "res://scenes/world/port_screens.gd",
         "res://scenes/world/world_hud.gd",
         "res://scenes/level/longship.gd",
         "res://scenes/level/rower_view.gd",
+        "res://scenes/world/world_chart.gd",
+        "res://scenes/world/task_arrows.gd",
+        "res://scenes/world/npc_boat.gd",
+        "res://scenes/world/farm_view.gd",
+        "res://scenes/ui/dwell_button.gd",
+        "res://scenes/ui/choice_panel.gd",
+        "res://scenes/ui/hand_cursor.gd",
+        "res://scenes/ui/coin_purse.gd",
+        "res://scenes/ui/pictures.gd",
     ]:
         var script: Script = load(path)
         _check(script != null and script.can_instantiate(), "%s compiles" % path)

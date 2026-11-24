@@ -10,7 +10,8 @@
     "name": "Solveig of Solby",
     "hair": "e8c25a",
     "braids": true,
-    "place": "farm_2"
+    "place": "farm_2",
+    "picture": "solveig"
   },
   "offer": "My apple trees bloom, but no bee visits them! Without bees, no apples. Buy a beehive from Alfhild in Dimmberga and bring it to my orchard.",
   "steps": [

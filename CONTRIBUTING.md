@@ -50,7 +50,7 @@ The players row with their bodies and choose on the screens with their hands: a 
 
 The chase mode (`scenes/chase/`: row to a town before the pirates catch you; the pirates find their way on the grid of the water of the map, `LakeMap.water_path`) runs directly with `$GODOT --path . res://scenes/chase/chase.tscn`. The party mode runs directly with `$GODOT --path . res://scenes/level/level.tscn` (add `-- --record` to record the vision while playing, `-- --no-camera --autopilot` to let it play itself), and the practical mode with `$GODOT --path . res://scenes/world/world.tscn`.
 
-The ships of the shipwright (`data/ships/ships.json`, see `Ships` and DESIGN.md, section 8) are sold in her shipyard in Ekvik; each changes how the boat rows (`RowBoat.set_ship`) and is drawn as the painted longship under the players (`world.gd`, `refit`).
+The ships of the shipwright (`data/ships/ships.json`, see `Ships` and DESIGN.md, section 8) are sold in her shipyard in Ekvik; each changes how the boat rows (`RowBoat.set_ship`) and is drawn under the players from its painted parts, placed on its hull by its "drawn" data (`Longship.look`, `world.gd`, `refit`).
 
 The missions (`data/missions/<nnn>_<id>/mission.json`, see DESIGN.md, section 10) are offered in the ports (the card "Tasks"); `Missions` (`scenes/game/missions.gd`) checks their data when the game starts, and `tests/godot/test_missions.gd` plays all of them through, in their order, as a careful player would.
 

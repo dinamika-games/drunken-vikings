@@ -157,5 +157,10 @@ func _draw_bubble() -> void:
     draw_set_transform(Vector2.ZERO, 0.0, Vector2(SCALE, SCALE))
     if not held and cooldown <= 0.0:
         var bob := sin(_time * 3.0) * 0.2
+        var bubble := Pictures.of("ui", "speech_bubble")
+        if bubble != null:
+            var base := Transform2D(0.0, Vector2(SCALE, SCALE), 0.0, Vector2.ZERO)
+            Pictures.draw(self, bubble, Vector2(2.6, -3.6 + bob), 2.4, 0.0, base)
+            return
         draw_circle(Vector2(2.4, -3.4 + bob), 0.7, Color(1, 1, 1, 0.9))
         draw_circle(Vector2(1.8, -2.7 + bob), 0.25, Color(1, 1, 1, 0.9))

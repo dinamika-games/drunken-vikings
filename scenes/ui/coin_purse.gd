@@ -24,9 +24,10 @@ static func draw(canvas: CanvasItem, at: Vector2, count: int, pop := 0.0) -> voi
     var font_size := 46
     var text_width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
     var board := Rect2(at, Vector2(96.0 + text_width + 26.0, 76.0))
-    canvas.draw_rect(board.grow(4.0), _INK)
-    canvas.draw_rect(board, _WOOD)
-    canvas.draw_rect(board.grow(-5.0), _WOOD_LIGHT)
+    if not Pictures.draw_frame(canvas, "plaque", board.grow(6.0), 40.0):
+        canvas.draw_rect(board.grow(4.0), _INK)
+        canvas.draw_rect(board, _WOOD)
+        canvas.draw_rect(board.grow(-5.0), _WOOD_LIGHT)
 
     var coin := Pictures.of("treats", "coin")
     if coin == null:

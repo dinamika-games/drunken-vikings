@@ -9,7 +9,8 @@
   "giver": {
     "name": "Tor the fisher",
     "hair": "8a5a2b",
-    "place": "fishers"
+    "place": "fishers",
+    "picture": "tor"
   },
   "offer": "The herring came in! So many fish that we have no salt left to keep them. Bring us four crates of salt, quickly, before the catch spoils.",
   "days": 2,

@@ -27,6 +27,7 @@ import pathlib
 import sys
 from typing import List, Optional, Sequence, Tuple
 
+import cv2
 import numpy as np
 from PIL import Image
 
@@ -64,6 +65,10 @@ class Sheet:
 
     #: The pictures which are textures, cut edge to edge and made opaque.
     textures: Sequence[str] = ()
+
+    #: The folder in assets/pictures/ to cut into, if not the name of the sheet
+    #: (so that several sheets fill one folder, e.g., the faces).
+    folder: str = ""
 
 
 SHEETS = {
@@ -178,6 +183,73 @@ SHEETS = {
             ["sapling", "tall_grass", "bracken", "meadowsweet"],
         ],
     ),
+    "ships": Sheet(
+        "14_ships/sheet_ships.png",
+        [
+            ["hull_faering", "hull_karve", "hull_knarr", "hull_longship"],
+            ["sail_karve_full", "sail_karve_slack", "sail_knarr_full", "sail_knarr_slack"],
+            ["crew_faering", "crew_karve", "crew_knarr", "crew_longship"],
+            ["cargo_knarr", "oar_short", "slipway", "timber"],
+        ],
+    ),
+    "faces_more": Sheet(
+        "15_faces_more/sheet_faces_more.png",
+        [
+            ["signe", "bjarne", "astrid", "knut"],
+            ["orm", "helga", "tor", "dagny"],
+            ["sten", "alfhild", "solveig", "arne"],
+            ["grim", "thora", "hild", "gerd"],
+            ["ingrid", "sven", "children", ""],
+        ],
+        folder="faces",
+    ),
+    "items_1": Sheet(
+        "16_task_items/sheet_items_1.png",
+        [
+            ["kitten", "kittens", "thyme", "shears", "net"],
+            ["ribbon", "tar", "blanket", "milk", "bear_cub"],
+            ["chamomile", "hot_stone", "madder", "garland", "log"],
+            ["charcoal", "oak", "letter", "rune_stick", "clay"],
+            ["honey_cakes", "plank", "cheese", "goose", "rune_stone"],
+        ],
+        folder="items",
+    ),
+    "items_2": Sheet(
+        "16_task_items/sheet_items_2.png",
+        [
+            ["syrup", "hedda", "paint", "mead", "skep"],
+            ["swarm", "fleece", "beads", "brooch", "ducklings"],
+            ["torch", "chest", "dowry", "rivets", "garlic"],
+            ["hide", "shawl", "cake", "rope", "ring"],
+        ],
+        folder="items",
+    ),
+    "ui": Sheet(
+        "17_ui/sheet_ui.png",
+        [
+            ["board", "card", "card_chosen", "card_off"],
+            ["plaque", "crate", "crate_task", "minimap_frame"],
+            ["glove", "rope_ring", "arrow", "task_marker"],
+            ["star", "star_empty", "speech_bubble", "thought_bubble"],
+        ],
+    ),
+    "icons": Sheet(
+        "18_icons/sheet_icons.png",
+        [
+            ["sell", "buy", "animals", "shipyard", "talk"],
+            ["row", "tasks", "more", "back", "thanks"],
+            ["farm", "unload", "load", "sleep", "plant"],
+            ["harvest", "buy_land", "stop", "help", "not_now"],
+        ],
+    ),
+    "chart": Sheet(
+        "19_chart/sheet_chart.png",
+        [
+            ["parchment", "compass", "you", "skipper"],
+            ["flag", "serpent", "banner", "scroll"],
+        ],
+        alpha=(64, 240),
+    ),
 }
 
 #: The seamless textures of the ground, relative to SHEETS_DIR, and their
@@ -189,6 +261,27 @@ GROUND_SIDE = 512
 
 #: The painting of the start screen, relative to SHEETS_DIR.
 START = "10_start/start.png"
+
+
+def drop_strays(alpha: np.ndarray) -> np.ndarray:
+    """
+    Clear the bits of a cell which only touch it from its border (a speck of
+    the neighbouring picture, a line of the grid): the patches which touch the
+    border and are less than a tenth of the biggest patch.
+    """
+    count, labels, stats, _ = cv2.connectedComponentsWithStats((alpha > 0).astype(np.uint8), connectivity=8)
+    if count <= 2:
+        return alpha
+    areas = stats[1:, cv2.CC_STAT_AREA]
+    biggest = int(areas.max())
+    height, width = alpha.shape
+    cleaned = alpha.copy()
+    for label in range(1, count):
+        x, y, w, h, area = stats[label]
+        touches = x == 0 or y == 0 or x + w == width or y + h == height
+        if touches and area < biggest / 10:
+            cleaned[labels == label] = 0
+    return cleaned
 
 
 def painted_box(alpha: np.ndarray) -> Optional[Tuple[int, int, int, int]]:
@@ -210,7 +303,7 @@ def cut(name: str, sheet: Sheet) -> int:
     height, width = image.shape[:2]
     rows = len(sheet.names)
     cols = len(sheet.names[0])
-    out = OUT / name
+    out = OUT / (sheet.folder or name)
     out.mkdir(parents=True, exist_ok=True)
     for r in range(rows):
         for c in range(cols):
@@ -225,6 +318,7 @@ def cut(name: str, sheet: Sheet) -> int:
                 cell[..., 3] = 255
                 picture = Image.fromarray(cell).resize((TEXTURE_SIDE, TEXTURE_SIDE), Image.LANCZOS)
             else:
+                image[top:bottom, left:right, 3] = drop_strays(image[top:bottom, left:right, 3])
                 box = painted_box(image[top:bottom, left:right, 3])
                 if box is None:
                     print(f"The cell {picture_name} of {name} is empty.")

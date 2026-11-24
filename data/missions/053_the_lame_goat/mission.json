@@ -16,10 +16,7 @@
     "hedda": {
       "name": "Hedda",
       "color": "e8e0d0",
-      "picture": [
-        "farm",
-        "goat"
-      ],
+      "picture": ["items", "hedda"],
       "one": "Hedda the goat"
     }
   },

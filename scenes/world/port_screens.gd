@@ -627,6 +627,8 @@ func _show_events(events: Array, index: int, then: Callable) -> void:
     if str(who.get("name", "")) != "":
         text = '%s: "%s"' % [who["name"], text]
     var cards: Array = [{"title": "Hooray!" if event["done"] else "Go on", "detail": ""}]
+    if event["done"]:
+        cards[0]["stars"] = int(event.get("stars", 0))
     var actions: Array[Callable] = [_show_events.bind(events, index + 1, then)]
     _world.show_screen(event["title"], text, cards, actions, _face(who, event["place"]))
 
@@ -733,7 +735,11 @@ func _show_task(id: String) -> void:
 
 func _shipwright_face() -> Dictionary:
     var who: Dictionary = _state.ships.shipwright
-    return {"hair": Color(str(who.get("hair", "8a5a2b"))), "braids": bool(who.get("braids", false))}
+    return {
+        "hair": Color(str(who.get("hair", "8a5a2b"))),
+        "braids": bool(who.get("braids", false)),
+        "picture": str(who.get("picture", ""))
+    }
 
 
 ## The ships of the shipwright, and the players' own.
@@ -754,8 +760,7 @@ func _show_shipyard(message := "") -> void:
                 {
                     "title": "%s, %d crates" % [kind["name"], ships.hold(id)],
                     "detail": detail,
-                    "picture":
-                    ["longships", "hull_plain"] if kind.has("drawn") else ["rowboat", "hull"],
+                    "picture": kind["drawn"]["hull"] if kind.has("drawn") else ["rowboat", "hull"],
                 }
             )
         )

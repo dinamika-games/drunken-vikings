@@ -9,7 +9,8 @@
   "giver": {
     "name": "Arne of Frosttorp",
     "hair": "a04a20",
-    "place": "farm"
+    "place": "farm",
+    "picture": "arne"
   },
   "offer": "Kol and Ingrid want sheep for their new home. Bring them two sheep, and I give you the strip of land by the forest, next to your farm. A fair trade!",
   "steps": [

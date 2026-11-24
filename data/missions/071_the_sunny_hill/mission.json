@@ -9,7 +9,8 @@
   "giver": {
     "name": "Arne of Frosttorp",
     "hair": "a04a20",
-    "place": "farm"
+    "place": "farm",
+    "picture": "arne"
   },
   "offer": "My old aunt Gerd moves to Solby, to her sister. She owns the sunny hill by your farm, and says: whoever rows me and my chests gets the hill! She has three chests.",
   "items": {
@@ -17,12 +18,14 @@
       "name": "Chest",
       "color": "6a4320",
       "one": "a chest",
-      "many": "chests"
+      "many": "chests",
+      "picture": ["items", "chest"]
     },
     "gerd": {
       "name": "Gerd",
       "color": "d8d8d0",
-      "one": "Aunt Gerd"
+      "one": "Aunt Gerd",
+      "picture": ["faces", "gerd"]
     }
   },
   "steps": [
@@ -35,7 +38,8 @@
       "to_who": {
         "name": "Solveig of Solby",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "solveig"
       },
       "load_say": "Aunt Gerd: My chests! Careful, the blue one has my grandmother's spoons.",
       "say": "Aunt Gerd's chests? Bring her too!"
@@ -49,7 +53,8 @@
       "to_who": {
         "name": "Aunt Gerd",
         "hair": "d8d8d0",
-        "braids": true
+        "braids": true,
+        "picture": "gerd"
       },
       "say": "My sister! And my chests! You are good girls. The sunny hill is yours: plant something beautiful on it."
     }

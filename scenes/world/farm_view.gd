@@ -290,8 +290,12 @@ func _draw_decor() -> void:
 func _draw_bubble(at: Vector2, food: String) -> void:
     var bob := sin(_time * 3.0) * 3.0
     at.y += bob
-    draw_circle(at + Vector2(-16, 22), 5.0, Color(1, 1, 1, 0.95))
-    draw_circle(at, 26.0, Color(1, 1, 1, 0.95))
+    var bubble := Pictures.of("ui", "thought_bubble")
+    if bubble != null:
+        Pictures.draw(self, bubble, at + Vector2(-4, 8), 76.0)
+    else:
+        draw_circle(at + Vector2(-16, 22), 5.0, Color(1, 1, 1, 0.95))
+        draw_circle(at, 26.0, Color(1, 1, 1, 0.95))
     var picture := Pictures.of("goods", food)
     if picture != null:
         Pictures.draw(self, picture, at, 38.0)

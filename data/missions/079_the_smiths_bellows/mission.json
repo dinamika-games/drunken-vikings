@@ -17,12 +17,14 @@
       "name": "Hide",
       "color": "8a5a2b",
       "one": "a goat hide",
-      "many": "goat hides"
+      "many": "goat hides",
+      "picture": ["items", "hide"]
     },
     "tar": {
       "name": "Tar",
       "color": "3a2a1a",
-      "one": "the pot of tar"
+      "one": "the pot of tar",
+      "picture": ["items", "tar"]
     }
   },
   "steps": [
@@ -47,7 +49,8 @@
       "from_who": {
         "name": "Helga the fisher",
         "hair": "c9602a",
-        "braids": true
+        "braids": true,
+        "picture": "helga"
       }
     },
     {

@@ -17,10 +17,7 @@
     "garland": {
       "name": "Garland",
       "color": "e86a9a",
-      "picture": [
-        "goods",
-        "flowers"
-      ],
+      "picture": ["items", "garland"],
       "one": "a garland",
       "many": "garlands"
     }
@@ -42,7 +39,8 @@
       "from_who": {
         "name": "Solveig of Solby",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "solveig"
       },
       "load_say": "We wove them all morning. They smell of summer!"
     },
@@ -52,7 +50,8 @@
       "who": {
         "name": "Thora, the chieftain's daughter",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "thora"
       },
       "say": "The garlands are up, the torches are lit, and everybody dances around the pole! Uncle Sven sings too loud. What a night!"
     }

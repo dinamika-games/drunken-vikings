@@ -10,17 +10,15 @@
     "name": "Dagny the potter",
     "hair": "3a2a1a",
     "braids": true,
-    "place": "potter"
+    "place": "potter",
+    "picture": "dagny"
   },
   "offer": "The new kiln makes so many pots! Bring ten crates to the market in Kråkhamn. Ten crates: only your big boat can do it.",
   "items": {
     "pots": {
       "name": "Pots",
       "color": "b8693a",
-      "picture": [
-        "goods",
-        "pots"
-      ],
+      "picture": ["goods", "pots"],
       "one": "a crate of pots",
       "many": "crates of pots"
     }

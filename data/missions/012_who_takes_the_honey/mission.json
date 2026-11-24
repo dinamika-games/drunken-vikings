@@ -10,14 +10,16 @@
     "name": "Alfhild the beekeeper",
     "hair": "e8c25a",
     "braids": true,
-    "place": "beekeeper"
+    "place": "beekeeper",
+    "picture": "alfhild"
   },
   "offer": "Every night, a pot of honey is gone from my hives! Who takes it? Ask Old Halvard the ferryman, he sees everything on the lakes.",
   "items": {
     "cub": {
       "name": "Bear cub",
       "color": "6a4320",
-      "one": "the bear cub"
+      "one": "the bear cub",
+      "picture": ["items", "bear_cub"]
     }
   },
   "steps": [
@@ -31,7 +33,8 @@
       "at": "farm_3",
       "who": {
         "name": "Old Grim of Svanetorp",
-        "hair": "d8d8d0"
+        "hair": "d8d8d0",
+        "picture": "grim"
       },
       "say": "Paw prints? Look in my woodshed... a bear cub, sticky with honey! His mother must be in the woods by Hjortingsala. Take him to her, gently."
     },
@@ -43,12 +46,14 @@
       "to": "chieftain",
       "from_who": {
         "name": "Old Grim of Svanetorp",
-        "hair": "d8d8d0"
+        "hair": "d8d8d0",
+        "picture": "grim"
       },
       "to_who": {
         "name": "Thora, the chieftain's daughter",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "thora"
       },
       "load_say": "He is asleep in the basket. Row quietly!"
     },

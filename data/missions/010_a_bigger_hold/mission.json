@@ -9,7 +9,8 @@
   "giver": {
     "name": "Bjarne the boatwright",
     "hair": "3a2a1a",
-    "place": "market"
+    "place": "market",
+    "picture": "bjarne"
   },
   "offer": "You brought the ale to my wedding, and now I can help you! Bring me two pots of tar from Helga in Ekvik, and I will make your hold wider: room for one more crate.",
   "items": {
@@ -17,7 +18,8 @@
       "name": "Tar",
       "color": "3a2a1a",
       "one": "a pot of tar",
-      "many": "pots of tar"
+      "many": "pots of tar",
+      "picture": ["items", "tar"]
     }
   },
   "steps": [
@@ -30,7 +32,8 @@
       "from_who": {
         "name": "Helga the fisher",
         "hair": "c9602a",
-        "braids": true
+        "braids": true,
+        "picture": "helga"
       },
       "load_say": "Pine tar, boiled from the roots in the forest. It smells strong, but it keeps the water out!"
     },

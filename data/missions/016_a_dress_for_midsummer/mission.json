@@ -18,7 +18,8 @@
     "madder": {
       "name": "Madder",
       "color": "b8332a",
-      "one": "the madder roots"
+      "one": "the madder roots",
+      "picture": ["items", "madder"]
     }
   },
   "steps": [
@@ -38,7 +39,8 @@
       "from_who": {
         "name": "Solveig of Solby",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "solveig"
       },
       "load_say": "Madder roots from my garden: they dye the wool red as a sunset."
     },

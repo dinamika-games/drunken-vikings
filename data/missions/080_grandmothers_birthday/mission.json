@@ -17,24 +17,19 @@
     "shawl": {
       "name": "Shawl",
       "color": "2f5f8a",
-      "picture": [
-        "goods",
-        "cloth"
-      ],
+      "picture": ["items", "shawl"],
       "one": "the shawl"
     },
     "cake": {
       "name": "Cake",
       "color": "d8a050",
-      "one": "the cake"
+      "one": "the cake",
+      "picture": ["items", "cake"]
     },
     "tova": {
       "name": "Tova",
       "color": "6a9a4a",
-      "picture": [
-        "faces",
-        "healer"
-      ],
+      "picture": ["faces", "healer"],
       "one": "Tova"
     }
   },

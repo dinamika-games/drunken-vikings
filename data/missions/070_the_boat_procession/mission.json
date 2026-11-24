@@ -18,7 +18,8 @@
       "name": "Torch",
       "color": "e8a830",
       "one": "a torch",
-      "many": "torches"
+      "many": "torches",
+      "picture": ["items", "torch"]
     }
   },
   "steps": [
@@ -37,7 +38,8 @@
       "to": "chieftain",
       "from_who": {
         "name": "Orm the innkeeper",
-        "hair": "3a2a1a"
+        "hair": "3a2a1a",
+        "picture": "orm"
       },
       "load_say": "My best tar torches, from the ones you helped me make!"
     },
@@ -47,7 +49,8 @@
       "who": {
         "name": "Thora, the chieftain's daughter",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "thora"
       },
       "say": "Twenty boats in a line, and you in front, with the dragon head! The torches shine on the water. The most beautiful night of the year."
     }

@@ -9,14 +9,16 @@
   "giver": {
     "name": "Orm the innkeeper",
     "hair": "3a2a1a",
-    "place": "inn_2"
+    "place": "inn_2",
+    "picture": "orm"
   },
   "offer": "Uncle Sven of Frosttorp sang and danced all night, and now he can't find his way home! He is very merry and a little wobbly. Row him home to Arne, please.",
   "items": {
     "sven": {
       "name": "Sven",
       "color": "a04a20",
-      "one": "Uncle Sven"
+      "one": "Uncle Sven",
+      "picture": ["faces", "sven"]
     }
   },
   "steps": [
@@ -28,7 +30,8 @@
       "to": "farm",
       "to_who": {
         "name": "Arne of Frosttorp",
-        "hair": "a04a20"
+        "hair": "a04a20",
+        "picture": "arne"
       },
       "load_say": "Uncle Sven: Ho ho! Two little vikings with a boat! Let us sing on the way!",
       "say": "Uncle Sven! Singing all the way, I hear? Come in, sleep it off. Thank you, girls!"

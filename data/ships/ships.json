@@ -1,21 +1,21 @@
 {
-  "comment": "The ships which Signe the shipwright builds in her shipyard, and how they row: the push of a stroke, how long the ship glides, how quickly it turns and how fast it can go, as shares of the small rowing boat; how far its bow reaches ahead (in metres, it must stay on the water); the hold in crates; the crew which rows to the players' beat; and how the ship is drawn (the painted longship, at this size, with or without a sail). See GameState and DESIGN.md, section 8.",
+  "comment": "The ships which Signe the shipwright builds in her shipyard, and how they row: the push of a stroke, how long the ship glides, how quickly it turns and how fast it can go, as shares of the small rowing boat; how far its bow reaches ahead (in metres, it must stay on the water); the hold in crates; the crew which rows to the players' beat; and how the ship is drawn (\"drawn\", see Longship.look: its painted hull, crew, oars, sail and cargo, placed in the pixels of the hull picture (y from its bow end, x from its middle), its length in metres, and the stern bench where the players row). See GameState and DESIGN.md, section 8.",
   "shipyard": "fishers_2",
-  "shipwright": {"name": "Signe the shipwright", "hair": "c9602a", "braids": true},
+  "shipwright": {"name": "Signe the shipwright", "hair": "c9602a", "braids": true, "picture": "signe"},
   "ships": [
     {"id": "rowing_boat", "name": "Rowing boat", "price": 0, "hold": 4, "crew": 0, "push": 1.0, "glide": 1.0, "turn": 1.0, "top": 1.0,
      "about": "Grandmother's old boat: small, nimble, and yours."},
     {"id": "faering", "name": "Færing", "price": 80, "hold": 8, "crew": 2, "push": 1.2, "glide": 1.15, "turn": 0.95, "top": 1.15,
-     "bow": 6.0, "drawn": {"size": 0.75, "width": 1.0, "sail": false},
+     "bow": 6.0, "drawn": {"length": 28, "hull": ["ships", "hull_faering"], "crew": ["ships", "crew_faering"], "crew_width": 118, "crew_y": 123, "pairs": 1, "lock_x": 62, "oar": ["ships", "oar_short"], "oar_length": 80, "stern_y": 198},
      "about": "A light four-oared boat: two of my rowers pull with you."},
     {"id": "karve", "name": "Karve", "price": 220, "hold": 16, "crew": 6, "push": 1.35, "glide": 1.45, "turn": 0.8, "top": 1.3,
-     "bow": 9.0, "drawn": {"size": 1.0, "width": 1.0, "sail": true},
+     "bow": 9.0, "drawn": {"length": 37.5, "hull": ["ships", "hull_karve"], "crew": ["ships", "crew_karve"], "crew_width": 108, "crew_y": 153, "pairs": 3, "lock_x": 52, "oar": ["longships", "oar"], "oar_length": 95, "sail": ["ships", "sail_karve"], "sail_y": 168, "sail_width": 150, "stern_y": 268},
      "about": "A small ship with six rowers and a square sail which keeps her gliding."},
     {"id": "knarr", "name": "Knarr", "price": 450, "hold": 40, "crew": 4, "push": 1.0, "glide": 1.7, "turn": 0.6, "top": 1.15,
-     "bow": 10.0, "drawn": {"size": 1.15, "width": 1.35, "sail": true},
+     "bow": 10.0, "drawn": {"length": 43, "hull": ["ships", "hull_knarr"], "crew": ["ships", "crew_knarr"], "crew_part": 0.5, "crew_width": 124, "crew_y": 95, "pairs": 1, "lock_x": 64, "oar": ["longships", "oar"], "oar_length": 90, "sail": ["ships", "sail_knarr"], "sail_y": 140, "sail_width": 170, "cargo": ["ships", "cargo_knarr"], "cargo_y": 190, "cargo_length": 150, "stern_y": 275},
      "about": "The trading ship: wide and deep, she carries forty crates, but she turns slowly."},
     {"id": "longship", "name": "Longship", "price": 800, "hold": 20, "crew": 20, "push": 1.7, "glide": 1.5, "turn": 0.9, "top": 1.6,
-     "bow": 12.0, "drawn": {"size": 1.4, "width": 0.9, "sail": true},
+     "bow": 12.0, "drawn": {"length": 52.5, "hull": ["ships", "hull_longship"], "crew": ["ships", "crew_longship"], "crew_width": 92, "crew_y": 168, "pairs": 10, "lock_x": 48, "oar": ["longships", "oar"], "oar_length": 85, "sail": ["longships", "sail_plain"], "sail_y": 150, "sail_width": 150, "stern_y": 290},
      "about": "Twenty rowers and a great sail: the fastest ship on the lakes."}
   ]
 }

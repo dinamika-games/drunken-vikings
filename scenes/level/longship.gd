@@ -84,8 +84,16 @@ var pirate := false
 ## Whether the captain of the pirates stands at the bow and shakes a fist.
 var shaking := false
 
-## Whether the ship has a sail (the færing of the players has none).
-var has_sail := true
+## How the ship of the players is drawn (see data/ships/ships.json, "drawn"):
+## the pictures [sheet, name] of its "hull", "crew", "oar", "sail" (without
+## "_full" or "_slack") and "cargo", placed in the pixels of the hull picture
+## (y from its bow end, x from its middle): the crew "crew_width" wide around
+## "crew_y" ("crew_part" of its picture from the top), its "pairs" of oars
+## turning at "lock_x", "oar_length" long, the sail "sail_width" wide at
+## "sail_y", the cargo "cargo_length" long at "cargo_y", and the stern bench of
+## the players at "stern_y"; the hull is "length" long in the world. Empty for
+## the longships of the party and the chase.
+var look := {}
 
 ## The swing of the oars, from -1 to 1, when the crew rows to the beat of the
 ## players (see [method follow]); NAN when the crew keeps its own beat.
@@ -174,10 +182,13 @@ func follow(delta: float, at: Vector2, towards: float, boat_speed: float) -> voi
 func _ship_oars(delta: float) -> void:
     if map == null or not _painted():
         return
+    var oars := _oars()
+    var middle: Vector2 = oars["locks"][oars["locks"].size() / 2]
     for i in range(2):
         var side := -1.0 if i == 0 else 1.0
-        var reach := Vector2(side * (PAINTED_LOCK_X + PAINTED_OAR * 0.85), PAINTED_OARS_Y[1])
-        var over_land := not map.is_water(to_global(reach * SCALE * PAINTED_SCALE))
+        var oar_length: float = oars["length"]
+        var reach := Vector2(side * (middle.x + oar_length * 0.85), middle.y)
+        var over_land := not map.is_water(to_global(oars["base"] * reach))
         _shipped[i] = move_toward(_shipped[i], 1.0 if over_land else 0.0, delta / SHIP_SECONDS)
 
 
@@ -193,13 +204,15 @@ func blade_positions() -> Array[Vector2]:
     var blades: Array[Vector2] = []
     var swing := _swing()
     if _painted():
-        for y: float in PAINTED_OARS_Y:
+        var oars := _oars()
+        for lock: Vector2 in oars["locks"]:
             for side in [-1.0, 1.0]:
                 if _shipped[0 if side < 0.0 else 1] > 0.0:
                     continue
                 var out := Vector2(side, 0).rotated(side * swing * 0.45)
-                var blade := Vector2(side * PAINTED_LOCK_X, y) + out * PAINTED_OAR * 0.75
-                blades.append(to_global(blade * SCALE * PAINTED_SCALE))
+                var oar_length: float = oars["length"]
+                var blade := Vector2(side * lock.x, lock.y) + out * oar_length * 0.75
+                blades.append(to_global(oars["base"] * blade))
         return blades
     for i in range(7):
         var y := -6.0 + i * 2.2
@@ -214,8 +227,79 @@ func _kind() -> String:
     return "pirate" if pirate else ("wedding" if wedding else "plain")
 
 
+## The oars of the painted ship: where those on the right turn ("locks"), how
+## long they are, their picture, and the transform from the units they are
+## given in ("base").
+func _oars() -> Dictionary:
+    var locks: Array[Vector2] = []
+    if look.is_empty():
+        for y: float in PAINTED_OARS_Y:
+            locks.append(Vector2(PAINTED_LOCK_X, y))
+        return {
+            "locks": locks,
+            "length": PAINTED_OAR,
+            "picture": Pictures.of("longships", "oar"),
+            "base": _base()
+        }
+    var crew := _crew_box()
+    var pairs := int(look.get("pairs", 1))
+    for i in range(pairs):
+        var y := crew.position.y + crew.size.y * (i + 0.5) / pairs
+        locks.append(Vector2(float(look["lock_x"]), y))
+    return {
+        "locks": locks,
+        "length": float(look["oar_length"]),
+        "picture": _picture("oar"),
+        "base": _base()
+    }
+
+
+## The picture of the [param part] of the [member look] ([param suffix] added
+## to its name).
+func _picture(part: String, suffix := "") -> Texture2D:
+    var which: Array = look.get(part, [])
+    return Pictures.of(which[0], which[1] + suffix) if which.size() == 2 else null
+
+
+## From the units of the drawing to those of the node: the longships are drawn
+## in their units, the ship of the players in the pixels of its hull picture,
+## with the middle of the hull at the origin.
+func _base() -> Transform2D:
+    if look.is_empty():
+        return Transform2D(0.0, Vector2(SCALE, SCALE) * PAINTED_SCALE, 0.0, Vector2.ZERO)
+    var hull := _picture("hull")
+    var k := float(look["length"]) / hull.get_height()
+    return Transform2D(0.0, Vector2(k, k), 0.0, Vector2(0, -hull.get_height() / 2.0 * k))
+
+
+## Where the crew of the [member look] sits, in the pixels of the hull from its bow end.
+func _crew_box() -> Rect2:
+    var crew := _picture("crew")
+    var width := float(look["crew_width"])
+    var height := crew.get_height() * float(look.get("crew_part", 1.0)) * width / crew.get_width()
+    return Rect2(-width / 2.0, float(look["crew_y"]) - height / 2.0, width, height)
+
+
+## How far behind the middle of the hull the players sit, in the world (the
+## ship of the players).
+func stern_offset() -> float:
+    var hull := _picture("hull")
+    return (_base() * Vector2(0, float(look["stern_y"]))).y if hull != null else 0.0
+
+
+## How wide the hull is, in the world (the ship of the players).
+func beam() -> float:
+    var hull := _picture("hull")
+    return hull.get_width() * float(look["length"]) / hull.get_height() if hull != null else 0.0
+
+
 ## Whether the pictures of the painted ship are there.
 func _painted() -> bool:
+    if not look.is_empty():
+        for part in ["hull", "crew", "oar"]:
+            if _picture(part) == null:
+                return false
+        return true
     var kind := _kind()
     return Pictures.has_all(
         "longships",
@@ -225,7 +309,11 @@ func _painted() -> bool:
 
 func _draw() -> void:
     if _painted():
-        _draw_painted()
+        _draw_oars()
+        if look.is_empty():
+            _draw_painted()
+        else:
+            _draw_look()
         return
     draw_set_transform(Vector2.ZERO, 0.0, Vector2(SCALE, SCALE))
 
@@ -375,14 +463,10 @@ func _draw_wedding() -> void:
     draw_line(Vector2(1.3, 8.0), Vector2(1.9, 7.3 - wave), Color("f0c8a0"), 0.2)
 
 
-## The painted ship: the oars turning around their locks under the shields,
-## the hull, the crew bobbing with the stroke, the bride and the groom of the
-## wedding at the stern, and the sail, full while the ship moves.
-func _draw_painted() -> void:
-    var kind := _kind()
-    var base := Transform2D(0.0, Vector2(SCALE, SCALE) * PAINTED_SCALE, 0.0, Vector2.ZERO)
+## The oars of the painted ship, turning around their locks under the
+## shields, and pulled in over the land.
+func _draw_oars() -> void:
     var swing := _swing()
-
     # NOTE (mristin):
     # The blades pull in the water while the swing goes back, and come out
     # flat on the way forward (see OarDrawing); they rest half lifted.
@@ -391,8 +475,8 @@ func _draw_painted() -> void:
         lift = 0.0 if oars_pulling else 0.8
     elif speed > 0.5:
         lift = clampf(0.5 - 0.9 * sin(_beat * TAU), 0.0, 1.0)
-    var oar := Pictures.of("longships", "oar")
-    for y: float in PAINTED_OARS_Y:
+    var oars := _oars()
+    for lock: Vector2 in oars["locks"]:
         for side in [-1.0, 1.0]:
             var out := Vector2(side, 0).rotated(side * swing * 0.45)
             var shipped: float = _shipped[0 if side < 0.0 else 1]
@@ -402,15 +486,22 @@ func _draw_painted() -> void:
             )
             OarDrawing.draw(
                 self,
-                oar,
-                base,
-                Vector2(side * PAINTED_LOCK_X, y),
+                oars["picture"],
+                oars["base"],
+                Vector2(side * lock.x, lock.y),
                 angle,
-                PAINTED_OAR,
+                oars["length"],
                 1.0 / 6.0,
                 maxf(lift, shipped)
             )
 
+
+## The painted longship: the hull, the crew bobbing with the stroke, the
+## bride and the groom of the wedding at the stern, and the sail, full while the ship moves.
+func _draw_painted() -> void:
+    var kind := _kind()
+    var base := _base()
+    var swing := _swing()
     Pictures.draw(
         self, Pictures.of("longships", "hull_" + kind), Vector2(0, -0.5), PAINTED_LENGTH, 0.0, base
     )
@@ -428,17 +519,33 @@ func _draw_painted() -> void:
             var wave := sin(_time * 5.0) * 0.04
             Pictures.draw(self, bride, Vector2(0, 7.6), 4.6, wave, base)
     var sail := "sail_%s_%s" % [kind, "full" if speed > 0.5 else "slack"]
-    if has_sail:
-        Pictures.draw(
-            self,
-            Pictures.of("longships", sail),
-            Vector2(0, -3.8),
-            12.0,
-            0.0,
-            base,
-            Color.WHITE,
-            0.42
-        )
+    Pictures.draw(
+        self, Pictures.of("longships", sail), Vector2(0, -3.8), 12.0, 0.0, base, Color.WHITE, 0.42
+    )
     var fist := Pictures.of("longships", "pirate_fist")
     if pirate and shaking and fist != null:
         Pictures.draw(self, fist, Vector2(0, -7.5), 5.0, sin(_time * 12.0) * 0.2, base)
+
+
+## The painted ship of the players (see [member look]): the hull, the cargo in
+## its hold, the crew bobbing with the stroke, and the sail, full while the
+## ship moves.
+func _draw_look() -> void:
+    var base := _base()
+    var hull := _picture("hull")
+    Pictures.draw(self, hull, Vector2(0, hull.get_height() / 2.0), hull.get_height(), 0.0, base)
+    var cargo := _picture("cargo")
+    if cargo != null:
+        var at := Vector2(0, float(look["cargo_y"]))
+        Pictures.draw(self, cargo, at, float(look["cargo_length"]), 0.0, base)
+    var crew := _picture("crew")
+    var box := _crew_box()
+    box.position.y += _swing() * 2.0
+    var part := float(look.get("crew_part", 1.0))
+    draw_set_transform_matrix(base)
+    draw_texture_rect_region(crew, box, Rect2(0, 0, crew.get_width(), crew.get_height() * part))
+    draw_set_transform_matrix(Transform2D.IDENTITY)
+    var sail := _picture("sail", "_full" if speed > 0.5 else "_slack")
+    if sail != null:
+        var at := Vector2(0, float(look["sail_y"]))
+        Pictures.draw(self, sail, at, float(look["sail_width"]), 0.0, base, Color.WHITE, 0.4)

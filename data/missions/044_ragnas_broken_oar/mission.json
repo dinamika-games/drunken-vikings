@@ -9,7 +9,8 @@
   "giver": {
     "name": "Tor the fisher",
     "hair": "8a5a2b",
-    "place": "fishers"
+    "place": "fishers",
+    "picture": "tor"
   },
   "offer": "Ragna rowed out at dawn and is not back! I fear her oar broke. Find her on the lakes, then come back and fetch the spare oar for her.",
   "steps": [

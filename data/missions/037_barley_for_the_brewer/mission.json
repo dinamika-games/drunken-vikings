@@ -9,7 +9,8 @@
   "giver": {
     "name": "Knut the brewer",
     "hair": "c9602a",
-    "place": "brewer"
+    "place": "brewer",
+    "picture": "knut"
   },
   "offer": "Orm of Hallvik wants the biggest barrel of ale for the autumn feast. I need grain, five crates! Bring them, and you get two crates of my ale.",
   "steps": [

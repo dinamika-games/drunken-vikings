@@ -18,7 +18,8 @@
       "name": "Child",
       "color": "e8c25a",
       "one": "a child",
-      "many": "children"
+      "many": "children",
+      "picture": ["faces", "children"]
     }
   },
   "steps": [
@@ -36,7 +37,8 @@
       "from_who": {
         "name": "Dagny the potter",
         "hair": "3a2a1a",
-        "braids": true
+        "braids": true,
+        "picture": "dagny"
       },
       "load_say": "They were sitting by my kiln to keep warm. Here, take them home, they are not hurt, only cold."
     },

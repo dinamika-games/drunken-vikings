@@ -468,7 +468,8 @@ func blocked_at(state: Node, place: String) -> Array[String]:
 
 ## The players are at the [param place] (docked, or at home on the farm): do
 ## what the missions under way ask there. Return what happened, as screens
-## to show: Array of {"title", "text", "who" (Dictionary), "place", "done" (bool)}.
+## to show: Array of {"title", "text", "who" (Dictionary), "place", "done" (bool),
+## "stars" (earned, when done)}.
 func arrive(state: Node, place: String) -> Array:
     var events: Array = []
     var moved := true
@@ -513,7 +514,12 @@ func _event(
     id: String, text: String, who: Dictionary, place: String, finished := false
 ) -> Dictionary:
     return {
-        "title": missions[id]["title"], "text": text, "who": who, "place": place, "done": finished
+        "title": missions[id]["title"],
+        "text": text,
+        "who": who,
+        "place": place,
+        "done": finished,
+        "stars": int(done.get(id, 0)) if finished else 0
     }
 
 

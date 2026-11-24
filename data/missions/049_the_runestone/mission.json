@@ -17,7 +17,8 @@
       "name": "Stone",
       "color": "8a8070",
       "one": "a piece of the stone",
-      "many": "pieces of the stone"
+      "many": "pieces of the stone",
+      "picture": ["items", "rune_stone"]
     }
   },
   "steps": [
@@ -37,7 +38,8 @@
       "from_who": {
         "name": "Dagny the potter",
         "hair": "3a2a1a",
-        "braids": true
+        "braids": true,
+        "picture": "dagny"
       },
       "load_say": "It is in three pieces, to fit in your boat. The carver joins them.",
       "say": "The stone! The carver begins today."
@@ -49,7 +51,8 @@
       "who": {
         "name": "Thora, the chieftain's daughter",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "thora"
       },
       "say": "The runestone stands! It says: Eirik raised this stone for Gunnvor, his good mother. And at the bottom, small: Ylva and Sigrid rowed it."
     }

@@ -54,3 +54,25 @@ static func draw(
     canvas.draw_set_transform_matrix(base * Transform2D(angle, at))
     canvas.draw_texture_rect(picture, Rect2(-size / 2.0, size), false, tint)
     canvas.draw_set_transform_matrix(base)
+
+
+## Draw the frame [param name] of the [param sheet] (see dev/pictures/) stretched
+## over [param rect] (nine-slice): its corners as painted, [param border]
+## pixels of the picture on each side, its sides and middle stretched; return
+## whether the picture is there.
+static func draw_frame(
+    canvas: CanvasItem, name: String, rect: Rect2, border: float, tint := Color.WHITE, sheet := "ui"
+) -> bool:
+    var picture := of(sheet, name)
+    if picture == null:
+        return false
+    var key := "frame/%s/%s/%d" % [sheet, name, int(border)]
+    if not _cache.has(key):
+        var box := StyleBoxTexture.new()
+        box.texture = picture
+        box.set_texture_margin_all(border)
+        _cache[key] = box
+    var box: StyleBoxTexture = _cache[key]
+    box.modulate_color = tint
+    canvas.draw_style_box(box, rect)
+    return true

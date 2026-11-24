@@ -16,7 +16,8 @@
     "ring": {
       "name": "Ring",
       "color": "d8d8d0",
-      "one": "the ring"
+      "one": "the ring",
+      "picture": ["items", "ring"]
     }
   },
   "steps": [
@@ -33,7 +34,8 @@
       "to": "inn",
       "from_who": {
         "name": "Tor the fisher",
-        "hair": "8a5a2b"
+        "hair": "8a5a2b",
+        "picture": "tor"
       },
       "load_say": "This? Silver with a little red stone. I thought it was a fish's treasure!",
       "say": "My mother's ring! Back from the lake! I can not thank you enough. Every meal at my inn is free for you."

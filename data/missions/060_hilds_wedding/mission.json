@@ -18,10 +18,7 @@
     "mead": {
       "name": "Mead",
       "color": "c9802a",
-      "picture": [
-        "goods",
-        "mead"
-      ],
+      "picture": ["items", "mead"],
       "one": "a cask of mead",
       "many": "casks of mead"
     }
@@ -36,7 +33,8 @@
       "from_who": {
         "name": "Alfhild the beekeeper",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "alfhild"
       },
       "load_say": "My sweetest mead, for Hild. Tell her to be happy!",
       "say": "Mead! Now the cloth."
@@ -49,7 +47,8 @@
       "who": {
         "name": "Hild, the smith's daughter",
         "hair": "3a2a1a",
-        "braids": true
+        "braids": true,
+        "picture": "hild"
       },
       "say": "Blue cloth for my dress! Father cries, he says it is the smoke. Come to the wedding!"
     }

@@ -9,17 +9,15 @@
   "giver": {
     "name": "Tor the fisher",
     "hair": "8a5a2b",
-    "place": "fishers"
+    "place": "fishers",
+    "picture": "tor"
   },
   "offer": "Our best catch ever! Bring three bundles of dried fish to each farm: Frosttorp, Solby and Svanetorp. A gift from Stormvik, for the winter.",
   "items": {
     "fish": {
       "name": "Fish",
       "color": "9aa6b0",
-      "picture": [
-        "goods",
-        "fish"
-      ],
+      "picture": ["goods", "fish"],
       "one": "a bundle of fish",
       "many": "bundles of fish"
     }
@@ -33,7 +31,8 @@
       "to": "farm",
       "to_who": {
         "name": "Arne of Frosttorp",
-        "hair": "a04a20"
+        "hair": "a04a20",
+        "picture": "arne"
       },
       "say": "From Tor? What a neighbour!"
     },
@@ -46,7 +45,8 @@
       "to_who": {
         "name": "Solveig of Solby",
         "hair": "e8c25a",
-        "braids": true
+        "braids": true,
+        "picture": "solveig"
       },
       "say": "Fish for the winter! Tell Tor: apples for him in spring."
     },
@@ -58,7 +58,8 @@
       "to": "farm_3",
       "to_who": {
         "name": "Old Grim of Svanetorp",
-        "hair": "d8d8d0"
+        "hair": "d8d8d0",
+        "picture": "grim"
       },
       "say": "Fish? For an old man? Tor is a good boy. Thank you!"
     }

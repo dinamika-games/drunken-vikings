@@ -9,7 +9,8 @@
   "giver": {
     "name": "Old Grim of Svanetorp",
     "hair": "d8d8d0",
-    "place": "farm_3"
+    "place": "farm_3",
+    "picture": "grim"
   },
   "offer": "I am old, and I would like fresh milk every morning. Bring me a cow from the horse farm. The swans will be jealous!",
   "steps": [

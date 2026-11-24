@@ -10,7 +10,8 @@
     "name": "Solveig of Solby",
     "hair": "e8c25a",
     "braids": true,
-    "place": "farm_2"
+    "place": "farm_2",
+    "picture": "solveig"
   },
   "offer": "Thanks to the bees, my trees are full of apples! Twelve baskets for the market in Kråkhamn. Only your boat can take them all at once.",
   "items": {
@@ -18,7 +19,8 @@
       "name": "Apples",
       "color": "b8332a",
       "one": "a basket of apples",
-      "many": "baskets of apples"
+      "many": "baskets of apples",
+      "picture": ["treats", "apple"]
     }
   },
   "steps": [

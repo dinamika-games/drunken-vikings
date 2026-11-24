@@ -17,7 +17,8 @@
     "rope": {
       "name": "Rope",
       "color": "c8a878",
-      "one": "the long rope"
+      "one": "the long rope",
+      "picture": ["items", "rope"]
     }
   },
   "steps": [
@@ -29,7 +30,8 @@
       "to": "horse_farm",
       "from_who": {
         "name": "Tor the fisher",
-        "hair": "8a5a2b"
+        "hair": "8a5a2b",
+        "picture": "tor"
       },
       "load_say": "My longest rope! Take it, quick!",
       "say": "Rope around him, gently, everybody pull... Slurp! He is out! Muddy, but well. You saved him."

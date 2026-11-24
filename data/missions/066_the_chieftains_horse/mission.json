@@ -17,10 +17,7 @@
     "tova": {
       "name": "Tova",
       "color": "6a9a4a",
-      "picture": [
-        "faces",
-        "healer"
-      ],
+      "picture": ["faces", "healer"],
       "one": "Tova"
     }
   },

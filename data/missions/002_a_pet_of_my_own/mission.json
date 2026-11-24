@@ -16,7 +16,8 @@
     "kitten": {
       "name": "Kitten",
       "color": "b0a898",
-      "one": "the kitten"
+      "one": "the kitten",
+      "picture": ["items", "kitten"]
     }
   },
   "steps": [

@@ -10,7 +10,8 @@
     "name": "Dagny the potter",
     "hair": "3a2a1a",
     "braids": true,
-    "place": "potter"
+    "place": "potter",
+    "picture": "dagny"
   },
   "offer": "My kiln cracked in the frost! To build a new one I need six baskets of clay from Ekvik and three sacks of charcoal from Grim to fire it.",
   "items": {
@@ -18,13 +19,15 @@
       "name": "Clay",
       "color": "8a8070",
       "one": "a basket of clay",
-      "many": "baskets of clay"
+      "many": "baskets of clay",
+      "picture": ["items", "clay"]
     },
     "charcoal": {
       "name": "Charcoal",
       "color": "2a2a2a",
       "one": "a sack of charcoal",
-      "many": "sacks of charcoal"
+      "many": "sacks of charcoal",
+      "picture": ["items", "charcoal"]
     }
   },
   "steps": [
@@ -37,7 +40,8 @@
       "from_who": {
         "name": "Helga the fisher",
         "hair": "c9602a",
-        "braids": true
+        "braids": true,
+        "picture": "helga"
       },
       "load_say": "Clay again? Dagny must be building a castle!"
     },
@@ -49,7 +53,8 @@
       "to": "potter",
       "from_who": {
         "name": "Old Grim of Svanetorp",
-        "hair": "d8d8d0"
+        "hair": "d8d8d0",
+        "picture": "grim"
       }
     },
     {

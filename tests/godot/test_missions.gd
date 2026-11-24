@@ -74,8 +74,9 @@ func _check_texts(state: Node) -> void:
             )
             for line in step.get("says", []):
                 _check(str(line).length() <= LONGEST_TEXT, "a line of %s fits" % mission["id"])
-            if step.has("who"):
-                _check_face(step["who"], mission["id"])
+            for key in ["who", "from_who", "to_who"]:
+                if step.has(key):
+                    _check_face(step[key], mission["id"])
         var reward_text := str(mission.get("fact", ""))
         _check(reward_text.length() <= 200, "the fact of %s is short" % mission["id"])
         for item in mission.get("items", {}).keys():
@@ -83,15 +84,20 @@ func _check_texts(state: Node) -> void:
                 str(mission["items"][item]["name"]).length() <= 10,
                 "the name of the item %s of %s fits a crate" % [item, mission["id"]]
             )
+            var picture: Array = mission["items"][item].get("picture", [])
+            _check(
+                picture.size() == 2 and Pictures.of(picture[0], picture[1]) != null,
+                "the item %s of %s is painted" % [item, mission["id"]]
+            )
 
 
 func _check_face(who: Dictionary, id: String) -> void:
     _check(str(who.get("name", "")) != "", "who speaks in %s has a name" % id)
     var picture := str(who.get("picture", ""))
-    if picture != "":
-        _check(
-            Pictures.of("faces", picture) != null, "the face %s of %s is painted" % [picture, id]
-        )
+    _check(
+        picture != "" and Pictures.of("faces", picture) != null,
+        "the face of %s in %s is painted" % [who.get("name", ""), id]
+    )
 
 
 ## A load bigger than the hold takes several trips, and the items of the
