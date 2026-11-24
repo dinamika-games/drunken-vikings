@@ -8,11 +8,12 @@ extends Node2D
 ## GameState). The longship waits for the players, and nobody is ever lost.
 ##
 ## Each stroke of the players pushes the boat, which glides on (see
-## RowingMeter). Alone, the player steers by going sideways with the head; two
-## players pull an oar each (the player on the left of the mirrored picture
-## the left one), and the boat turns away from the stronger rower (see
-## RowBoat). Start with [code]-- --players=2[/code] for two players. The
-## players play only with their bodies, never with the keyboard. The view turns with the boat,
+## RowingMeter). Alone, the player steers by leaning to the side (the head
+## and the shoulders, see RowingMeter); two players pull an oar each (the
+## player on the left of the mirrored picture the left one), and the boat
+## turns away from the stronger rower (see RowBoat). Start with
+## [code]-- --players=2[/code] for two players. The players play only with
+## their bodies, never with the keyboard. The view turns with the boat,
 ## so that the bow always points up and going left turns left.
 ##
 ## Once the longship is in the market village, the players choose with
@@ -24,10 +25,17 @@ extends Node2D
 ## [code]-- --record[/code], the vision records what it measures while the
 ## players row (only numbers, see VisionRecorder) into
 ## ~/Downloads/rowing_recordings/level-<time>.jsonl, to study it with
-## dev/rowing/analyze.py.
+## dev/rowing/analyze.py. With [code]-- --log-pose[/code] (see Vision), the
+## party prints into the log, along with the poses and on the same clock,
+## where the boat and the longship are and where the nearest treats lie from
+## the boat, and every drop and pick, so that we can study where the player
+## meant to go (see [method _log_party]).
 
 ## How many pixels a metre takes on the screen.
 const ZOOM := 6.0
+
+## With --log-pose, print this many of the nearest treats.
+const LOG_TREATS := 3
 
 ## The camera looks this far ahead of the boat, in metres, so that the
 ## players see where they go.
@@ -36,8 +44,10 @@ const LOOK_AHEAD := 45.0
 ## The wedding party drops a treat every this many seconds (at random within).
 const DROP_EVERY := Vector2(4.0, 7.0)
 
-## The treats fall this far to the side of the longship's wake, in metres.
-const DROP_SIDEWAYS := Vector2(6.0, 24.0)
+## The treats fall this far to the side of the longship's wake, in metres,
+## each one on the other side than the one before, so that the players row a
+## gentle slalom from one treat to the next.
+const DROP_SIDEWAYS := Vector2(4.0, 10.0)
 
 ## The level is done when the boat comes this close to the end of the route
 ## after the viking ship arrived, in metres.
@@ -67,12 +77,17 @@ var _elapsed := 0.0
 var _done := false
 var _treats: Treats
 var _drop_left := 1.0
+## The side of the wake where the next treat falls (1 or -1).
+var _drop_side := 1.0
 var _coins := 0
 var _rng := RandomNumberGenerator.new()
 var _state: Node
 var _panel: ChoicePanel
 var _actions: Array[Callable] = []
 var _autopilot := false
+## With --log-pose, print the party every this many seconds; 0 prints nothing.
+var _log_every := 0.0
+var _logged_at := -INF
 var _autopilot_beat := 0.0
 
 var _hud: CanvasLayer
@@ -92,6 +107,9 @@ func _ready() -> void:
     if vision != null:
         _service = vision.service
         _strokes_seen = [_service.GetStrokes(0), _service.GetStrokes(1)]
+        var rate: float = _service.LogPoseRate
+        if rate > 0.0:
+            _log_every = 1.0 / rate
         if "--record" in OS.get_cmdline_user_args():
             var path := (
                 "%s/Downloads/rowing_recordings/level-%s.jsonl"
@@ -290,11 +308,22 @@ func _process(delta: float) -> void:
         _coins += picked
         if _state != null:
             _state.silver += picked
+        if _log_every > 0.0:
+            print(
+                (
+                    "Party: t=%.2f picked=%d coins=%d boat=(%.1f,%.1f)"
+                    % [_now(), picked, _coins, _boat.position.x, _boat.position.y]
+                )
+            )
 
     if not _done and _ship.arrived and _boat.position.distance_to(_map.route[-1]) < FINISH_DISTANCE:
         _done = true
         print("Done: %d strokes in %.0f s, %d coins" % [_boat.strokes, _elapsed, _coins])
         _finish()
+
+    if _log_every > 0.0 and _now() - _logged_at >= _log_every:
+        _logged_at = _now()
+        _log_party()
 
     _place_camera(delta)
     for label in _labels:
@@ -390,7 +419,11 @@ func _drop_treats(delta: float) -> void:
         return
     _drop_left = _rng.randf_range(DROP_EVERY.x, DROP_EVERY.y)
     var back := Vector2.DOWN.rotated(_ship.heading)
-    var side := back.orthogonal() * (1.0 if _rng.randf() < 0.5 else -1.0)
+    # NOTE (mristin):
+    # The sides take turns, so that the treats lie in a slalom: one to the
+    # left and one to the right of the wake all at once is too sharp a turn.
+    _drop_side = -_drop_side
+    var side := back.orthogonal() * _drop_side
     var spot: Vector2 = (
         _ship.position + back * 24.0 + side * _rng.randf_range(DROP_SIDEWAYS.x, DROP_SIDEWAYS.y)
     )
@@ -398,6 +431,75 @@ func _drop_treats(delta: float) -> void:
     # Only on the water, never on the shore.
     if _map.is_water(spot) and not _map.crosses_land(_ship.position, spot):
         _treats.drop(spot, _rng)
+        if _log_every > 0.0:
+            var seen := _from_boat(spot)
+            print(
+                (
+                    "Party: t=%.2f drop=(%.1f,%.1f) side=%+d ahead=%.1f right=%.1f bearing=%+.0f"
+                    % [_now(), spot.x, spot.y, int(_drop_side), seen.x, seen.y, seen.z]
+                )
+            )
+
+
+## The time on the clock of the vision (as the poses in the log), in seconds.
+func _now() -> float:
+    return _service.Now if _service != null else Time.get_ticks_msec() / 1000.0
+
+
+## Where [param at] lies from the boat: x metres ahead, y metres to the right,
+## and z the bearing in degrees (positive to the right, 0 straight ahead).
+func _from_boat(at: Vector2) -> Vector3:
+    var ahead_dir := _boat.forward()
+    var right_dir := ahead_dir.rotated(PI / 2.0)
+    var rel := at - _boat.position
+    var ahead := rel.dot(ahead_dir)
+    var right := rel.dot(right_dir)
+    return Vector3(ahead, right, rad_to_deg(atan2(right, ahead)))
+
+
+## Print one line about the party, e.g.:
+## [code]Party: t=12.34 boat=(10.0,-200.0) heading=+12 speed=4.2 steer=+0.30
+## strokes=7 ship=(15.0,-290.0) ship_ahead=88.0 coins=2 treats=5
+## next=[(31.0,+6.0,+11),(70.0,-8.0,-7)][/code], where [code]next[/code] are
+## the nearest treats as (metres ahead, metres to the right, bearing in
+## degrees), nearest first.
+func _log_party() -> void:
+    var near: Array = []
+    for item in _treats.items:
+        near.append(_from_boat(item["at"]))
+    near.sort_custom(
+        func(a: Vector3, b: Vector3) -> bool: return a.x * a.x + a.y * a.y < b.x * b.x + b.y * b.y
+    )
+    var parts: PackedStringArray = []
+    for seen in near.slice(0, LOG_TREATS):
+        parts.append("(%.1f,%+.1f,%+.0f)" % [seen.x, seen.y, seen.z])
+    print(
+        (
+            (
+                "Party: t=%.2f boat=(%.1f,%.1f) heading=%+.0f speed=%.1f steer=%+.2f strokes=%d"
+                % [
+                    _now(),
+                    _boat.position.x,
+                    _boat.position.y,
+                    rad_to_deg(wrapf(_boat.heading, -PI, PI)),
+                    _boat.speed,
+                    _boat.steer,
+                    _boat.strokes
+                ]
+            )
+            + (
+                " ship=(%.1f,%.1f) ship_ahead=%.1f coins=%d treats=%d next=[%s]"
+                % [
+                    _ship.position.x,
+                    _ship.position.y,
+                    _from_boat(_ship.position).x,
+                    _coins,
+                    _treats.items.size(),
+                    ",".join(parts)
+                ]
+            )
+        )
+    )
 
 
 ## The party is over: the coins go into the voyage, and the players choose

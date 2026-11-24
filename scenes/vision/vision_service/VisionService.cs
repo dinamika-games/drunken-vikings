@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Threading;
 
 using DrunkenVikings.Vision;
@@ -67,6 +68,18 @@ public partial class VisionService : Node
     /// <summary>The threads of RTMO.</summary>
     [Export]
     public int Threads = 2;
+
+    /// <summary>
+    /// Print the head and the shoulders of each player, and how they row and
+    /// steer, this many times a second (see <see cref="LogPose"/>); 0 prints
+    /// nothing. Only numbers go to the log, no pictures, and no recording is
+    /// made.
+    /// </summary>
+    [Export]
+    public double LogPoseRate = 0.0;
+
+    /// <summary>When the poses were printed the last time.</summary>
+    private double _poseLoggedAt = double.NegativeInfinity;
 
     public ServiceStatus Status { get; private set; } = ServiceStatus.Disabled;
 
@@ -266,14 +279,62 @@ public partial class VisionService : Node
             signals[i] = _signals[i];
             var head = pose?.Head(KeypointThreshold);
             _meters[i].Observe(
-                snapshot.Timestamp, head?.X ?? float.NaN, head?.Y ?? float.NaN, unit);
+                snapshot.Timestamp, head?.X ?? float.NaN, head?.Y ?? float.NaN, unit, _signals[i].ShoulderTilt);
             if (pose != null)
             {
                 _seenAt[i] = snapshot.Timestamp;
             }
         }
 
+        if (LogPoseRate > 0.0 && snapshot.Timestamp - _poseLoggedAt >= 1.0 / LogPoseRate)
+        {
+            _poseLoggedAt = snapshot.Timestamp;
+            for (int i = 0; i < count; i++)
+            {
+                LogPose(snapshot, i);
+            }
+        }
+
         _recorder?.RecordPose(snapshot, signals);
+    }
+
+    /// <summary>
+    /// Print one line about the head and the shoulders of the player, e.g.:
+    /// <c>Pose: t=12.34 p=0 src=RtmPose head=(330,200) unit=180 home=325 shift=-0.03
+    /// tilt=+2.1 level=-1.0 steer=+0.00 (head +0.00, body +0.00) strokes=5 pull=0.40</c>.
+    /// </summary>
+    private void LogPose(VisionSnapshot snapshot, int i)
+    {
+        var meter = _meters[i];
+        var head = snapshot.Players[i]?.Head(KeypointThreshold);
+        string source = i < snapshot.Sources.Count ? snapshot.Sources[i].ToString() : "None";
+        string Number(double value, string format) =>
+            double.IsNaN(value) ? "nan" : value.ToString(format, CultureInfo.InvariantCulture);
+
+        // NOTE (mristin):
+        // Round first and put the sign ourselves: the custom formats of .NET
+        // print a small negative number as "-+0.00".
+        string Signed(double value, int digits)
+        {
+            if (double.IsNaN(value))
+            {
+                return "nan";
+            }
+
+            double rounded = Math.Round(value, digits);
+            string format = digits == 0 ? "0" : "0." + new string('0', digits);
+            return (rounded < 0 ? "-" : "+") + Math.Abs(rounded).ToString(format, CultureInfo.InvariantCulture);
+        }
+
+        GD.Print(
+            $"Pose: t={Number(snapshot.Timestamp, "0.00")} p={i} src={source}"
+            + $" head=({Number(head?.X ?? float.NaN, "0")},{Number(head?.Y ?? float.NaN, "0")})"
+            + $" unit={Number(_signals[i].Unit, "0")} home={Number(meter.HomeX, "0")}"
+            + $" shift={Signed(meter.Shift, 2)}"
+            + $" tilt={Signed(meter.Tilt, 1)} level={Signed(meter.Level, 1)}"
+            + $" steer={Signed(meter.Steer, 2)}"
+            + $" (head {Signed(meter.HeadSteer, 2)}, body {Signed(meter.TiltSteer, 2)})"
+            + $" strokes={meter.Strokes} pull={Number(meter.Pull, "0.00")}");
     }
 
     // ---------------------------------------------------------------------

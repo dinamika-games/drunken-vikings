@@ -121,6 +121,107 @@ namespace DrunkenVikings.Tests
         }
 
         [Fact]
+        public void A_change_of_the_unit_does_not_steer()
+        {
+            // NOTE (mristin):
+            // In the recording of the party (2026-11-23), the unit fell from 206
+            // to 130 pixels while the head stayed; home was kept in units then,
+            // and the boat spun while the player sat upright.
+            var meter = new RowingMeter();
+            for (int i = 0; i <= 40; i++)
+            {
+                meter.Observe(i / 10.0, 330f, 200f, 206f, 0f);
+            }
+
+            for (int i = 41; i <= 80; i++)
+            {
+                meter.Observe(i / 10.0, 330f, 200f, 130f, 0f);
+                Assert.Equal(0f, meter.Steer);
+            }
+        }
+
+        [Fact]
+        public void Sitting_upright_after_a_long_lean_does_not_steer_the_other_way()
+        {
+            var meter = new RowingMeter();
+            meter.Observe(0.0, 320f, 200f, 100f, 0f);
+
+            // NOTE (mristin):
+            // Lean to the right slowly, and stay there for half a minute.
+            double t = 0.0;
+            for (int i = 1; i <= 30; i++)
+            {
+                t = i / 10.0;
+                meter.Observe(t, 320f - 3.3f * i, 200f, 100f, 1f * i);
+            }
+
+            for (int i = 1; i <= 300; i++)
+            {
+                t += 0.1;
+                meter.Observe(t, 220f, 200f, 100f, 30f);
+            }
+
+            Assert.True(meter.Steer > 0.9f, $"Expected right while leaning, but got {meter.Steer}");
+
+            t += 0.1;
+            meter.Observe(t, 320f, 200f, 100f, 0f);
+            Assert.True(meter.Steer == 0f, $"Expected straight, but got {meter.Steer} (shift {meter.Shift}, tilt {meter.Tilt}, level {meter.Level})");
+        }
+
+        [Fact]
+        public void Tilting_the_shoulders_steers_even_when_the_head_stays()
+        {
+            var meter = new RowingMeter();
+            meter.Observe(0.0, 320f, 200f, 100f, 0f);
+
+            meter.Observe(0.1, 320f, 200f, 100f, 30f);
+            Assert.Equal(1f, meter.Steer, 2);
+
+            meter.Observe(0.2, 320f, 200f, 100f, -20f);
+            Assert.Equal(-0.5f, meter.Steer, 1);
+        }
+
+        [Fact]
+        public void The_head_and_the_shoulders_which_disagree_cancel_out()
+        {
+            var meter = new RowingMeter();
+            meter.Observe(0.0, 320f, 200f, 100f, 0f);
+
+            // NOTE (mristin):
+            // The head goes to the player's right, the shoulders to the left.
+            meter.Observe(0.1, 220f, 200f, 100f, -30f);
+            Assert.Equal(0f, meter.Steer, 2);
+        }
+
+        [Fact]
+        public void Swapped_shoulders_do_not_steer()
+        {
+            var meter = new RowingMeter();
+            meter.Observe(0.0, 320f, 200f, 100f, 0f);
+            meter.Observe(0.1, 320f, 200f, 100f, -166f);
+            Assert.Equal(0f, meter.Steer);
+            Assert.True(float.IsNaN(meter.Tilt));
+        }
+
+        [Fact]
+        public void Home_follows_a_player_who_slid_on_the_seat()
+        {
+            var meter = new RowingMeter();
+            meter.Observe(0.0, 320f, 200f, 100f, 0f);
+
+            // NOTE (mristin):
+            // The head is a unit to the side, but the shoulders are level.
+            double t = 0.0;
+            for (int i = 1; i <= 400; i++)
+            {
+                t = i / 10.0;
+                meter.Observe(t, 220f, 200f, 100f, 0f);
+            }
+
+            Assert.Equal(0f, meter.Steer);
+        }
+
+        [Fact]
         public void The_pull_follows_the_head_through_the_strokes()
         {
             var meter = new RowingMeter();

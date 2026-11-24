@@ -8,7 +8,10 @@ extends Node
 ## the rowing (0, or 1 with two players).
 ##
 ## Start with `-- --no-camera` to run without the camera, e.g., in the tests,
-## and with `-- --players=2` for two players side by side.
+## and with `-- --players=2` for two players side by side. With
+## `-- --log-pose` (or `--log-pose=<times a second>`, 4 by default), the vision
+## prints the head and the shoulders of the players and how they row and steer
+## into the log, without recording anything.
 
 @onready var service: Node = $Service
 
@@ -24,3 +27,7 @@ func _ready() -> void:
     for arg in OS.get_cmdline_user_args():
         if arg.begins_with("--players="):
             service.SetPlayerCount(int(arg.trim_prefix("--players=")))
+        elif arg == "--log-pose":
+            service.LogPoseRate = 4.0
+        elif arg.begins_with("--log-pose="):
+            service.LogPoseRate = float(arg.trim_prefix("--log-pose="))

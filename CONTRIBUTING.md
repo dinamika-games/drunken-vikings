@@ -44,6 +44,8 @@ The players row with their bodies and choose on the screens with their hands: a 
 * `--players=2`: two players, each pulls the oar on their side; the boat turns away from the stronger rower.
 * `--new`: a new voyage instead of the saved one.
 * `--no-camera --autopilot`: the boat trades by itself, to try the world without the camera; for the developers, `--dev-keys` lets the arrows and Space choose on the screens, and `--shots=<dir>` saves screenshots.
+* `--log-pose[=<times a second>]`: print the head and the shoulders of the players and how they row and steer into the log (4 times a second by default), e.g., `Pose: t=12.34 p=0 src=RtmPose head=(330,200) unit=180 home=325 shift=-0.03 tilt=+2.1 level=-1.0 steer=+0.00 (head +0.00, body +0.00) strokes=5 pull=0.40`; only numbers, and nothing is recorded.
+  In the party, it also prints where the boat and the longship are and the nearest treats as seen from the boat (`next=[(metres ahead, metres to the right, bearing), ...]`), and every drop and pick, on the same clock (`t`) as the poses, to study where the player meant to go.
 
 The chase mode (`scenes/chase/`: row to a town before the pirates catch you; the pirates find their way on the grid of the water of the map, `LakeMap.water_path`) runs directly with `$GODOT --path . res://scenes/chase/chase.tscn`. The party mode runs directly with `$GODOT --path . res://scenes/level/level.tscn` (add `-- --record` to record the vision while playing, `-- --no-camera --autopilot` to let it play itself), and the practical mode with `$GODOT --path . res://scenes/world/world.tscn`.
 
@@ -79,6 +81,19 @@ venv/bin/python dev/rowing/analyze.py <recording.jsonl> [--plot out.png]
 ```
 
 It prints how well the vision saw the players (the poses a second, which key points it saw), and for each signal its range against its noise and the rhythm it swings in (the strokes), over the whole recording and in windows between the marks.
+
+To see how the game steers on a recording (the head and the tilt of the shoulders, see `RowingMeter`), replay it:
+
+```
+venv/bin/python dev/rowing/replay_steering.py <recording.jsonl> [--every 0.25] [--csv out.csv]
+```
+
+To study a party played with `-- --log-pose` (how the vision saw the player, how they steered, and which treats they picked), save its log and analyze it:
+
+```
+$GODOT --path . res://scenes/level/level.tscn -- --log-pose > party.log 2>&1
+venv/bin/python dev/rowing/analyze_party_log.py party.log
+```
 
 ## Formatting
 

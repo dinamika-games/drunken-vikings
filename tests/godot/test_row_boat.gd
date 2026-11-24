@@ -97,6 +97,10 @@ func _initialize() -> void:
     )
 
     _check_oars(map)
+    # NOTE (mristin):
+    # The map is a node, not counted by references: free it, or it outlives
+    # the test with its shader and textures.
+    map.free()
 
     if _failures.is_empty():
         print("PASS test_row_boat")
