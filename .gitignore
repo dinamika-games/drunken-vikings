@@ -38,3 +38,6 @@ __pycache__/
 
 # The downloads of dev/maps/
 /.cache/
+
+# The exports (see export_presets.cfg)
+/build/
