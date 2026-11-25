@@ -22,6 +22,8 @@ extends RefCounted
 ##   the land between two frames, nor goes faster than its ship can; so do
 ##   the boats of the skippers, which never jump either (their ways are
 ##   preconditions of the map, see tests/godot/test_map.gd);
+## * the skippers keep clear of the players' boat: they never sail into it
+##   while it goes slowly (see NpcBoat);
 ## * the boat rows exactly while no screen shows; in a port, the boat lies
 ##   still at the berth and the state knows the place; with a skipper, the
 ##   skipper waits;
@@ -40,7 +42,10 @@ extends RefCounted
 ## the start's).
 ##
 ## Each problem is reported once, with its first example and how often it
-## happened.
+## happened. The example tells all that is needed to see what went wrong
+## without running the test again: where (the screen, the day, the mode, the
+## place), what was measured against what was allowed, and the state of what
+## broke the contract (the boat, the skipper, the longship).
 ##
 ## Not a test itself (its name does not start with test_).
 
@@ -57,6 +62,14 @@ const PLACEHOLDERS := ["%s", "%d", "%.", "{", "}", "<null>", "<Object", "[]", "N
 ## The boats of the skippers are checked on every this many frames.
 const NPC_EVERY := 4
 
+## A sailing skipper never comes closer to the players' boat than this, in
+## metres between their middle lines (see NpcBoat.CLEARANCE), unless the
+## players row faster than this, in metres a second (and run into the
+## skipper), or the players' boat came to the skipper rather than the skipper
+## to it.
+const NPC_GAP := 6.0
+const NPC_RAMMING := 2.0
+
 ## A little slack for the floats, in metres and metres a second.
 const SLACK := 0.01
 
@@ -72,6 +85,9 @@ var _last_boat := Vector2.INF
 var _last_mode := ""
 var _last_day := 0
 var _npc_last := {}
+## The gap of each skipper to the players' boat, and where the boat was, on
+## the last check.
+var _npc_gap := {}
 
 
 ## The problems found, one line each.
@@ -95,6 +111,7 @@ func restart(day: int) -> void:
     _last_mode = ""
     _last_day = day
     _npc_last.clear()
+    _npc_gap.clear()
 
 
 func _report(key: String, example: String) -> void:
@@ -134,30 +151,60 @@ func check_screen(panel: ChoicePanel) -> void:
         if bool(card.get("enabled", true)):
             enabled += 1
         var title := str(card.get("title", ""))
-        _expect(not titles.has(title), "no two cards are called the same", where + ": " + title)
+        _expect(
+            not titles.has(title),
+            "no two cards are called the same",
+            "%s: '%s' twice among %s" % [where, title, str(_titles(panel))]
+        )
         titles[title] = true
         _check_card(font, card, where)
-    _expect(enabled > 0, "the players can always go on", where + ": " + str(titles.keys()))
+    _expect(
+        enabled > 0,
+        "the players can always go on",
+        "%s: all %d cards disabled: %s" % [where, panel.cards.size(), str(_titles(panel))]
+    )
     var count := panel.cards.size()
     _expect(
         count * CARD.x + (count - 1) * CARD_GAP <= SCREEN_WIDTH,
         "the cards fit the screen side by side",
-        "%s: %d cards" % [where, count]
+        (
+            "%s: %d cards take %.0f px of %.0f: %s"
+            % [
+                where,
+                count,
+                count * CARD.x + (count - 1) * CARD_GAP,
+                SCREEN_WIDTH,
+                str(_titles(panel))
+            ]
+        )
     )
 
     var left := 40.0 + (140.0 if not panel.face.is_empty() else 0.0)
     var width := BOARD_WIDTH - left - 40.0
+    var title_width := (
+        font.get_string_size(panel.title, HORIZONTAL_ALIGNMENT_LEFT, -1, TITLE_FONT).x
+    )
     _expect(
-        font.get_string_size(panel.title, HORIZONTAL_ALIGNMENT_LEFT, -1, TITLE_FONT).x <= width,
+        title_width <= width,
         "the title of a screen fits the board",
-        where
+        "%s: %.0f px wide at %d px, %.0f px free" % [where, title_width, TITLE_FONT, width]
     )
     var fitted := ChoicePanel.fit_text(font, panel.text, width)
-    _expect(fitted["all"], "the text of a screen fits the board", "%s: %s" % [where, panel.text])
+    _expect(
+        fitted["all"],
+        "the text of a screen fits the board",
+        (
+            "%s: not all of it fits %.0f px even at %s px: %s"
+            % [where, width, fitted["size"], panel.text]
+        )
+    )
     _expect(
         fitted["size"] == ChoicePanel.TEXT_SIZES[0] or not where.begins_with("'The farm'"),
         "the text of the farm fits the board at the usual size",
-        "%s: %s" % [where, panel.text]
+        (
+            "%s: at %s px instead of %s px: %s"
+            % [where, fitted["size"], ChoicePanel.TEXT_SIZES[0], panel.text]
+        )
     )
     for text in [panel.title, panel.text]:
         _check_placeholders(text, where)
@@ -165,7 +212,7 @@ func check_screen(panel: ChoicePanel) -> void:
     _expect(
         face == "" or Pictures.of("faces", face) != null,
         "every face is painted",
-        "%s: %s" % [where, face]
+        "%s: no picture faces/%s" % [where, face]
     )
 
 
@@ -179,7 +226,7 @@ func _check_card(font: Font, card: Dictionary, where: String) -> void:
         _expect(
             picture.size() == 2 and Pictures.of(picture[0], picture[1]) != null,
             "every picture on a card is painted",
-            "%s: %s %s" % [where, title, str(picture)]
+            "%s: card '%s' shows %s, which is not painted" % [where, title, str(picture)]
         )
     # NOTE: As DwellButton._draw lays the card out: no line runs into the
     # nails of the painted card (see DwellButton.line_width).
@@ -193,39 +240,60 @@ func _check_card(font: Font, card: Dictionary, where: String) -> void:
     var lines := DwellButton.wrap_title(font, title, CARD, top, painted, title_font)
     for i in range(lines.size()):
         var at := top + i * DwellButton.TITLE_LINE
+        var line_width := (
+            font.get_string_size(lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, title_font).x
+        )
+        var free := DwellButton.line_width(font, CARD, at, title_font, painted)
         _expect(
-            (
-                font.get_string_size(lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, title_font).x
-                <= DwellButton.line_width(font, CARD, at, title_font, painted)
-            ),
+            line_width <= free,
             "the title of a card fits its width, clear of the nails",
-            "%s: %s" % [where, title]
+            (
+                "%s: card '%s', line %d '%s' is %.0f px wide at %d px, %.0f px free"
+                % [where, title, i + 1, lines[i], line_width, title_font, free]
+            )
         )
     var bottom := CARD.y - 8.0
     if detail != "":
         var detail_font := DwellButton.detail_size(font, detail, CARD, painted)
         var baseline := DwellButton.detail_baseline(CARD, painted)
         bottom = baseline - font.get_ascent(detail_font)
+        var detail_width := (
+            font.get_string_size(detail, HORIZONTAL_ALIGNMENT_LEFT, -1, detail_font).x
+        )
+        var detail_free := DwellButton.line_width(font, CARD, baseline, detail_font, painted)
         _expect(
-            (
-                font.get_string_size(detail, HORIZONTAL_ALIGNMENT_LEFT, -1, detail_font).x
-                <= DwellButton.line_width(font, CARD, baseline, detail_font, painted)
-            ),
+            detail_width <= detail_free,
             "the detail of a card fits its width, clear of the nails",
-            "%s: %s" % [where, detail]
+            (
+                "%s: card '%s', detail '%s' is %.0f px wide at %d px, %.0f px free"
+                % [where, title, detail, detail_width, detail_font, detail_free]
+            )
         )
     var last := top + (lines.size() - 1) * DwellButton.TITLE_LINE + font.get_descent(title_font)
     _expect(
         last <= bottom,
         "the title of a card fits above its detail",
-        "%s: '%s' / '%s' (%d lines)" % [where, title, detail, lines.size()]
+        (
+            "%s: '%s' / '%s': %d lines at %d px end at %.0f px, the detail begins at %.0f px"
+            % [where, title, detail, lines.size(), title_font, last, bottom]
+        )
     )
+
+
+## The titles of the cards on the screen of the [param panel].
+static func _titles(panel: ChoicePanel) -> Array:
+    var result := []
+    for card: Dictionary in panel.cards:
+        result.append(
+            str(card.get("title", "")) + ("" if bool(card.get("enabled", true)) else " (disabled)")
+        )
+    return result
 
 
 func _check_placeholders(text: String, where: String) -> void:
     for placeholder in PLACEHOLDERS:
         if placeholder in text:
-            _report("no text shows a placeholder", "%s: %s" % [where, text])
+            _report("no text shows a placeholder", "%s: '%s' in %s" % [where, placeholder, text])
             return
 
 
@@ -240,24 +308,68 @@ func check_world(world: Node) -> void:
     var map: LakeMap = world.map()
     var boat: RowBoat = world.boat()
     var mode: String = world._mode
-    var where := "day %d, %s" % [state.day, mode]
+    var where := (
+        "day %d, %s (after %s), at '%s', on the %s"
+        % [state.day, mode, _last_mode, state.place, state.ships.current]
+    )
 
     _check_boat(map, boat, mode == "rowing" and _last_mode == "rowing", where)
     _last_mode = mode
     _frame += 1
-    for npc in world.npcs() if _frame % NPC_EVERY == 0 else []:
+    for npc: NpcBoat in world.npcs() if _frame % NPC_EVERY == 0 else []:
+        var last: Vector2 = _npc_last.get(npc.get_instance_id(), npc.position)
         _expect(
             map.is_water(npc.position),
             "the skippers stay on the water",
-            "%s at %s" % [npc.skipper["name"], npc.position]
+            (
+                "%s: %s, %s, came from %s; %s"
+                % [where, npc.describe(), _near(map, npc.position), last, _boat_text(boat)]
+            )
         )
-        var last: Vector2 = _npc_last.get(npc.get_instance_id(), npc.position)
+        var allowed := NpcBoat.SPEED * 0.2 * NPC_EVERY + SLACK
         _expect(
-            last.distance_to(npc.position) <= NpcBoat.SPEED * 0.2 * NPC_EVERY + SLACK,
+            last.distance_to(npc.position) <= allowed,
             "the skippers never jump",
-            "%s from %s to %s" % [npc.skipper["name"], last, npc.position]
+            (
+                "%s: %s, came %.1f m from %s in %d frames (at most %.1f m)"
+                % [where, npc.describe(), last.distance_to(npc.position), last, NPC_EVERY, allowed]
+            )
         )
         _npc_last[npc.get_instance_id()] = npc.position
+        # NOTE: The skippers can not help it when the players' boat comes
+        # to lie beside them: when it docks (it is put at the berth), when
+        # the players hail them (they stop beside the boat), and when the
+        # players row or turn their boat into them. The skippers only never
+        # sail into where the players' boat lay (nor deeper, once close).
+        var gap: float = npc.gap_to_players()
+        var before: Array = _npc_gap.get(npc.get_instance_id(), [INF, boat.position, boat.heading])
+        var sailed_into := _gap_to(npc, before[1], before[2], npc.players_length)
+        _expect(
+            (
+                not npc.sailing()
+                or boat.speed > NPC_RAMMING
+                or gap >= NPC_GAP
+                or sailed_into >= minf(NPC_GAP, before[0] - SLACK)
+            ),
+            "the skippers keep clear of the players' boat",
+            (
+                (
+                    "%s: %s, %.1f m before (keep %.1f m), %.1f m from where the boat lay"
+                    + " at %s heading %.0f°; %s"
+                )
+                % [
+                    where,
+                    npc.describe(),
+                    before[0],
+                    NPC_GAP,
+                    sailed_into,
+                    before[1],
+                    rad_to_deg(before[2]),
+                    _boat_text(boat)
+                ]
+            )
+        )
+        _npc_gap[npc.get_instance_id()] = [gap, boat.position, boat.heading]
 
     var panel: ChoicePanel = world._panel
     var chart: bool = world._chart != null
@@ -266,28 +378,51 @@ func check_world(world: Node) -> void:
             _expect(
                 state.place == "",
                 "on the water, the boat is at no place",
-                "%s: %s, after %s" % [where, state.place, _last_mode]
+                "%s: %s" % [where, _boat_text(boat)]
             )
-            _expect(not panel.visible, "on the water, no screen shows", where)
+            _expect(
+                not panel.visible,
+                "on the water, no screen shows",
+                "%s: the screen '%s' shows" % [where, panel.title]
+            )
         "port":
-            _expect(state.place != "", "in a port, the state knows the place", where)
-            _expect(panel.visible or chart, "in a port, a screen shows", where)
+            _expect(
+                state.place != "",
+                "in a port, the state knows the place",
+                "%s: %s, %s" % [where, _boat_text(boat), _near(map, boat.position)]
+            )
+            _expect(
+                panel.visible or chart,
+                "in a port, a screen shows",
+                "%s: neither a screen nor the map shows" % where
+            )
             if state.place != "":
                 var berth: Vector2 = map.place(state.place)["berth"]
                 _expect(
                     boat.speed == 0.0 and boat.position.distance_to(berth) < SLACK,
                     "in a port, the boat lies still at the berth",
-                    "%s: %s, speed %.2f" % [state.place, boat.position, boat.speed]
+                    (
+                        "%s: %s, %.2f m from the berth %s"
+                        % [where, _boat_text(boat), boat.position.distance_to(berth), berth]
+                    )
                 )
         "skipper":
-            _expect(panel.visible or chart, "with a skipper, a screen shows", where)
             _expect(
-                world._talking_to != null and world._talking_to.held,
+                panel.visible or chart,
+                "with a skipper, a screen shows",
+                "%s: neither a screen nor the map shows" % where
+            )
+            var talking: NpcBoat = world._talking_to
+            _expect(
+                talking != null and talking.held,
                 "the skipper waits while the players talk",
-                where
+                (
+                    "%s: %s"
+                    % [where, talking.describe() if talking != null else "no skipper to talk to"]
+                )
             )
         _:
-            _report("the world is rowing, in a port or with a skipper", mode)
+            _report("the world is rowing, in a port or with a skipper", "%s: '%s'" % [where, mode])
 
     check_music("farm" if mode == "port" and state.place == "home" else "lakes", where)
     var ships: Ships = state.ships
@@ -295,13 +430,14 @@ func check_world(world: Node) -> void:
     _expect(
         world._ship_view == null or kind.has("drawn") == true,
         "only a ship with a drawing is drawn",
-        ships.current
+        "%s: the %s has no drawing, yet a ship is drawn" % [where, ships.current]
     )
     if kind.has("drawn"):
+        var drawn: Variant = world._ship_view.look if world._ship_view != null else null
         _expect(
-            world._ship_view != null and world._ship_view.look == kind["drawn"],
+            world._ship_view != null and drawn == kind["drawn"],
             "the ship drawn is the ship the players row",
-            ships.current
+            "%s: the %s should look %s, drawn %s" % [where, ships.current, kind["drawn"], drawn]
         )
     check_state(state)
 
@@ -311,60 +447,153 @@ func _check_boat(map: LakeMap, boat: RowBoat, moving: bool, where: String) -> vo
     _expect(
         is_finite(at.x) and is_finite(at.y) and is_finite(boat.heading),
         "the boat is somewhere",
-        where
+        "%s: %s" % [where, _boat_text(boat)]
     )
-    _expect(map.is_water(at), "the boat stays on the water", "%s at %s" % [where, at])
+    _expect(
+        map.is_water(at),
+        "the boat stays on the water",
+        "%s: %s, %s, came from %s" % [where, _boat_text(boat), _near(map, at), _last_boat]
+    )
     if moving and _last_boat != Vector2.INF:
         _expect(
             not map.crosses_land(_last_boat, at),
             "the boat never crosses the land",
-            "%s from %s to %s" % [where, _last_boat, at]
+            (
+                "%s: %s, came %.1f m from %s, %s"
+                % [where, _boat_text(boat), _last_boat.distance_to(at), _last_boat, _near(map, at)]
+            )
         )
     _last_boat = at
+    var top := RowBoat.MAX_SPEED * boat.top_share
     _expect(
-        boat.speed >= 0.0 and boat.speed <= RowBoat.MAX_SPEED * boat.top_share + SLACK,
+        boat.speed >= 0.0 and boat.speed <= top + SLACK,
         "the boat never goes faster than its ship can",
-        "%s: %.2f" % [where, boat.speed]
+        "%s: %s, at most %.2f m/s" % [where, _boat_text(boat), top]
+    )
+
+
+## How far the middle line of the skipper's boat ([param npc]) is from the
+## middle line of a boat [param length] long at [param at], heading
+## [param heading].
+static func _gap_to(npc: NpcBoat, at: Vector2, heading: float, length: float) -> float:
+    var mine := Vector2.UP.rotated(npc.heading) * NpcBoat.LENGTH / 2.0
+    var theirs := Vector2.UP.rotated(heading) * length / 2.0
+    var closest := Geometry2D.get_closest_points_between_segments(
+        npc.position - mine, npc.position + mine, at - theirs, at + theirs
+    )
+    return closest[0].distance_to(closest[1])
+
+
+## The players' [param boat] in one line.
+static func _boat_text(boat: RowBoat) -> String:
+    return (
+        "the boat at %s heading %.0f°, %.2f m/s, steering %+.2f%s (bow %.1f m)"
+        % [
+            boat.position,
+            rad_to_deg(boat.heading),
+            boat.speed,
+            boat.steer,
+            ", braking" if boat.brake else "",
+            boat.bow
+        ]
+    )
+
+
+## Where the [param point] is on the [param map]: how far from the nearest berth.
+static func _near(map: LakeMap, point: Vector2) -> String:
+    var nearest := {}
+    for place: Dictionary in map.places:
+        if (
+            nearest.is_empty()
+            or (point.distance_to(place["berth"]) < point.distance_to(nearest["berth"]))
+        ):
+            nearest = place
+    if nearest.is_empty():
+        return "no place on the map"
+    return (
+        "%.0f m from the berth of %s (%.0f m from its jetty end)"
+        % [point.distance_to(nearest["berth"]), nearest["id"], point.distance_to(nearest["jetty"])]
+    )
+
+
+## The [param ship] (the wedding longship or the pirates) in one line.
+static func _longship_text(ship: Longship) -> String:
+    return (
+        "at %s heading %.0f°, %.2f m/s, %.0f m along its way%s%s"
+        % [
+            ship.position,
+            rad_to_deg(ship.heading),
+            ship.speed,
+            ship.progress,
+            ", waiting" if ship.waiting else "",
+            ", arrived" if ship.arrived else ""
+        ]
     )
 
 
 ## Check the voyage in the [param state].
 func check_state(state: Node) -> void:
-    var where := "day %d" % state.day
+    var where := "day %d at '%s'" % [state.day, state.place]
     _expect(state.silver >= 0, "the silver never goes below zero", "%s: %d" % [where, state.silver])
     _expect(
         state.day >= _last_day,
         "the days never run backwards",
-        "%d after %d" % [state.day, _last_day]
+        "%s, after day %d" % [where, _last_day]
     )
     _last_day = state.day
     _expect(
         state.load_count() <= state.capacity,
         "the cargo fits the hold",
-        "%s: %d of %d" % [where, state.load_count(), state.capacity]
+        (
+            "%s: %d of %d on the %s: %s"
+            % [where, state.load_count(), state.capacity, state.ships.current, state.cargo]
+        )
     )
     var missions: Missions = state.missions
     var active := {}
+    var under_way := []
     for entry in missions.active:
-        _expect(not active.has(entry["id"]), "a task is under way once", entry["id"])
+        under_way.append(entry["id"])
+    for entry in missions.active:
+        _expect(
+            not active.has(entry["id"]),
+            "a task is under way once",
+            "%s: %s among %s" % [where, entry["id"], under_way]
+        )
         active[entry["id"]] = true
-        _expect(not missions.done.has(entry["id"]), "a task under way is not done", entry["id"])
+        _expect(
+            not missions.done.has(entry["id"]),
+            "a task under way is not done",
+            "%s: %s, done with %s stars" % [where, entry["id"], missions.done.get(entry["id"])]
+        )
     _expect(
         missions.active.size() <= Missions.MAX_ACTIVE,
         "at most three tasks are under way",
-        str(active.keys())
+        "%s: %s" % [where, under_way]
     )
     for id in missions.done:
         _expect(
             int(missions.done[id]) >= 1 and int(missions.done[id]) <= 3,
             "a task done has one to three stars",
-            "%s: %s" % [id, missions.done[id]]
+            "%s: %s with %s stars" % [where, id, missions.done[id]]
         )
     for item in state.cargo:
-        _expect(int(state.cargo[item]) > 0, "the cargo holds no empty crates", item)
-        _expect(_known(state, item, active), "every crate in the boat is known", item)
+        _expect(
+            int(state.cargo[item]) > 0,
+            "the cargo holds no empty crates",
+            "%s: %s x %s in %s" % [where, item, state.cargo[item], state.cargo]
+        )
+        _expect(
+            _known(state, item, active),
+            "every crate in the boat is known",
+            "%s: %s is no good, animal nor item of a task under way %s" % [where, item, under_way]
+        )
     var ships: Ships = state.ships
-    _expect(ships.current in ships.owned, "the players row a ship they own", ships.current)
+    _expect(
+        ships.current in ships.owned,
+        "the players row a ship they own",
+        "%s: the %s, owning %s" % [where, ships.current, ships.owned]
+    )
 
 
 func _known(state: Node, item: String, active: Dictionary) -> bool:
@@ -384,21 +613,36 @@ func _known(state: Node, item: String, active: Dictionary) -> bool:
 func check_save(state: Node) -> void:
     var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(state.save_path))
     if not data is Dictionary:
-        _report("the voyage is saved", state.save_path)
+        _report(
+            "the voyage is saved",
+            "day %d at '%s': %s holds no voyage" % [state.day, state.place, state.save_path]
+        )
         return
     var where := "day %d at %s" % [state.day, state.place]
     var missions: Dictionary = state.missions.to_data()
-    var same := {
-        "silver": int(data.get("silver", -1)) == state.silver,
-        "day": int(data.get("day", -1)) == state.day,
-        "place": str(data.get("place", "")) == state.place,
-        "cargo": _same(data.get("cargo", {}), state.cargo),
-        "missions": _same(data.get("missions", {}), missions),
-        "ships": _same(data.get("ships", {}), state.ships.to_data()),
-        "farm": _same(data.get("farm", {}), state.farm.to_data()),
+    var memory := {
+        "silver": state.silver,
+        "day": state.day,
+        "place": state.place,
+        "cargo": state.cargo,
+        "missions": missions,
+        "ships": state.ships.to_data(),
+        "farm": state.farm.to_data(),
     }
-    for key in same:
-        _expect(same[key], "the save on the disk is the voyage in memory", "%s: %s" % [where, key])
+    for key in memory:
+        _expect(
+            data.has(key) and _same(data[key], memory[key]),
+            "the save on the disk is the voyage in memory",
+            (
+                "%s: the %s saved is %s, in memory %s"
+                % [
+                    where,
+                    key,
+                    JSON.stringify(data.get(key)).left(300),
+                    JSON.stringify(memory[key]).left(300)
+                ]
+            )
+        )
 
 
 ## Whether two values are the same as JSON (whose numbers are all floats).
@@ -422,14 +666,24 @@ func check_party(level: Node, silver: int) -> void:
     _expect(
         map.is_water(level.ship().position),
         "the wedding longship stays on the water",
-        str(level.ship().position)
+        (
+            "the party: the longship %s, %s; %s"
+            % [
+                _longship_text(level.ship()),
+                _near(map, level.ship().position),
+                _boat_text(level.boat())
+            ]
+        )
     )
     check_music("party", "the party")
     var state: Node = level._state
     _expect(
         state.silver - silver == level.coins(),
         "every treat picked is a silver coin in the purse",
-        "%d coins, %d silver more" % [level.coins(), state.silver - silver]
+        (
+            "the party: %d coins picked, but %d silver more (%d now, %d at the start)"
+            % [level.coins(), state.silver - silver, state.silver, silver]
+        )
     )
     check_state(state)
 
@@ -451,6 +705,13 @@ func check_chase(chase: Node) -> void:
     _expect(
         map.is_water(chase.pirates().position),
         "the pirates stay on the water",
-        str(chase.pirates().position)
+        (
+            "the chase: the pirates %s, %s; %s"
+            % [
+                _longship_text(chase.pirates()),
+                _near(map, chase.pirates().position),
+                _boat_text(chase.boat())
+            ]
+        )
     )
     check_state(chase._state)

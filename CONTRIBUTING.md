@@ -74,6 +74,12 @@ It fails on any error which the game logs (`error_log.gd`), and whenever the pla
 It runs as fast as the computer can: `--fixed-fps 60` makes every frame 1/60 s of the game however fast it is computed, the game runs 10 times faster than that, and what redraws on every frame (the boats, the wakes, the HUD) is drawn only on every 8th frame, so that about five hours of the game take some three minutes (about 700 frames a second).
 The random choices come from a seed; try others with `-- --seed=<n>`, and more tasks with `-- --tasks=<n>` (all 100 take some seven minutes: `-- --tasks=100 --wall-seconds=600`); `-- --trace` prints every choice and where the bot rows.
 
+**Always log the runs of the fuzzing tests** (the end-to-end test and the balance bot) to a file, and delete the log only once the test passes; otherwise a failure means running it all again only to see what went wrong, which takes double the time:
+
+```
+$GODOT --headless --fixed-fps 60 --path . --script tests/godot/end2end/test_playthrough.gd -- --no-camera > playthrough.log 2>&1 && rm playthrough.log
+```
+
 **The balance** of the farm and the trading is checked by a bot which plays the rules of the game (`GameState`, `Economy`, `Farm`, `Missions`, `Ships`) without rowing, a trip taking the length of its route at the speed of the ship, many times with several strategies (a careful child doing the tasks, the tasks with trading on the way, a pure trader, a farmer, and a random fuzzer), and reports when the players can buy the ships and the land, in hours of play and in tasks done, and whether any run gets stuck:
 
 ```

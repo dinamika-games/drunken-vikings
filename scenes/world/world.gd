@@ -151,6 +151,7 @@ func _ready() -> void:
         var start: Dictionary = _map.places[(i * 3 + 1) % _map.places.size()]
         npc.setup(_map, start["id"], Gossip.skipper(i), 1000 + i)
         npc.cooldown = 20.0
+        npc.players = _boat
         add_child(npc)
         _npcs.append(npc)
 
@@ -226,6 +227,8 @@ func refit() -> void:
     _rower.show_hull = true
     _boat_wake.width = 2.5
     _boat_wake.spread = 8.0
+    for npc in _npcs:
+        npc.players_length = float(data.get("drawn", {}).get("length", RowerView.HULL_LENGTH))
     if not data.has("drawn"):
         return
     _ship_view = Longship.new()
