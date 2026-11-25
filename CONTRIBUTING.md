@@ -74,16 +74,19 @@ It fails on any error which the game logs (`error_log.gd`), and whenever the pla
 It runs as fast as the computer can: `--fixed-fps 60` makes every frame 1/60 s of the game however fast it is computed, the game runs 10 times faster than that, and what redraws on every frame (the boats, the wakes, the HUD) is drawn only on every 8th frame, so that about five hours of the game take some three minutes (about 700 frames a second).
 The random choices come from a seed; try others with `-- --seed=<n>`, and more tasks with `-- --tasks=<n>` (all 100 take some seven minutes: `-- --tasks=100 --wall-seconds=600`); `-- --trace` prints every choice and where the bot rows.
 
-**Always log the runs of the fuzzing tests** (the end-to-end test and the balance bot) to a file, and delete the log only once the test passes; otherwise a failure means running it all again only to see what went wrong, which takes double the time:
+**Always log the runs of the fuzzing tests** (the end-to-end test and the balance bot) to a file, and delete the log only once the test passes; otherwise a failure means running it all again only to see what went wrong, which takes double the time.
+`dev/logged.sh <log> <command>...` does just that: it keeps the log and shows its end when the test fails, and deletes it when the test passes (so never delete the logs by hand):
 
 ```
-$GODOT --headless --fixed-fps 60 --path . --script tests/godot/end2end/test_playthrough.gd -- --no-camera > playthrough.log 2>&1 && rm playthrough.log
+dev/logged.sh playthrough.log $GODOT --headless --fixed-fps 60 --path . --script tests/godot/end2end/test_playthrough.gd -- --no-camera
 ```
+
+Run one end-to-end test at a time: they share the saved journeys (`user://`), so two at once see each other's journeys and fail.
 
 **The balance** of the farm and the trading is checked by a bot which plays the rules of the game (`GameState`, `Economy`, `Farm`, `Missions`, `Ships`) without rowing, a trip taking the length of its route at the speed of the ship, many times with several strategies (a careful child doing the tasks, the tasks with trading on the way, a pure trader, a farmer, and a random fuzzer), and reports when the players can buy the ships and the land, in hours of play and in tasks done, and whether any run gets stuck:
 
 ```
-$GODOT --headless --path . --script dev/balance/balance.gd -- --no-camera [--runs=20] [--hours=50] [--speed=8] [--strategies=tasks,mixed,trader,farmer,random] [--ship-prices=80,220,450,800] [--reward-scale=1.0]
+dev/logged.sh balance.log $GODOT --headless --path . --script dev/balance/balance.gd -- --no-camera [--runs=20] [--hours=50] [--speed=8] [--strategies=tasks,mixed,trader,farmer,random] [--ship-prices=80,220,450,800] [--reward-scale=1.0]
 ```
 
 With the rewards of the tasks as they are, a careful child gets the færing after about 30 tasks (7 hours of play at 8 m/s), the karve after about 65 and the knarr near the end; the longship is a goal for those who also trade or farm.
