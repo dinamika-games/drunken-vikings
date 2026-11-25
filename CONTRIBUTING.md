@@ -150,6 +150,20 @@ venv/bin/gdformat dev/ scenes/
 venv/bin/gdlint dev/ scenes/
 ```
 
+## Packaging
+
+The export presets (`export_presets.cfg`) package the game for Linux, Windows and macOS into `build/`.
+You need the export templates of Godot 4.6.2 (.NET) (in the editor: Editor, Manage Export Templates), then:
+
+```
+GODOT=<the Godot executable> venv/bin/python dev/package.py
+```
+
+Pass `--platforms` to package only some, e.g., `--platforms windows`.
+The script exports the presets, adds `LICENSE`, `THIRD_PARTY_NOTICES.md` and the licenses of Godot (`licenses/godot/`), of the models and of ONNX Runtime to every package, and copies the camera extension next to the Windows executable: Godot 4.6 has no camera on Windows, and the game loads the extension from there itself (see `addons/CameraServerExtension/CameraServerExtension.gdextension` and `VisionService.StartCameraExtension`).
+Export with the script rather than from the editor, or the Windows package has no camera.
+It fails if Godot reports an error (Godot exits with zero even if it fails to build the C# part) or a package misses ONNX Runtime.
+
 ## A class, not a positional array
 
 When a few values of different kinds belong together (a record: e.g., how far a skipper was from the boat, where the boat lay and how it headed), give them a class with named fields rather than an array read by position.
