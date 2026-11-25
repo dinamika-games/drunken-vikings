@@ -94,9 +94,12 @@ var _last_boat := Vector2.INF
 var _last_mode := ""
 var _last_day := 0
 var _npc_last := {}
-## The gap of each skipper to the players' boat, and where the boat was, on
-## the last check.
+## What each skipper saw of the players' boat on the last check (a
+## _Sighting, by the instance id of the skipper).
 var _npc_gap := {}
+## How often the game put the players' boat somewhere (it docks at a berth,
+## or undocks, turned to head out), see check_world.
+var _placings := 0
 
 
 ## The problems found, one line each.
@@ -400,6 +403,8 @@ func check_world(world: Node) -> void:
     )
 
     _check_boat(map, boat, mode == "rowing" and _last_mode == "rowing", where)
+    if (mode == "rowing") != (_last_mode == "rowing"):
+        _placings += 1
     _last_mode = mode
     _frame += 1
     for npc: NpcBoat in world.npcs() if _frame % NPC_EVERY == 0 else []:
@@ -423,19 +428,26 @@ func check_world(world: Node) -> void:
         )
         _npc_last[npc.get_instance_id()] = npc.position
         # NOTE: The skippers can not help it when the players' boat comes
-        # to lie beside them: when it docks (it is put at the berth), when
-        # the players hail them (they stop beside the boat), and when the
-        # players row or turn their boat into them. The skippers only never
-        # sail into where the players' boat lay (nor deeper, once close).
+        # to lie beside them: when it docks (it is put at the berth) or
+        # undocks (it is turned to head out), when the players hail them
+        # (they stop beside the boat), and when the players row or turn their
+        # boat into them. The skippers only never sail into where the
+        # players' boat lay (nor deeper, once close).
         var gap: float = npc.gap_to_players()
-        var before: Array = _npc_gap.get(npc.get_instance_id(), [INF, boat.position, boat.heading])
-        var sailed_into := _gap_to(npc, before[1], before[2], npc.players_length)
+        var before: _Sighting = _npc_gap.get(
+            npc.get_instance_id(), _Sighting.new(INF, boat.position, boat.heading, _placings)
+        )
+        if before.placings != _placings:
+            # NOTE: Put there by the game since the last look: nothing to
+            # compare with.
+            before = _Sighting.new(0.0, boat.position, boat.heading, _placings)
+        var sailed_into := _gap_to(npc, before.at, before.heading, npc.players_length)
         _expect(
             (
                 not npc.sailing()
                 or boat.speed > NPC_RAMMING
                 or gap >= NPC_GAP
-                or sailed_into >= minf(NPC_GAP, before[0] - SLACK)
+                or sailed_into >= minf(NPC_GAP, before.gap - SLACK)
             ),
             "the skippers keep clear of the players' boat",
             (
@@ -446,16 +458,16 @@ func check_world(world: Node) -> void:
                 % [
                     where,
                     npc.describe(),
-                    before[0],
+                    before.gap,
                     NPC_GAP,
                     sailed_into,
-                    before[1],
-                    rad_to_deg(before[2]),
+                    before.at,
+                    rad_to_deg(before.heading),
                     _boat_text(boat)
                 ]
             )
         )
-        _npc_gap[npc.get_instance_id()] = [gap, boat.position, boat.heading]
+        _npc_gap[npc.get_instance_id()] = _Sighting.new(gap, boat.position, boat.heading, _placings)
 
     var panel: ChoicePanel = world._panel
     var chart: bool = world._chart != null
@@ -801,3 +813,19 @@ func check_chase(chase: Node) -> void:
         )
     )
     check_state(chase._state)
+
+
+## What a skipper saw of the players' boat on a check: how far apart the
+## boats were, where the boat lay and how it headed, and how often the game
+## had put the boat somewhere by then (see Contracts._placings).
+class _Sighting:
+    var gap: float
+    var at: Vector2
+    var heading: float
+    var placings: int
+
+    func _init(apart: float, lay_at: Vector2, lay_heading: float, placed: int) -> void:
+        gap = apart
+        at = lay_at
+        heading = lay_heading
+        placings = placed

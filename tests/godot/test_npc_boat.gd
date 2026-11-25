@@ -78,6 +78,17 @@ func _gap(npc: NpcBoat, players: RowBoat, length: float) -> float:
     return closest[0].distance_to(closest[1])
 
 
+## How far apart the middle lines of the skipper's boat and of a boat of the
+## [param length] lying [param at], heading [param heading], are.
+func _gap_at(npc: NpcBoat, at: Vector2, heading: float, length: float) -> float:
+    var ahead := Vector2.UP.rotated(npc.heading) * NpcBoat.LENGTH / 2.0
+    var theirs := Vector2.UP.rotated(heading) * length / 2.0
+    var closest := Geometry2D.get_closest_points_between_segments(
+        npc.position - ahead, npc.position + ahead, at - theirs, at + theirs
+    )
+    return closest[0].distance_to(closest[1])
+
+
 ## Sail the skipper for [param seconds] (the players' boat glides as it goes);
 ## return the closest the boats came, and whether the skipper arrived.
 func _sail(
@@ -137,6 +148,49 @@ func _initialize() -> void:
         closest = minf(closest, _gap(npc, players, RowerView.HULL_LENGTH))
         t += DELTA
     _check(closest >= NEVER_CLOSER, "the skipper passes the oncoming boat clear: %.1f m" % closest)
+
+    # The skipper finds itself too close beside the players' boat, which
+    # glides slowly towards its side, while it turns about to pass behind the
+    # boat (as the end-to-end test once saw, see NpcBoat._look): on every
+    # step, it sails no closer to where the boat lay a step before (the boat
+    # may come closer itself, as the contracts of the end-to-end test allow).
+    for glide: float in [0.0, 0.7, 1.35, 1.9]:
+        for side: float in [-1.0, 1.0]:
+            for shift: float in [-1.0, 0.0, 1.0]:
+                players = RowBoat.new()
+                players.position = Vector2(680.3, 780.6 + shift)
+                players.heading = deg_to_rad(-110.0)
+                players.speed = glide
+                npc = _skipper(map, players, 6.4)
+                npc._path = PackedVector2Array([Vector2(655, 780), Vector2(400, 780)])
+                npc._index = 0
+                npc._wait = 0.0
+                npc._off_route = true
+                npc.position = Vector2(677.7, 787.7)
+                npc.heading = deg_to_rad(96.0)
+                npc._course = Vector2(0.984, -0.179)
+                npc._speed = 4.08
+                npc._swerve_side = side
+                var worst := 0.0
+                var worst_before := 0.0
+                for i in range(int(3.0 / DELTA)):
+                    var lay := Vector2(players.position)
+                    var lay_heading := players.heading
+                    var before := _gap_at(npc, lay, lay_heading, 6.4)
+                    npc._process(DELTA)
+                    players.move(DELTA, map)
+                    var after := _gap_at(npc, lay, lay_heading, 6.4)
+                    if after - before < worst - worst_before:
+                        worst = after
+                        worst_before = before
+                var what := (
+                    "the skipper beside the gliding boat (%.2f m/s, to %+.0f, %+.0f m)"
+                    % [glide, side, shift]
+                )
+                _check(
+                    worst >= worst_before - 0.01,
+                    "%s sails into where it lay: %.3f m to %.3f m" % [what, worst_before, worst]
+                )
 
     # The players lie at the berth where the skipper arrives: the skipper moors
     # beside them.

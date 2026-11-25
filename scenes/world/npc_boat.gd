@@ -191,17 +191,28 @@ func _sail(delta: float) -> void:
             _off_route = true
             _rejoin(target)
         return
+    var gap := gap_to_players()
+    var was_at := position
+    var was_heading := heading
     position += _course * step
-    if swerving and step > 0.0 and not _off_route:
-        _off_route = true
-        _aim_clock = 0.0
-        _aim_clock = 0.0
     if step > 0.0:
         heading = wrapf(
             lerp_angle(heading, _course.angle() + PI / 2.0, 1.0 - exp(-delta / TURN_SECONDS)),
             -PI,
             PI
         )
+    # NOTE (mristin):
+    # Too close to the players already, the skipper never sails any closer,
+    # not even by the sweep of its hull as it turns: it slides aside instead,
+    # as when moored, and sails on once clear.
+    if gap < CLEARANCE and gap_to_players() < gap:
+        position = was_at
+        heading = was_heading
+        _make_room(delta)
+        return
+    if swerving and step > 0.0 and not _off_route:
+        _off_route = true
+        _aim_clock = 0.0
 
 
 ## Come back to the [param target], the next point of the way, along the
@@ -282,6 +293,7 @@ func _keep_clear(direct: Vector2, speed: float) -> Vector2:
     if players == null or _far_from_players():
         _swerve_side = 0.0
         return direct * speed
+    var now := gap_to_players()
     var best := direct * speed
     var best_look := _look(best)
     if is_inf(best_look[0]):
@@ -312,7 +324,11 @@ func _keep_clear(direct: Vector2, speed: float) -> Vector2:
     # at the ways which would keep it clear.
     for velocity in candidates:
         var look := _look(velocity)
-        if velocity == kept:
+        # NOTE (mristin):
+        # The course kept counts as further clear only while it sails no
+        # closer than the boat is now; otherwise, the bonus would let the
+        # skipper sail into the players' boat once too close beside it.
+        if velocity == kept and look[1] >= minf(now, CLEARANCE):
             look[1] += KEEP_BONUS
         if not is_inf(look[0]) and not _better(look, best_look):
             continue
@@ -427,7 +443,7 @@ func _players_line(seconds := 0.0) -> PackedVector2Array:
 ## this boat setting out at [param velocity] now: as in [method _sail], it
 ## takes the course at once, but comes to its speed and turns its hull to the
 ## course only little by little.
-func _gap_at(velocity: Vector2, seconds: float) -> float:
+func _gap_at(velocity: Vector2, seconds: float, players_seconds := NAN) -> float:
     var target := velocity.length()
     var way := velocity / target if target > 0.0 else _course
     var ease := SPEED_SECONDS if target > 0.0 else STOP_SECONDS
@@ -436,7 +452,9 @@ func _gap_at(velocity: Vector2, seconds: float) -> float:
     if target > 0.0:
         turned = lerp_angle(heading, way.angle() + PI / 2.0, 1.0 - exp(-seconds / TURN_SECONDS))
     return _gap_along(
-        position + way * travelled, Vector2.UP.rotated(turned), _players_line(seconds)
+        position + way * travelled,
+        Vector2.UP.rotated(turned),
+        _players_line(seconds if is_nan(players_seconds) else players_seconds)
     )
 
 
@@ -452,13 +470,19 @@ func _gap_along(middle: Vector2, ahead: Vector2, theirs: PackedVector2Array) -> 
 ## [in how many seconds the boat comes closer to the players' boat than
 ## [constant CLEARANCE] (0 if it is now, INF if not within
 ## [constant LOOK_AHEAD]), the closest it comes after now, the gap at the end].
+##
+## Once already closer than [constant CLEARANCE], the skipper looks only at
+## where the players' boat lies now, not where it glides: else it would pass
+## behind the gliding boat, through where the boat lies, which it must
+## never sail into (the boat may stop any time).
 func _look(velocity: Vector2) -> Array:
     var conflict := INF
     var closest := INF
     var gap := INF
     var seconds := 0.0
+    var lying := NAN if gap_to_players() >= CLEARANCE else 0.0
     while seconds <= LOOK_AHEAD:
-        gap = _gap_at(velocity, seconds)
+        gap = _gap_at(velocity, seconds, lying)
         if gap < CLEARANCE and is_inf(conflict):
             conflict = seconds
         if seconds > 0.0:
