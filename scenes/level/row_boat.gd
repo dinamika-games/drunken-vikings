@@ -43,6 +43,14 @@ const TURN_STILL := 0.6
 ## At this speed and faster, the boat turns fully, in metres per second.
 const TURN_FULL_SPEED := 6.0
 
+## Faster than [constant TURN_FULL_SPEED], the boat turns quicker still, up to
+## this share more of its full turn at [constant TURN_FAST_SPEED], so that the
+## fast boat does not draw too wide circles.
+const TURN_FAST_EXTRA := 0.5
+
+## At this speed and faster, the boat turns its quickest, in metres per second.
+const TURN_FAST_SPEED := 24.0
+
 ## With two rowers, each stroke pushes this share of a stroke of one player
 ## pulling both oars (two rowers in time push more than one).
 const PAIR_SHARE := 0.6
@@ -158,7 +166,11 @@ func move(delta: float, map: LakeMap) -> float:
     since_side[0] += delta
     since_side[1] += delta
     since_in_time += delta
-    var turning := clampf(TURN_STILL + speed / TURN_FULL_SPEED, TURN_STILL, 1.0)
+    var turning := (
+        clampf(TURN_STILL + speed / TURN_FULL_SPEED, TURN_STILL, 1.0)
+        + TURN_FAST_EXTRA
+        * clampf((speed - TURN_FULL_SPEED) / (TURN_FAST_SPEED - TURN_FULL_SPEED), 0.0, 1.0)
+    )
     heading = wrapf(
         heading + (steer * deg_to_rad(TURN_DEGREES) * turning * turn_share + yaw_rate) * delta,
         -PI,
