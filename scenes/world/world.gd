@@ -21,8 +21,16 @@ const LOOK_AHEAD := 45.0
 const DOCK_DISTANCE := 30.0
 const DOCK_SPEED := 3.5
 
-## After leaving a jetty, the boat docks there again only once it was this far.
-const UNDOCK_DISTANCE := 70.0
+## After leaving a jetty, the boat docks there again only once it was this far
+## from it, in metres: the boat leaves slowly from the berth, within reach of
+## the jetty, and must not dock again at once.
+##
+## NOTE (mristin):
+## Keep this only a little beyond [constant DOCK_DISTANCE]. A single stroke
+## carries the boat some 60 m; the players who row out a stroke, turn and
+## come back (e.g., they forgot to load the boat) must be able to dock again,
+## and not row to another place first.
+const UNDOCK_DISTANCE := DOCK_DISTANCE + 10.0
 
 ## A skipper hails the players when they glide this close, this slowly.
 const HAIL_DISTANCE := 40.0
