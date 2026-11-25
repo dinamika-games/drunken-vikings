@@ -41,6 +41,11 @@ func _run() -> void:
             _play_part(how, index)
         how.queue_free()
         await process_frame
+    # NOTE: The sounds of the strokes may still play: stop them, and give the
+    # audio server (on its own thread) the time to let go of them, before
+    # quitting.
+    root.get_node("/root/AudioService").silence()
+    await create_timer(0.3, true, false, true).timeout
     print("PASS test_how_to" if _failures == 0 else "FAIL test_how_to (%d)" % _failures)
     quit(0 if _failures == 0 else 1)
 

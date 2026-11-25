@@ -163,4 +163,6 @@ func _row(kind: Dictionary) -> Dictionary:
     turner.steer = 1.0
     for i in range(60):
         turner.move(1.0 / 60.0, map)
+    # NOTE: The map is a node, which nobody frees for us outside the tree.
+    map.free()
     return {"push": push, "glide": boat.speed / push, "turn": absf(turner.heading)}

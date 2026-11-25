@@ -20,19 +20,27 @@ const DWELL_SECONDS := 2.0
 ## The hovered card grows by this many pixels on each side.
 const _GROW := 6.0
 
-## On the painted card, a nail sits in each corner: the detail, in the row
-## of the bottom nails, keeps this far from the sides (the title begins below
-## the top nails, see [constant TITLE_TOP]).
-const NAIL_INSET := 50.0
+## On the painted card (also the golden one of the hovered card), a nail
+## sits in each corner, its middle this far from the sides and from the top
+## (and the bottom); a line of text which runs past the nails keeps this much
+## clear of them (the nail itself included).
+const NAIL := Vector2(34.0, 33.0)
+const NAIL_CLEAR := 20.0
 
-## The sizes of the text: the title, and the detail (as large as fits
-## between the nails, down to the smallest).
-const TITLE_SIZE := 26
+## The sizes of the text: the title, and the detail (each as large as fits
+## clear of the nails, down to the smallest).
+const TITLE_SIZES := [26, 24, 22, 20]
 const DETAIL_SIZES := [24, 22, 20, 18, 16, 14]
 
-## Where the first line of the title goes when nothing is drawn above it
-## (just below the row of the top nails), from the top of the card.
-const TITLE_TOP := 58.0
+## Where the first line of the title goes when nothing is drawn above it,
+## from the top of the card, and how far the lines of the title are apart.
+const TITLE_TOP := 50.0
+const TITLE_LINE := 30.0
+
+## The detail lies this far above the bottom of the painted card (of the
+## card drawn in code).
+const DETAIL_ABOVE := 30.0
+const DETAIL_ABOVE_PLAIN := 18.0
 
 const _PAPER := Color("fffaf0")
 const _PAPER_OFF := Color("d8d0c0")
@@ -122,6 +130,10 @@ func _draw() -> void:
         draw_rect(rect, _WOOD, false, 3.0)
     var ink := _INK if on else _GREY
 
+    # NOTE (mristin):
+    # The card grows while a hand is on it, but its nails stay where they are
+    # (see _draw_painted_card), so what is on the card stays, too.
+    rect = Rect2(Vector2.ZERO, size)
     var top := rect.position.y + TITLE_TOP
     var painted: Texture2D = null
     if card.get("picture") is Texture2D:
@@ -169,28 +181,28 @@ func _draw() -> void:
         )
         draw_line(at, at + Vector2(0, 16 if up else -16), color, 6.0)
 
-    var lines := ChoicePanel.wrap_text(
-        font, str(card.get("title", "")), text_width(rect.size.x, _painted, false), TITLE_SIZE
-    )
+    var title := str(card.get("title", ""))
+    var title_font := title_size(font, title, rect.size, top, _painted)
+    var lines := wrap_title(font, title, rect.size, top, _painted, title_font)
     for i in range(lines.size()):
         draw_string(
             font,
-            Vector2(rect.position.x, top + i * 30.0),
+            Vector2(rect.position.x, top + i * TITLE_LINE),
             lines[i],
             HORIZONTAL_ALIGNMENT_CENTER,
             rect.size.x,
-            TITLE_SIZE,
+            title_font,
             ink
         )
     var detail := str(card.get("detail", ""))
     if detail != "":
         draw_string(
             font,
-            Vector2(rect.position.x, rect.end.y - (30.0 if _painted else 18.0)),
+            Vector2(rect.position.x, detail_baseline(rect.size, _painted)),
             detail,
             HORIZONTAL_ALIGNMENT_CENTER,
             rect.size.x,
-            detail_size(font, detail, rect.size.x, _painted),
+            detail_size(font, detail, rect.size, _painted),
             _WOOD
         )
 
@@ -222,21 +234,83 @@ func _draw() -> void:
 
 ## The painted card (see Pictures.draw_frame): golden while a hand is on it,
 ## grey when it can not be chosen; return whether the pictures are there.
-## How wide a line of text may be on a card [param card_width] wide:
-## between the nails of the [param painted] card in the row of the bottom
-## nails ([param nail_row]), else nearly as wide as the card.
-static func text_width(card_width: float, painted: bool, nail_row: bool) -> float:
-    if painted and nail_row:
-        return card_width - 2.0 * NAIL_INSET
-    return card_width - 20.0
+## How wide a line of text may be on a card of the [param card] size, at
+## the [param baseline] in the [param font_size]: as wide as the card allows,
+## or, where the line runs past the nails of the [param painted] card,
+## between them.
+static func line_width(
+    font: Font, card: Vector2, baseline: float, font_size: int, painted: bool
+) -> float:
+    if painted:
+        var top := baseline - font.get_ascent(font_size)
+        var bottom := baseline + font.get_descent(font_size)
+        for nail in [NAIL.y, card.y - NAIL.y]:
+            if top < nail + NAIL_CLEAR and bottom > nail - NAIL_CLEAR:
+                return card.x - 2.0 * (NAIL.x + NAIL_CLEAR)
+    return card.x - 20.0
+
+
+## The lines of the [param title] on a card of the [param card] size, the
+## first at the [param baseline]: each as wide as its row allows (see
+## [method line_width]).
+static func wrap_title(
+    font: Font,
+    title: String,
+    card: Vector2,
+    baseline: float,
+    painted: bool,
+    font_size: int = TITLE_SIZES[0]
+) -> Array[String]:
+    var lines: Array[String] = []
+    var current := ""
+    for word in title.split(" ", false):
+        var candidate := word if current == "" else current + " " + word
+        var at := baseline + lines.size() * TITLE_LINE
+        var width := line_width(font, card, at, font_size, painted)
+        if (
+            font.get_string_size(candidate, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > width
+            and current != ""
+        ):
+            lines.append(current)
+            current = word
+        else:
+            current = candidate
+    if current != "":
+        lines.append(current)
+    return lines
+
+
+## The size of the [param title] on a card of the [param card] size, its
+## first line at the [param baseline]: as large as lets every line fit its
+## row (a word alone may be too wide for a row by the nails).
+static func title_size(
+    font: Font, title: String, card: Vector2, baseline: float, painted: bool
+) -> int:
+    for font_size in TITLE_SIZES:
+        var lines := wrap_title(font, title, card, baseline, painted, font_size)
+        var fits := true
+        for i in range(lines.size()):
+            var width := line_width(font, card, baseline + i * TITLE_LINE, font_size, painted)
+            if font.get_string_size(lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > width:
+                fits = false
+                break
+        if fits:
+            return font_size
+    return TITLE_SIZES[-1]
+
+
+## Where the detail lies on a card of the [param card] size.
+static func detail_baseline(card: Vector2, painted: bool) -> float:
+    return card.y - (DETAIL_ABOVE if painted else DETAIL_ABOVE_PLAIN)
 
 
 ## The size of the text of the [param detail], as large as fits its row.
-static func detail_size(font: Font, detail: String, card_width: float, painted: bool) -> int:
-    var width := text_width(card_width, painted, true)
-    for size in DETAIL_SIZES:
-        if font.get_string_size(detail, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x <= width:
-            return size
+static func detail_size(font: Font, detail: String, card: Vector2, painted: bool) -> int:
+    var baseline := detail_baseline(card, painted)
+    for font_size in DETAIL_SIZES:
+        var width := line_width(font, card, baseline, font_size, painted)
+        if font.get_string_size(detail, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x <= width:
+            return font_size
     return DETAIL_SIZES[-1]
 
 
