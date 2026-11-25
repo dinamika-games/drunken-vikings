@@ -10,9 +10,13 @@ extends RefCounted
 ## * the cards fit the screen side by side, and no two cards are called
 ##   the same;
 ## * the title of every card fits it, above its detail and its picture, and
-##   so does the detail; the title of the screen fits the board, and so does
-##   its text (a long text a little smaller, see ChoicePanel.fit_text; the
-##   farm's at the usual size);
+##   so does the detail; all on a card (its texts, its picture with the hair
+##   of a rower, its stars, its crate, its arrow) keeps a padding from the
+##   painted frame, clear of the nails, and the picture keeps clear of the
+##   title;
+## * the title of the screen fits the board, and so does its text (a long
+##   text a little smaller, see ChoicePanel.fit_text; the farm's at the
+##   usual size);
 ## * no text shows a placeholder (e.g., "%d", "{place}", "<null>");
 ## * every picture on a card, and every face, is painted.
 ##
@@ -51,10 +55,15 @@ extends RefCounted
 
 ## The cards of ChoicePanel and how they draw (see ChoicePanel, DwellButton).
 const SCREEN_WIDTH := 1920.0
-const CARD := Vector2(250, 190)
+const CARD := DwellButton.SIZE
 const CARD_GAP := 34.0
 const BOARD_WIDTH := 1100.0
 const TITLE_FONT := 40
+
+## All on a card keeps at least this far from the wood of its frame, and
+## its picture this far above the letters of its title, in pixels.
+const CARD_PADDING := 10.0
+const PICTURE_GAP := 6.0
 
 ## The texts which betray a placeholder or a missing value.
 const PLACEHOLDERS := ["%s", "%d", "%.", "{", "}", "<null>", "<Object", "[]", "Nil "]
@@ -230,11 +239,7 @@ func _check_card(font: Font, card: Dictionary, where: String) -> void:
         )
     # NOTE: As DwellButton._draw lays the card out: no line runs into the
     # nails of the painted card (see DwellButton.line_width).
-    var top := DwellButton.TITLE_TOP
-    if card.has("picture") or card.has("stars"):
-        top = 124.0
-    elif card.has("color"):
-        top = 100.0
+    var top := DwellButton.title_top(card)
     var painted := Pictures.of("ui", "card") != null
     var title_font := DwellButton.title_size(font, title, CARD, top, painted)
     var lines := DwellButton.wrap_title(font, title, CARD, top, painted, title_font)
@@ -269,6 +274,7 @@ func _check_card(font: Font, card: Dictionary, where: String) -> void:
                 % [where, title, detail, detail_width, detail_font, detail_free]
             )
         )
+    _check_card_padding(font, card, where, top, title_font, painted)
     var last := top + (lines.size() - 1) * DwellButton.TITLE_LINE + font.get_descent(title_font)
     _expect(
         last <= bottom,
@@ -278,6 +284,86 @@ func _check_card(font: Font, card: Dictionary, where: String) -> void:
             % [where, title, detail, lines.size(), title_font, last, bottom]
         )
     )
+
+
+## Check that all on the [param card] (on the screen [param where]) keeps
+## clear of the frame (and of the nails) of the [param painted] card, and its
+## picture clear of the title, which begins at the [param top] in the
+## [param title_font].
+func _check_card_padding(
+    font: Font, card: Dictionary, where: String, top: float, title_font: int, painted: bool
+) -> void:
+    var title := str(card.get("title", ""))
+    var detail := str(card.get("detail", ""))
+    var inset := (DwellButton.PAPER_INSET if painted else 0.0) + CARD_PADDING
+    var paper := Rect2(Vector2(inset, inset), CARD - 2.0 * Vector2(inset, inset))
+    var letters_top := top - font.get_ascent(title_font)
+    _expect(
+        letters_top >= paper.position.y,
+        "the title of a card keeps a padding from the frame",
+        (
+            "%s: card '%s' at %d px: its letters begin at %.0f px, the padding ends at %.0f px"
+            % [where, title, title_font, letters_top, paper.position.y]
+        )
+    )
+    if detail != "":
+        var detail_font := DwellButton.detail_size(font, detail, CARD, painted)
+        var detail_bottom := (
+            DwellButton.detail_baseline(CARD, painted) + font.get_descent(detail_font)
+        )
+        _expect(
+            detail_bottom <= paper.end.y,
+            "the detail of a card keeps a padding from the frame",
+            (
+                "%s: card '%s', detail '%s' at %d px: ends at %.0f px, the padding at %.0f"
+                % [where, title, detail, detail_font, detail_bottom, paper.end.y]
+            )
+        )
+    # NOTE: Whatever is drawn above the title (the picture, the stars or the
+    # crate), and the arrow of the mood, lies within the box of the picture,
+    # or the picture itself is checked.
+    var drawn: Array[Rect2] = []
+    var picture := DwellButton.picture_of(card)
+    if picture != null:
+        drawn.append(DwellButton.picture_rect(picture, CARD))
+    elif card.has("stars") or card.has("color"):
+        drawn.append(DwellButton.picture_box(CARD))
+    if int(card.get("mood", 0)) != 0:
+        drawn.append(Rect2(DwellButton.mood_at(CARD) - Vector2(12, 16), Vector2(24, 32)))
+    var nails: Array[Rect2] = []
+    if painted:
+        for x in [DwellButton.NAIL.x, CARD.x - DwellButton.NAIL.x]:
+            for y in [DwellButton.NAIL.y, CARD.y - DwellButton.NAIL.y]:
+                nails.append(
+                    Rect2(
+                        Vector2(x, y) - Vector2.ONE * DwellButton.NAIL_CLEAR,
+                        Vector2.ONE * 2.0 * DwellButton.NAIL_CLEAR
+                    )
+                )
+    for rect in drawn:
+        _expect(
+            paper.encloses(rect),
+            "the picture of a card keeps a padding from the frame",
+            (
+                "%s: card '%s' draws %s, the padded paper is %s (e.g., hair on the frame)"
+                % [where, title, str(rect), str(paper)]
+            )
+        )
+        for nail in nails:
+            _expect(
+                not nail.intersects(rect),
+                "the picture of a card keeps clear of the nails",
+                "%s: card '%s' draws %s over the nail %s" % [where, title, str(rect), str(nail)]
+            )
+    if not drawn.is_empty():
+        _expect(
+            drawn[0].end.y + PICTURE_GAP <= letters_top,
+            "the picture of a card keeps clear of its title",
+            (
+                "%s: card '%s': the picture ends at %.0f px, the title begins at %.0f px"
+                % [where, title, drawn[0].end.y, letters_top]
+            )
+        )
 
 
 ## The titles of the cards on the screen of the [param panel].

@@ -30,7 +30,7 @@ const _GREY := Color("8a8070")
 const TEXT_SIZES := [28, 26, 24, 22]
 const TEXT_HEIGHT := 180.0
 
-const _CARD := Vector2(250, 190)
+const _CARD := DwellButton.SIZE
 const _GAP := 34.0
 
 var title := ""

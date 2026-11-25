@@ -27,20 +27,45 @@ const _GROW := 6.0
 const NAIL := Vector2(34.0, 33.0)
 const NAIL_CLEAR := 20.0
 
+## The size of a card.
+const SIZE := Vector2(250, 230)
+
+## The wood of the painted frame (also of the golden frame of the hovered
+## card) reaches this far into the card from each side (as measured on the
+## pictures ui/card and ui/card_chosen); all on the card keeps this much
+## more clear of it.
+const PAPER_INSET := 23.0
+const PADDING := 12.0
+
 ## The sizes of the text: the title, and the detail (each as large as fits
 ## clear of the nails, down to the smallest).
 const TITLE_SIZES := [26, 24, 22, 20]
 const DETAIL_SIZES := [24, 22, 20, 18, 16, 14]
 
-## Where the first line of the title goes when nothing is drawn above it,
-## from the top of the card, and how far the lines of the title are apart.
-const TITLE_TOP := 50.0
+## The picture (or the stars, or the crate) fits in a box this large at the
+## top of the card, padded within the frame and between the nails, and
+## the title begins this far below it.
+const PICTURE_BOX := Vector2(140, 76)
+const PICTURE_GAP := 8.0
+
+## Where the first line of the title goes, from the top of the card, when
+## nothing is drawn above it (its letters begin padded below the frame) and
+## below a picture, and how far the lines of the title are apart.
+const TITLE_TOP := 64.0
+const TITLE_BELOW_PICTURE := 148.0
 const TITLE_LINE := 30.0
 
-## The detail lies this far above the bottom of the painted card (of the
-## card drawn in code).
-const DETAIL_ABOVE := 30.0
+## The detail lies this far above the bottom of the painted card (its
+## letters end padded above the frame), and of the card drawn in code.
+const DETAIL_ABOVE := 43.0
 const DETAIL_ABOVE_PLAIN := 18.0
+
+## The stars of a task: how far apart, and how large the middle one and
+## those on the sides are; and the size of the crate.
+const STAR_STEP := 46.0
+const STAR_MIDDLE := 50.0
+const STAR_SIDE := 42.0
+const CRATE := Vector2(68, 52)
 
 const _PAPER := Color("fffaf0")
 const _PAPER_OFF := Color("d8d0c0")
@@ -134,28 +159,24 @@ func _draw() -> void:
     # The card grows while a hand is on it, but its nails stay where they are
     # (see _draw_painted_card), so what is on the card stays, too.
     rect = Rect2(Vector2.ZERO, size)
-    var top := rect.position.y + TITLE_TOP
-    var painted: Texture2D = null
-    if card.get("picture") is Texture2D:
-        painted = card["picture"]
-    elif card.has("picture"):
-        painted = Pictures.of(card["picture"][0], card["picture"][1])
+    var top := title_top(card)
+    var box := picture_box(rect.size)
+    var painted: Texture2D = picture_of(card)
     if painted != null:
-        var size := Pictures.size_of(painted, 80.0)
-        var at := rect.position + Vector2(rect.size.x / 2.0, 56.0)
         draw_texture_rect(
-            painted, Rect2(at - size / 2.0, size), false, Color.WHITE if on else Color(1, 1, 1, 0.4)
+            painted,
+            picture_rect(painted, rect.size),
+            false,
+            Color.WHITE if on else Color(1, 1, 1, 0.4)
         )
-        top = rect.position.y + 124.0
     elif card.has("stars") and Pictures.of("ui", "star") != null:
         # The stars a task earned: three, the earned ones golden.
         for k in range(3):
             var star := Pictures.of("ui", "star" if k < int(card["stars"]) else "star_empty")
-            var at := rect.position + Vector2(rect.size.x / 2.0 + (k - 1) * 62.0, 56.0)
-            Pictures.draw(self, star, at, 56.0 if k == 1 else 46.0)
-        top = rect.position.y + 124.0
+            var at := box.get_center() + Vector2((k - 1) * STAR_STEP, 0.0)
+            Pictures.draw(self, star, at, STAR_MIDDLE if k == 1 else STAR_SIDE)
     elif card.has("color"):
-        var crate := Rect2(rect.position + Vector2(rect.size.x / 2.0 - 34.0, 18.0), Vector2(68, 52))
+        var crate := Rect2(box.get_center() - CRATE / 2.0, CRATE)
         var color: Color = card["color"]
         draw_rect(crate, color if on else Color(color, 0.4))
         draw_rect(crate, _WOOD, false, 3.0)
@@ -166,10 +187,9 @@ func _draw() -> void:
             Color(_WOOD, 0.5),
             2.0
         )
-        top = rect.position.y + 100.0
     var mood := int(card.get("mood", 0))
     if mood != 0:
-        var at := rect.position + Vector2(rect.size.x - 30.0, 40.0)
+        var at := mood_at(rect.size)
         var up := mood > 0
         var color := _GREEN if up else _RED
         var tip := at + Vector2(0, -16 if up else 16)
@@ -232,8 +252,43 @@ func _draw() -> void:
             reached -= side
 
 
-## The painted card (see Pictures.draw_frame): golden while a hand is on it,
-## grey when it can not be chosen; return whether the pictures are there.
+## The picture which the [param card] shows (see the class description), or
+## null.
+static func picture_of(card: Dictionary) -> Texture2D:
+    if card.get("picture") is Texture2D:
+        return card["picture"]
+    if card.has("picture"):
+        return Pictures.of(card["picture"][0], card["picture"][1])
+    return null
+
+
+## Where the first line of the title of the [param card] goes.
+static func title_top(card: Dictionary) -> float:
+    if card.has("picture") or card.has("stars") or card.has("color"):
+        return TITLE_BELOW_PICTURE
+    return TITLE_TOP
+
+
+## The box of the picture on a card of the [param card] size.
+static func picture_box(card: Vector2) -> Rect2:
+    return Rect2(Vector2((card.x - PICTURE_BOX.x) / 2.0, PAPER_INSET + PADDING), PICTURE_BOX)
+
+
+## Where the arrow of the mood stands (its middle, 24 px wide and 32 px tall)
+## on a card of the [param card] size: right of the picture, below the nail.
+static func mood_at(card: Vector2) -> Vector2:
+    return Vector2(card.x - 46.0, picture_box(card).get_center().y)
+
+
+## Where the [param picture] is drawn on a card of the [param card] size: as
+## large as fits its box, in the middle of it.
+static func picture_rect(picture: Texture2D, card: Vector2) -> Rect2:
+    var box := picture_box(card)
+    var scale := minf(PICTURE_BOX.x / picture.get_width(), PICTURE_BOX.y / picture.get_height())
+    var size := Vector2(picture.get_size()) * scale
+    return Rect2(box.get_center() - size / 2.0, size)
+
+
 ## How wide a line of text may be on a card of the [param card] size, at
 ## the [param baseline] in the [param font_size]: as wide as the card allows,
 ## or, where the line runs past the nails of the [param painted] card,
@@ -314,6 +369,8 @@ static func detail_size(font: Font, detail: String, card: Vector2, painted: bool
     return DETAIL_SIZES[-1]
 
 
+## The painted card (see Pictures.draw_frame): golden while a hand is on it,
+## grey when it can not be chosen; return whether the pictures are there.
 func _draw_painted_card(rect: Rect2, lit: bool, on: bool) -> bool:
     if lit:
         return Pictures.draw_frame(self, "card_chosen", rect.grow(14.0), 44.0)

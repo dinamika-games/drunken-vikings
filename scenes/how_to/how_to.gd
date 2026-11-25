@@ -134,8 +134,8 @@ func _ready() -> void:
     add_child(_camera_picture)
     _ready_button = DwellButton.new()
     _ready_button.card = {"title": "Ready!", "detail": "let's row", "picture": ["icons", "row"]}
-    _ready_button.position = Vector2(1560, 872)
-    _ready_button.size = Vector2(250, 190)
+    _ready_button.position = Vector2(1560, 1076.0 - DwellButton.SIZE.y)
+    _ready_button.size = DwellButton.SIZE
     _ready_button.pressed.connect(func() -> void: done.emit())
     add_child(_ready_button)
     _hands = HandCursor.new()
@@ -471,7 +471,7 @@ func _draw_border(rect: Rect2, label: String) -> void:
 ## the rope ring fills, and the card glows.
 func _draw_card() -> void:
     draw_rect(PANEL, Color("1b2230"))
-    var card := Rect2(PANEL.get_center() - Vector2(125, 95), Vector2(250, 190))
+    var card := Rect2(PANEL.get_center() - DwellButton.SIZE / 2.0, DwellButton.SIZE)
     var progress := _progress
     var cursor := _cursor
     var lit := progress > 0.0
@@ -482,17 +482,20 @@ func _draw_card() -> void:
         44.0 if lit else 30.0
     ):
         draw_rect(card, _PAPER)
+    # NOTE (mristin):
+    # Laid out as DwellButton lays out its cards.
     var coins := Pictures.of("goods", "ale")
     if coins != null:
-        Pictures.draw(self, coins, card.position + Vector2(125, 56), 80.0)
+        var at := DwellButton.picture_rect(coins, card.size)
+        draw_texture_rect(coins, Rect2(card.position + at.position, at.size), false)
     var font := ThemeDB.fallback_font
     draw_string(
         font,
-        card.position + Vector2(0, 150),
+        card.position + Vector2(0, DwellButton.TITLE_BELOW_PICTURE),
         "Sell",
         HORIZONTAL_ALIGNMENT_CENTER,
-        250,
-        30,
+        card.size.x,
+        DwellButton.TITLE_SIZES[0],
         Color("2a1e14")
     )
     if progress > 0.0:
