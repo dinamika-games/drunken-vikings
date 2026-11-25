@@ -7,7 +7,8 @@ extends Control
 ## little.
 ##
 ## The card shows its [member card]: "title", "detail" (a second line, e.g., a
-## price), "color" (of the crate on it, optional), "mood" (-1 cheap, 1 dear, 0
+## price), "picture" (the [sheet, name] of a painted picture (see Pictures),
+## or a Texture2D; optional), "color" (of the crate on it, optional), "mood" (-1 cheap, 1 dear, 0
 ## as usual; optional), "stars" (0 to 3, the stars a task earned; optional) and
 ## "enabled" (default true).
 
@@ -18,6 +19,20 @@ const DWELL_SECONDS := 2.0
 
 ## The hovered card grows by this many pixels on each side.
 const _GROW := 6.0
+
+## On the painted card, a nail sits in each corner: the detail, in the row
+## of the bottom nails, keeps this far from the sides (the title begins below
+## the top nails, see [constant TITLE_TOP]).
+const NAIL_INSET := 50.0
+
+## The sizes of the text: the title, and the detail (as large as fits
+## between the nails, down to the smallest).
+const TITLE_SIZE := 26
+const DETAIL_SIZES := [24, 22, 20, 18, 16, 14]
+
+## Where the first line of the title goes when nothing is drawn above it
+## (just below the row of the top nails), from the top of the card.
+const TITLE_TOP := 58.0
 
 const _PAPER := Color("fffaf0")
 const _PAPER_OFF := Color("d8d0c0")
@@ -107,9 +122,11 @@ func _draw() -> void:
         draw_rect(rect, _WOOD, false, 3.0)
     var ink := _INK if on else _GREY
 
-    var top := rect.position.y + 50.0
+    var top := rect.position.y + TITLE_TOP
     var painted: Texture2D = null
-    if card.has("picture"):
+    if card.get("picture") is Texture2D:
+        painted = card["picture"]
+    elif card.has("picture"):
         painted = Pictures.of(card["picture"][0], card["picture"][1])
     if painted != null:
         var size := Pictures.size_of(painted, 80.0)
@@ -152,7 +169,9 @@ func _draw() -> void:
         )
         draw_line(at, at + Vector2(0, 16 if up else -16), color, 6.0)
 
-    var lines := ChoicePanel.wrap_text(font, str(card.get("title", "")), rect.size.x - 20.0, 26)
+    var lines := ChoicePanel.wrap_text(
+        font, str(card.get("title", "")), text_width(rect.size.x, _painted, false), TITLE_SIZE
+    )
     for i in range(lines.size()):
         draw_string(
             font,
@@ -160,7 +179,7 @@ func _draw() -> void:
             lines[i],
             HORIZONTAL_ALIGNMENT_CENTER,
             rect.size.x,
-            26,
+            TITLE_SIZE,
             ink
         )
     var detail := str(card.get("detail", ""))
@@ -171,7 +190,7 @@ func _draw() -> void:
             detail,
             HORIZONTAL_ALIGNMENT_CENTER,
             rect.size.x,
-            24,
+            detail_size(font, detail, rect.size.x, _painted),
             _WOOD
         )
 
@@ -203,6 +222,24 @@ func _draw() -> void:
 
 ## The painted card (see Pictures.draw_frame): golden while a hand is on it,
 ## grey when it can not be chosen; return whether the pictures are there.
+## How wide a line of text may be on a card [param card_width] wide:
+## between the nails of the [param painted] card in the row of the bottom
+## nails ([param nail_row]), else nearly as wide as the card.
+static func text_width(card_width: float, painted: bool, nail_row: bool) -> float:
+    if painted and nail_row:
+        return card_width - 2.0 * NAIL_INSET
+    return card_width - 20.0
+
+
+## The size of the text of the [param detail], as large as fits its row.
+static func detail_size(font: Font, detail: String, card_width: float, painted: bool) -> int:
+    var width := text_width(card_width, painted, true)
+    for size in DETAIL_SIZES:
+        if font.get_string_size(detail, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x <= width:
+            return size
+    return DETAIL_SIZES[-1]
+
+
 func _draw_painted_card(rect: Rect2, lit: bool, on: bool) -> bool:
     if lit:
         return Pictures.draw_frame(self, "card_chosen", rect.grow(14.0), 44.0)

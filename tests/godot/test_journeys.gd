@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## The journeys of GameState: new ones, the list (the last played first),
-## going on with one, and deleting one.
+## going on with one, and deleting one; how the rowers look.
 ##
 ## $GODOT --headless --path . --script tests/godot/test_journeys.gd -- --no-camera
 
@@ -29,6 +29,12 @@ func _run() -> void:
     state.new_journey(2)
     var first: String = state.journey_id
     state.silver = 77
+    _check(
+        state.look(0) == Looks.default_look(0) and state.look(1) == Looks.default_look(1),
+        "a new journey starts with Ylva and Sigrid"
+    )
+    var boy := {"figure": "boy", "skin": 3, "hair": 4, "clothes": 2}
+    state.looks[1] = boy
     state.save()
     _check(state.journeys().size() == 1, "one journey after the first")
     _check(state.last_journey() == first, "the first journey is the last one")
@@ -43,6 +49,7 @@ func _run() -> void:
     var second: String = state.journey_id
     _check(second != first, "a new journey has a new id")
     _check(state.silver == GameState.START_SILVER, "a new journey starts afresh")
+    _check(state.look(1) == Looks.default_look(1), "a new journey starts with new looks")
     var listed: Array = state.journeys()
     _check(listed.size() == 2, "two journeys")
     _check(listed[0]["id"] == second, "the last played comes first")
@@ -51,6 +58,12 @@ func _run() -> void:
     _check(state.open_journey(first), "the first journey opens")
     _check(state.silver == 77, "the first journey keeps its silver")
     _check(state.players == 2, "the first journey keeps its two rowers")
+    _check(state.look(1) == boy, "the first journey keeps how its rowers look")
+    _check(
+        Looks.normalized({"figure": "dragon", "skin": 99, "hair": 3.0}, 0)
+        == {"figure": "girl", "skin": 1, "hair": 3, "clothes": 0},
+        "a look from a save is checked"
+    )
     _check(state.last_journey() == first, "the opened journey is the last one")
 
     state.delete_journey(second)

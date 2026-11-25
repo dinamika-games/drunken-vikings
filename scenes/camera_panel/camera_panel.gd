@@ -2,7 +2,8 @@ class_name CameraPanel
 extends Control
 
 ## The camera picture, mirrored (as the players see themselves in a mirror),
-## with the players dressed up as Ylva (see [DressUp]), or with their
+## with the players dressed up as the vikings of their looks (see [DressUp]
+## and GameState.looks), or with their
 ## skeletons: where the dress is not painted, for the rowing experiment, or
 ## with [code]-- --skeleton[/code].
 
@@ -62,6 +63,9 @@ func _exit_tree() -> void:
 
 func _process(delta: float) -> void:
     _time += delta
+    var state := get_node_or_null("/root/GameState")
+    if state != null:
+        _dress.looks = state.looks
     if service != null and dress_up and DressUp.available():
         for player in range(service.GetPlayerCount()):
             _dress.observe(

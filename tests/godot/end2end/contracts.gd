@@ -50,7 +50,6 @@ const CARD := Vector2(250, 190)
 const CARD_GAP := 34.0
 const CARD_FONT := 26
 const CARD_LINE := 30.0
-const DETAIL_FONT := 24
 const BOARD_WIDTH := 1100.0
 const TITLE_FONT := 40
 
@@ -177,7 +176,7 @@ func _check_card(font: Font, card: Dictionary, where: String) -> void:
     var detail := str(card.get("detail", ""))
     _check_placeholders(title, where)
     _check_placeholders(detail, where)
-    if card.has("picture"):
+    if card.has("picture") and not card["picture"] is Texture2D:
         var picture: Array = card["picture"]
         _expect(
             picture.size() == 2 and Pictures.of(picture[0], picture[1]) != null,
@@ -185,28 +184,30 @@ func _check_card(font: Font, card: Dictionary, where: String) -> void:
             "%s: %s %s" % [where, title, str(picture)]
         )
     # NOTE: As DwellButton._draw lays the card out.
-    var top := 50.0
+    var top := DwellButton.TITLE_TOP
     if card.has("picture") or card.has("stars"):
         top = 124.0
     elif card.has("color"):
         top = 100.0
-    var lines := ChoicePanel.wrap_text(font, title, CARD.x - 20.0, CARD_FONT)
+    var painted := Pictures.of("ui", "card") != null
+    var title_width := DwellButton.text_width(CARD.x, painted, false)
+    var lines := ChoicePanel.wrap_text(font, title, title_width, CARD_FONT)
     for line in lines:
         _expect(
-            font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, CARD_FONT).x <= CARD.x - 10.0,
+            font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, CARD_FONT).x <= title_width,
             "the title of a card fits its width",
             "%s: %s" % [where, title]
         )
-    var painted := Pictures.of("ui", "card") != null
     var bottom := CARD.y - 8.0
     if detail != "":
-        bottom = CARD.y - (30.0 if painted else 18.0) - font.get_ascent(DETAIL_FONT)
+        var detail_font := DwellButton.detail_size(font, detail, CARD.x, painted)
+        bottom = CARD.y - (30.0 if painted else 18.0) - font.get_ascent(detail_font)
         _expect(
             (
-                font.get_string_size(detail, HORIZONTAL_ALIGNMENT_LEFT, -1, DETAIL_FONT).x
-                <= CARD.x - 10.0
+                font.get_string_size(detail, HORIZONTAL_ALIGNMENT_LEFT, -1, detail_font).x
+                <= DwellButton.text_width(CARD.x, painted, true)
             ),
-            "the detail of a card fits its width",
+            "the detail of a card fits between the nails of the card",
             "%s: %s" % [where, detail]
         )
     var last := top + (lines.size() - 1) * CARD_LINE + font.get_descent(CARD_FONT)

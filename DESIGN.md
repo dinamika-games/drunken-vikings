@@ -51,6 +51,7 @@ It is inspired by the lakes of Sweden (Mälaren, Hjälmaren, Vänern) and by the
 ## 3. Characters
 
 * **Ylva** (player 1, by default) and **Sigrid**, her cousin (player 2, by default), young traders with a small boat. The players choose the name, the looks and the clothes (section 7).
+  * **The looks of the rowers** (done): when a new journey starts (and later with the card "Your vikings" on the choice of what to play), each rower chooses a viking girl (Ylva's braids and dress) or a viking boy (tousled hair, a tunic over trousers), and the colour of the skin (5), of the hair (5) and of the clothes (5); each card shows the rower in the boat as the card would make them look. The look is saved with the journey; the rowers in the boat and the dress-up in the camera picture show it (`Looks`, `scenes/looks/`).
 * **The pet in the boat**: at the start, the players choose a kitten, a puppy or a little goat, and name it. It rides in the bow, reacts to what happens (it purrs at a good deal, hides from the rain, barks at the geese), and helps in some missions (the puppy finds the lost lamb, the kitten the mice in the grain store).
 * **Tova the healer**, a young herbalist on the island of the home lakes, who teaches the players to look after sick animals: which herb helps which animal, where the herbs grow, and how to keep the animals warm, fed and calm. The players become her helpers, and later healers themselves.
 * **Grandmother Åsa** at the homestead: she gives the first missions, explains the trading and keeps the homestead while the players are away.

@@ -143,9 +143,19 @@ venv/bin/gdlint dev/ scenes/
 
 ## The dress in the camera picture
 
-The players are dressed up as Ylva in the camera picture (`scenes/camera_panel/dress_up.gd`): the hair by the eyes, the bodice from the shoulders to the waist, the skirt over the lap, the sleeves along the arms and the fists on the oar, painted with ChatGPT from the prompts of `~/Downloads/viking/dress/`. Cut them into `assets/pictures/dress/` (with their anchors in `dress.json`), and see how they sit on the poses of a recording (only the key points, no camera picture):
+The players are dressed up as the vikings of their looks in the camera picture (Ylva's dress, or the boy's tunic in `assets/pictures/dress_boy/`, see below) (`scenes/camera_panel/dress_up.gd`): the hair by the eyes, the bodice from the shoulders to the waist, the skirt over the lap, the sleeves along the arms and the fists on the oar, painted with ChatGPT from the prompts of `~/Downloads/viking/dress/`. Cut them into `assets/pictures/dress/` (with their anchors in `dress.json`), and see how they sit on the poses of a recording (only the key points, no camera picture):
 
 ```
 venv/bin/python dev/pictures/cut_dress.py [~/Downloads/viking/dress]
 $GODOT --path . --script dev/pictures/preview_dress.gd -- <recording.jsonl> <out dir> <t> [<t> ...] [--reach] [--skeleton]
+```
+
+## The looks of the players
+
+Each rower chooses a viking girl or boy and the colours of the skin, the hair and the clothes (`Looks`, `scenes/looks/looks.gd`; saved with the journey in `GameState.looks`).
+The painted pictures of the rowers in the boat (`assets/pictures/rowboat/`: `ylva_*`, `sigrid_*`, `boy_*`, `boy_one_*`) and of the dress-up have each a mask (`<name>_mask.png`: red the skin, green the hair, blue the clothes, white what keeps its colour); `Recolor.cs` (`scenes/looks/core/Recoloring.cs`, tested in `tests/DrunkenVikings.Tests/RecoloringTests.cs`) recolours the masked areas keeping their shading, when a look first needs a picture, and `Looks` keeps it.
+The boy and the masks were painted with ChatGPT from the prompts of `~/Downloads/viking-masks/` (see its README.md) onto sheets laid out like the game's pictures (made by the `make_*.py` there), and are cut, fitted to the pictures and placed (the boy's pieces with their anchors in `dress_boy/dress.json`) by:
+
+```
+venv/bin/python dev/pictures/cut_looks.py [~/Downloads/viking-masks]
 ```

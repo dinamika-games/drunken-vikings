@@ -14,6 +14,7 @@
       can not be loaded outside of the engine.
     -->
     <Compile Include="../../scenes/vision/core/*.cs" LinkBase="Linked/vision" />
+    <Compile Include="../../scenes/looks/core/*.cs" LinkBase="Linked/looks" />
   </ItemGroup>
 
   <ItemGroup>

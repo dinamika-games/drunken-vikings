@@ -39,6 +39,11 @@ var journey_id := ""
 var journey_name := ""
 var players := 1
 
+## How each player looks: a viking girl or boy, and the colours of the skin,
+## the hair and the clothes (see Looks); one for each of the two players,
+## whether one or two row.
+var looks: Array = [Looks.default_look(0), Looks.default_look(1)]
+
 ## The silver, in pieces.
 var silver := START_SILVER
 
@@ -251,6 +256,7 @@ func new_voyage() -> void:
     place = "home"
     price_book = {}
     news = []
+    looks = [Looks.default_look(0), Looks.default_look(1)]
     _load_data()
 
 
@@ -350,6 +356,7 @@ func save() -> bool:
         "format": FORMAT,
         "name": journey_name,
         "players": players,
+        "looks": looks,
         "created": _created,
         "updated": Time.get_datetime_string_from_system(),
         "silver": silver,
@@ -379,6 +386,11 @@ func save() -> bool:
     return true
 
 
+## The look of the [param player] (see Looks).
+func look(player: int) -> Dictionary:
+    return looks[player] if player >= 0 and player < looks.size() else Looks.default_look(player)
+
+
 ## Load the saved voyage; return whether there was one.
 func load_voyage() -> bool:
     if not FileAccess.file_exists(save_path):
@@ -390,6 +402,13 @@ func load_voyage() -> bool:
     players = clampi(int(data.get("players", 1)), 1, 2)
     if _forced_players > 0:
         players = _forced_players
+    var saved_looks: Variant = data.get("looks", [])
+    looks = []
+    for player in range(2):
+        var saved: Variant = (
+            saved_looks[player] if saved_looks is Array and player < saved_looks.size() else null
+        )
+        looks.append(Looks.normalized(saved, player))
     _created = str(data.get("created", ""))
     silver = int(data.get("silver", START_SILVER))
     cargo = {}

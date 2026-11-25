@@ -3,12 +3,16 @@ extends Control
 ## The first screen: the players choose with their hands (see ChoicePanel)
 ## their journey (see GameState): go on with the last one, open another
 ## recent one, start a new one (then they choose how many row: one, or two
-## with an oar each, and see how to play, see HowTo), or delete one (in three
-## steps). Then they choose what
+## with an oar each, how each rower looks, and see how to play, see HowTo),
+## or delete one (in three steps). Then they choose what
 ## they play: the party mode for the smaller children (follow the wedding
 ## longship and pick up what falls into the water), the chase mode (row to a
 ## town before the pirates catch you), or the farm and the trading on the
-## lakes. Escape twice quits.
+## lakes; or change how they look.
+##
+## How a rower looks (see Looks): a viking girl or boy, and the colour of the
+## skin, of the hair and of the clothes, one screen each; every card shows
+## the rower in the boat as the card would make them look. Escape twice quits.
 
 const PARTY_SCENE := "res://scenes/level/level.tscn"
 const CHASE_SCENE := "res://scenes/chase/chase.tscn"
@@ -30,6 +34,14 @@ var _state: Node
 var _panel: ChoicePanel
 var _actions: Array[Callable] = []
 var _time := 0.0
+
+## Choosing the looks: the steps ([player, "figure", "skin", "hair" or
+## "clothes"]), the step on the screen, what comes after the last step, and
+## what Back on the first step does.
+var _look_steps: Array = []
+var _look_step := 0
+var _look_done: Callable
+var _look_back: Callable
 
 ## The painting of the start screen (see dev/pictures/cut_sheets.py), or
 ## null: then we draw a simple lake.
@@ -126,8 +138,8 @@ func _ask_players() -> void:
             "A new journey",
             "How many of you row? Two rowers pull an oar each.",
             [
-                {"title": "One rower", "detail": "Ylva"},
-                {"title": "Two rowers", "detail": "Ylva and Sigrid"},
+                {"title": "One rower", "detail": "both oars"},
+                {"title": "Two rowers", "detail": "an oar each"},
                 {"title": "Back", "detail": ""},
             ],
             YLVA
@@ -139,7 +151,117 @@ func _start_journey(count: int) -> void:
     if _state != null:
         _state.new_journey(count)
     _apply_players()
-    _how_to()
+    _ask_looks(_how_to, _undo_journey)
+
+
+## Back from the looks of a new journey: it is not begun after all.
+func _undo_journey() -> void:
+    if _state != null and _state.journey_id != "":
+        _state.delete_journey(_state.journey_id)
+    _ask_players()
+
+
+## How the rowers look: the steps of each rower, one after the other; then
+## [param done], or [param back] from the first step.
+func _ask_looks(done: Callable, back: Callable) -> void:
+    _look_steps = []
+    var count: int = _state.players if _state != null else 1
+    for player in range(count):
+        for step in ["figure", "skin", "hair", "clothes"]:
+            _look_steps.append([player, step])
+    _look_step = 0
+    _look_done = done
+    _look_back = back
+    _ask_look_step()
+
+
+## The look of the [param player] so far.
+func _look(player: int) -> Dictionary:
+    if _state != null:
+        return _state.look(player)
+    return Looks.default_look(player)
+
+
+func _set_look(player: int, look: Dictionary) -> void:
+    if _state != null:
+        _state.looks[player] = look
+
+
+## Who chooses on the screens of the looks: the only rower, or the one on
+## the left or on the right of the boat.
+func _rower_name(player: int) -> String:
+    var count: int = _state.players if _state != null else 1
+    if count == 1:
+        return "Your viking"
+    return "The left rower" if player == 0 else "The right rower"
+
+
+## The rower of the [param player] in the boat as the [param look] makes them look.
+func _preview(player: int, look: Dictionary) -> Texture2D:
+    var count: int = _state.players if _state != null else 1
+    return Looks.rower(look, count == 2 and player == 1, "middle")
+
+
+func _ask_look_step() -> void:
+    var player: int = _look_steps[_look_step][0]
+    var step: String = _look_steps[_look_step][1]
+    var look := _look(player)
+    var cards: Array = []
+    _actions = []
+    var text: String
+    if step == "figure":
+        text = "Who rows: a viking girl or a viking boy?"
+        for pair in [["girl", "Girl"], ["boy", "Boy"]]:
+            var changed := look.duplicate()
+            changed["figure"] = pair[0]
+            cards.append({"title": pair[1], "detail": "", "picture": _preview(player, changed)})
+            _actions.append(_choose_look.bind(player, "figure", pair[0]))
+    else:
+        var palette := Looks.palette(step)
+        text = {
+            "skin": "Choose the colour of the skin.",
+            "hair": "Choose the colour of the hair.",
+            "clothes": "Choose the colour of the clothes.",
+        }[step]
+        for index in range(palette.size()):
+            var changed := look.duplicate()
+            changed[step] = index
+            var entry: Dictionary = palette[index]
+            (
+                cards
+                . append(
+                    {
+                        "title": str(entry["name"]),
+                        "detail": "as now" if int(look[step]) == index else "",
+                        "picture": _preview(player, changed),
+                    }
+                )
+            )
+            _actions.append(_choose_look.bind(player, step, index))
+    cards.append({"title": "Back", "detail": ""})
+    _actions.append(_look_previous)
+    _panel.show_cards(_rower_name(player), text, cards, YLVA)
+
+
+func _choose_look(player: int, step: String, value: Variant) -> void:
+    var look := _look(player).duplicate()
+    look[step] = value
+    _set_look(player, look)
+    _look_step += 1
+    if _look_step < _look_steps.size():
+        _ask_look_step()
+        return
+    if _state != null:
+        _state.save()
+    _look_done.call()
+
+
+func _look_previous() -> void:
+    if _look_step == 0:
+        _look_back.call()
+        return
+    _look_step -= 1
+    _ask_look_step()
 
 
 ## Show how to play (see HowTo), then what to play.
@@ -196,7 +318,9 @@ func _delete(id: String) -> void:
 
 
 func _ask_mode() -> void:
-    _actions = [_party, _chase, _go_on, _how_to, _ask_journey]
+    _actions = [
+        _party, _chase, _go_on, _how_to, _ask_looks.bind(_ask_mode, _ask_mode), _ask_journey
+    ]
     var name: String = _state.journey_name if _state != null else ""
     (
         _panel
@@ -208,10 +332,11 @@ func _ask_mode() -> void:
                 + "or trade on the lakes and look after your farm."
             ),
             [
-                {"title": "Party!", "detail": "follow the wedding"},
+                {"title": "Party!", "detail": "the wedding"},
                 {"title": "Chase!", "detail": "flee the pirates"},
                 {"title": "The farm", "detail": "trade and farm"},
                 {"title": "How to play", "detail": "row and steer", "picture": ["icons", "help"]},
+                {"title": "Your vikings", "detail": "how you look"},
                 {"title": "Back", "detail": name},
             ],
             YLVA

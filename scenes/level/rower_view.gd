@@ -1,13 +1,16 @@
 class_name RowerView
 extends Node2D
 
-## The small boat of the players, seen from above, with its rowers: viking
-## women with braids, who pull the oars with the strokes of the players.
+## The small boat of the players, seen from above, with its rowers: vikings
+## who pull the oars with the strokes of the players, each as the player
+## chose to look (a girl with braids or a boy, in the colours of the look,
+## see Looks).
 ##
-## Alone, Ylva (blond braids) sits in the middle and pulls both oars. With two
-## players, Ylva sits on the left and pulls the left oar, and Sigrid (red
-## braids) sits on the right and pulls the right oar; the oars flash gold when
-## the two row in time.
+## Alone, the first player sits in the middle and pulls both oars (painted
+## as Ylva, blond in teal, or as the boy). With two players, the first sits
+## on the left and pulls the left oar, and the second (painted as Sigrid, red
+## braids in plum, or as the boy with one oar) sits on the right and pulls
+## the right oar; the oars flash gold when the two row in time.
 ##
 ## The oars follow the players: while the camera sees a player row, the oar
 ## goes forward as the player reaches forward and back as the player leans
@@ -99,6 +102,10 @@ const SIGRID := [Color("c9602a"), Color("a04a20"), Color("2f5f8a"), Color("7a3a6
 
 ## The boat to draw.
 var boat: RowBoat
+
+## How the players look (see Looks); if empty, as the journey says
+## (GameState.looks), else as Ylva and Sigrid.
+var looks: Array = []
 
 ## The lakes, so that the rowers pull in an oar over the land (or null).
 var map: LakeMap
@@ -375,13 +382,35 @@ func _draw_painted_rower(who: String, seat: Vector2, swing: float, size: float) 
         var weight := (1.0 - blend) if i == 0 else blend
         if weight <= 0.01:
             continue
-        var picture: Texture2D = _pictures["%s_%s" % [who, poses[i]]]
+        var picture := _rower_picture(who, poses[i])
         var picture_size := Vector2(picture.get_width(), picture.get_height()) * per_pixel
         # NOTE (mristin):
         # The poses share the top of the head (the braids point to the bow),
         # and the arms reach down towards the stern as far as the pose does.
         var top := seat + Vector2(-picture_size.x / 2.0, -ROWER_HEIGHT * size * 0.55)
         draw_texture_rect(picture, Rect2(top, picture_size), false, Color(1, 1, 1, weight))
+
+
+## The picture of the rower [param who] ("ylva": the first player, both
+## oars alone; "sigrid": the second player, one oar) in the [param pose], in
+## the look of the player. The pictures of the boy are as large as the
+## girls', with the hands in the same places (see dev/pictures/cut_looks.py).
+func _rower_picture(who: String, pose: String) -> Texture2D:
+    var player := 1 if who == "sigrid" else 0
+    var picture := Looks.rower(_look_of(player), who == "sigrid", pose)
+    return picture if picture != null else _pictures["%s_%s" % [who, pose]]
+
+
+## The look of the [param player] (see [member looks]).
+func _look_of(player: int) -> Dictionary:
+    var given := looks
+    if given.is_empty() and is_inside_tree():
+        var state := get_node_or_null("/root/GameState")
+        if state != null:
+            given = state.looks
+    if player < given.size() and given[player] is Dictionary:
+        return given[player]
+    return Looks.default_look(player)
 
 
 ## Where the blade of the oar of the [param side] would be if it were out,

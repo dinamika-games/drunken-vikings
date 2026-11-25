@@ -101,12 +101,28 @@ func _new_journey() -> void:
     )
     await choose("One rower")
     check(fake.players == 1, "the camera follows one player")
+    # NOTE: A detour: Back from the second screen of the looks, and on.
+    await choose("Boy")
+    await choose("Back")
+    await _choose_look(["Boy", "Tan", "Black", "Red"])
+    check(
+        voyage().look(0) == {"figure": "boy", "skin": 2, "hair": 4, "clothes": 3},
+        "the rower looks as chosen"
+    )
     await _how_to(1)
     party_silver = voyage().silver
     await choose("Party!")
     await _party()
     await choose("To the farm")
     await wait_for_scene(WORLD)
+
+
+## Choose how the rowers look: the cards [param titles], one per screen.
+func _choose_look(titles: Array) -> void:
+    for title in titles:
+        if aborted():
+            return
+        await choose(title)
 
 
 func _lakes() -> void:
@@ -123,6 +139,10 @@ func _chase_phase() -> void:
     # A detour: How to play again, from the choice of what to play.
     await choose("How to play")
     await _how_to(1)
+    # And another: a new colour of the hair.
+    await choose("Your vikings")
+    await _choose_look(["Boy", "Tan", "Brown", "Red"])
+    check(voyage().look(0)["hair"] == 2, "the rower changes how they look")
     await choose("Chase!")
     await _chase()
     _left = _snapshot(voyage())
@@ -134,6 +154,14 @@ func _second_journey() -> void:
     await choose("+ New journey")
     await choose("Two rowers")
     check(fake.players == 2, "the camera follows two players")
+    await _choose_look(["Girl", "Dark", "Brown", "Blue", "Boy", "Fair", "Red", "Green"])
+    check(
+        (
+            voyage().look(0) == {"figure": "girl", "skin": 4, "hair": 2, "clothes": 2}
+            and voyage().look(1) == {"figure": "boy", "skin": 0, "hair": 1, "clothes": 4}
+        ),
+        "the two rowers look as chosen"
+    )
     await _how_to(2)
     await choose("The farm")
     if aborted() or not await wait_for_scene(WORLD):
@@ -151,6 +179,10 @@ func _back() -> void:
     var state := voyage()
     await _go_on(_first)
     check(fake.players == 1, "the first journey has one rower again")
+    check(
+        voyage().look(0) == {"figure": "boy", "skin": 2, "hair": 2, "clothes": 3},
+        "the first journey keeps how its rower looks"
+    )
     await choose("The farm")
     if aborted() or not await wait_for_scene(WORLD):
         return

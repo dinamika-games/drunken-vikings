@@ -1,9 +1,14 @@
 class_name DressUp
 extends RefCounted
 
-## Dress the player up as Ylva in the camera picture: the painted pieces of
-## her dress (res://assets/pictures/dress/, cut by dev/pictures/cut_dress.py,
-## with their anchors in dress.json) drawn along the key points of the pose.
+## Dress the player up in the camera picture as the viking of their look
+## (see Looks): the painted pieces of Ylva's dress (res://assets/pictures/dress/,
+## cut by dev/pictures/cut_dress.py) or of the boy's tunic
+## (res://assets/pictures/dress_boy/, cut by dev/pictures/cut_looks.py), each
+## with their anchors in dress.json and in the colours of the look, drawn
+## along the key points of the pose. The boy's pieces are laid out as Ylva's:
+## his lap piece (the hem of his tunic over his knees) lies as her skirt, his
+## upper tunic as her bodice.
 ##
 ## The player sits on the floor and rows, so the dress comes in two parts:
 ##
@@ -44,6 +49,7 @@ enum Kp {
     RIGHT_KNEE,
 }
 
+## The sheet of Ylva's dress, which the game needs (the boy's is optional).
 const SHEET := "dress"
 
 ## A key point counts from this score on.
@@ -111,7 +117,14 @@ const HAND_BEYOND := 0.3
 ## VisionService.GetPull), when the elbow is not seen.
 const REACH_UNTIL := 0.4
 
+## The anchors of the pieces, by their sheet.
 static var _anchors: Dictionary = {}
+
+## The look of each player (see Looks); the default look for a player without.
+var looks: Array = []
+
+## The look of the player being drawn, and the anchors of its pieces.
+var _look: Dictionary = {}
 
 ## Per player: the gliding key points (Vector2 in pixels of the panel, or
 ## null) and when each was seen the last time.
@@ -134,15 +147,36 @@ static func available() -> bool:
     )
 
 
-## The anchors of the pieces (see dev/pictures/cut_dress.py); empty if missing.
-static func anchors() -> Dictionary:
-    if _anchors.is_empty():
-        var path := "%s/%s/dress.json" % [Pictures.ROOT, SHEET]
+## The anchors of the pieces of the [param sheet] (see
+## dev/pictures/cut_dress.py); empty if missing.
+static func anchors(sheet := SHEET) -> Dictionary:
+    if not _anchors.has(sheet):
+        _anchors[sheet] = {}
+        var path := "%s/%s/dress.json" % [Pictures.ROOT, sheet]
         if FileAccess.file_exists(path):
             var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
             if parsed is Dictionary:
-                _anchors = parsed
-    return _anchors
+                _anchors[sheet] = parsed
+    return _anchors[sheet]
+
+
+## The look of the [param player]: as given, or the default (see Looks). A
+## boy whose pieces are not painted is dressed as Ylva, in his colours.
+func look_of(player: int) -> Dictionary:
+    var look: Dictionary = (
+        looks[player] if player < looks.size() and looks[player] is Dictionary else {}
+    )
+    if look.is_empty():
+        look = Looks.default_look(player)
+    if anchors(Looks.dress_sheet(look)).is_empty():
+        look = look.duplicate()
+        look["figure"] = "girl"
+    return look
+
+
+## The piece [param name] in the look of the player being drawn.
+func _piece(name: String) -> Texture2D:
+    return Looks.dress(_look, name)
 
 
 static func _point(value: Dictionary) -> Vector2:
@@ -224,7 +258,8 @@ func draw(canvas: CanvasItem, player: int, pull: float) -> void:
     var p: Array = _points[player]
     if p.size() != 17:
         return
-    var a := anchors()
+    _look = look_of(player)
+    var a := anchors(Looks.dress_sheet(_look))
     var shoulders_seen: bool = p[Kp.LEFT_SHOULDER] != null and p[Kp.RIGHT_SHOULDER] != null
     if not shoulders_seen:
         _draw_head(canvas, p, a)
@@ -293,7 +328,7 @@ func _waist(p: Array, a: Dictionary) -> Dictionary:
 
 
 func _draw_bodice(canvas: CanvasItem, _p: Array, a: Dictionary, waist: Dictionary) -> void:
-    var texture := Pictures.of(SHEET, "bodice")
+    var texture := _piece("bodice")
     var bodice: Dictionary = a["bodice"]
     var size := texture.get_size()
     var sl := _point(bodice["shoulder_left"])
@@ -335,7 +370,7 @@ func _draw_bodice(canvas: CanvasItem, _p: Array, a: Dictionary, waist: Dictionar
 
 
 func _draw_skirt(canvas: CanvasItem, p: Array, a: Dictionary, waist: Dictionary) -> void:
-    var texture := Pictures.of(SHEET, "skirt")
+    var texture := _piece("skirt")
     var skirt: Dictionary = a["skirt"]
     var wl := _point(skirt["waist_left"])
     var wr := _point(skirt["waist_right"])
@@ -379,7 +414,7 @@ func _draw_head(canvas: CanvasItem, p: Array, a: Dictionary) -> void:
         return
     var scale := line.length() / float(head["eye_distance"])
     canvas.draw_set_transform(middle, line.angle(), Vector2(scale, scale))
-    canvas.draw_texture(Pictures.of(SHEET, "head"), -_point(head["eyes"]))
+    canvas.draw_texture(_piece("head"), -_point(head["eyes"]))
 
 
 ## Where the fist of [param side] (0 the player's left arm, on the left of
@@ -422,7 +457,7 @@ func _draw_fist(canvas: CanvasItem, fist: Dictionary) -> void:
         return
     var scale: float = fist["scale"]
     canvas.draw_set_transform(fist["at"], 0.0, Vector2(scale * float(fist["mirror"]), scale))
-    canvas.draw_texture(Pictures.of(SHEET, fist["name"]), -(fist["hand"] as Vector2))
+    canvas.draw_texture(_piece(fist["name"]), -(fist["hand"] as Vector2))
 
 
 ## The sleeve of [param side] as one strip from the round of the shoulder
@@ -438,7 +473,7 @@ func _sleeve_strip(
     var elbow: Variant = p[Kp.LEFT_ELBOW + side]
     if elbow == null:
         return {}
-    var texture := Pictures.of(SHEET, "sleeve")
+    var texture := _piece("sleeve")
     var sleeve: Dictionary = a["sleeve"]
     var size := texture.get_size()
     var neck: Vector2 = ((p[Kp.LEFT_SHOULDER] as Vector2) + (p[Kp.RIGHT_SHOULDER] as Vector2)) / 2.0
@@ -528,7 +563,7 @@ func _draw_sleeve(canvas: CanvasItem, strip: Dictionary, under: bool) -> void:
     var first := 0 if under else cut
     var last := cut if under else points.size() - 1
     var half: float = strip["half"]
-    var texture := Pictures.of(SHEET, "sleeve")
+    var texture := _piece("sleeve")
     var white := PackedColorArray([Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE])
     canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
     var normals := PackedVector2Array()
