@@ -622,7 +622,19 @@ func _sleep() -> void:
     var lines: Array[String] = ["Good morning! It is day %d." % _state.day]
     if not made.is_empty():
         lines.append("The farm made %s overnight." % ", ".join(made))
-    for reminder in _state.farm.reminders(_state.day):
+    var young: Array[String] = []
+    for kind in _state.farm.born.keys():
+        young.append("a %s" % _state.farm.animal_kinds[kind]["young"])
+    if not young.is_empty():
+        var last: String = young.pop_back()
+        lines.append(
+            (
+                "New on the farm: %s!"
+                % (", ".join(young) + " and " + last if young.size() > 0 else last)
+            )
+        )
+    # NOTE: The board has room for the two most pressing reminders.
+    for reminder in _state.farm.reminders(_state.day).slice(0, 2):
         lines.append(reminder["text"])
     lines.append("The voyage is saved: you can stop here and come back another day.")
     var cards: Array = [

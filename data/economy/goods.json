@@ -2,6 +2,7 @@
   "comment": "The goods of the game: the base price in silver pieces, and the color of the crate in the pictures. See scenes/game/economy.gd.",
   "goods": [
     {"id": "eggs", "name": "Eggs", "base": 2, "color": "f1e6cc"},
+    {"id": "milk", "name": "Milk", "base": 3, "color": "f4f2ea"},
     {"id": "flowers", "name": "Flowers", "base": 3, "color": "e86a9a"},
     {"id": "grain", "name": "Grain", "base": 3, "color": "d8b45a"},
     {"id": "hay", "name": "Hay", "base": 2, "color": "c9c26a"},

@@ -11,6 +11,16 @@ extends RefCounted
 ## must be harvested within some days after it is ripe; a late harvest is
 ## smaller (the birds ate some), but never lost.
 ##
+## The cows, the goats and the sheep give milk. The cellar keeps only so much
+## of it (see [member milk_kept]); Grandmother Åsa makes cheese of the rest
+## overnight, from so many crates of milk a crate of cheese.
+##
+## The animals have young as steadily as a clock, never faster for a bigger
+## herd: a pair of a kind (or more) has one young every so many days (the
+## "young_days" of the kind), counting only the days on which the whole herd
+## of the kind ate its fill and the farm had room for one more. Hungry or
+## crowded, the herd has no young until the players bring feed or buy land.
+##
 ## The farm is plain data, so that the game saves it (see [method to_data]).
 
 ## A late harvest loses this share for each day late, but keeps at least the
@@ -30,6 +40,18 @@ var animals := {}
 
 ## Which animals were hungry on the last day (gave nothing): id -> true.
 var hungry := {}
+
+## The days counted towards the next young of each kind: id -> days.
+var young_progress := {}
+
+## The young born on the last day: id -> how many.
+var born := {}
+
+## How many crates of milk the cellar keeps; the rest becomes cheese overnight.
+var milk_kept := 2.0
+
+## How many crates of milk make a crate of cheese.
+var milk_per_cheese := 2.0
 
 ## The store of the farm: good -> crates (with fractions, e.g., 2.5 crates of eggs).
 var store := {}
@@ -64,8 +86,13 @@ func load_data(path: String) -> String:
     for i in range(int(start["fields"])):
         fields.append({"crop": "", "planted": 0})
     pasture = float(start["pasture"])
+    var cheese: Dictionary = data["cheese"]
+    milk_kept = float(cheese["milk_kept"])
+    milk_per_cheese = float(cheese["milk_per_cheese"])
     plots = []
     hungry = {}
+    young_progress = {}
+    born = {}
     return ""
 
 
@@ -95,6 +122,8 @@ func remove_animal(kind: String) -> bool:
     if animals[kind] == 0:
         animals.erase(kind)
         hungry.erase(kind)
+    if animals.get(kind, 0) < 2:
+        young_progress.erase(kind)
     return true
 
 
@@ -177,9 +206,11 @@ func add_plot(plot_id: String) -> void:
                 fields.append({"crop": "", "planted": 0})
 
 
-## A day passes: the animals eat and give, if there is feed.
+## A day passes: the animals eat and give, if there is feed; the milk which
+## the cellar cannot keep becomes cheese; the fed herds with room have young.
 func next_day() -> void:
     hungry = {}
+    born = {}
     for kind in animals.keys():
         var count: int = animals[kind]
         var properties: Dictionary = animal_kinds[kind]
@@ -192,12 +223,46 @@ func next_day() -> void:
             store[food] = float(store[food]) - need
             if store[food] <= 1e-6:
                 store.erase(food)
-        put(properties["gives"], float(properties["gives_per_day"]) * count)
+        var gives: Dictionary = properties["gives"]
+        for good in gives.keys():
+            put(good, float(gives[good]) * count)
+    _make_cheese()
+    for kind in animals.keys():
+        if not may_have_young(kind) or hungry.has(kind) or not has_room_for(kind):
+            continue
+        young_progress[kind] = int(young_progress.get(kind, 0)) + 1
+        if int(young_progress[kind]) >= int(animal_kinds[kind]["young_days"]):
+            young_progress[kind] = 0
+            add_animal(kind)
+            born[kind] = 1
+
+
+## Whether the animals of the kind can have young at all: a pair at least,
+## of a kind which has young.
+func may_have_young(kind: String) -> bool:
+    return int(animals.get(kind, 0)) >= 2 and int(animal_kinds[kind].get("young_days", 0)) > 0
+
+
+## In how many days the herd of the kind has its next young, if it stays fed
+## and has room; -1 if it has none.
+func days_to_young(kind: String) -> int:
+    if not may_have_young(kind):
+        return -1
+    return int(animal_kinds[kind]["young_days"]) - int(young_progress.get(kind, 0))
+
+
+## The milk beyond what the cellar keeps becomes cheese.
+func _make_cheese() -> void:
+    var milk := float(store.get("milk", 0.0))
+    if milk <= milk_kept + 1e-6:
+        return
+    store["milk"] = milk_kept
+    put("cheese", (milk - milk_kept) / milk_per_cheese)
 
 
 ## What the farm should remind the players of, on the [param day]: Array of
-## {"kind": "harvest"|"ripe"|"hungry"|"feed", "text", "days"}, the most
-## urgent first.
+## {"kind": "harvest"|"ripe"|"hungry"|"crowded"|"feed", "text", "days"}, the
+## most urgent first.
 func reminders(day: int) -> Array:
     var result: Array = []
     for i in range(fields.size()):
@@ -223,13 +288,25 @@ func reminders(day: int) -> Array:
                 text = "%s is ripe, the birds are eating it: harvest it now!" % name
             result.append({"kind": "harvest", "days": left, "text": text})
     for kind in hungry.keys():
-        result.append(
-            {
-                "kind": "hungry",
-                "days": -1,
-                "text": "The %s are hungry: bring %s!" % [_plural(kind), animal_kinds[kind]["eats"]]
-            }
-        )
+        var text := "The %s are hungry: bring %s!" % [_plural(kind), animal_kinds[kind]["eats"]]
+        if may_have_young(kind):
+            text = (
+                "The %s are hungry, so no %s: bring %s!"
+                % [_plural(kind), animal_kinds[kind]["young_plural"], animal_kinds[kind]["eats"]]
+            )
+        result.append({"kind": "hungry", "days": -1, "text": text})
+    # NOTE (mristin):
+    # One reminder for all the herds without room, so that a full farm does
+    # not crowd out the other reminders.
+    var crowded: Array[String] = []
+    for kind in animals.keys():
+        if may_have_young(kind) and not hungry.has(kind) and not has_room_for(kind):
+            crowded.append(animal_kinds[kind]["young_plural"])
+    if not crowded.is_empty():
+        var young := crowded[0]
+        if crowded.size() > 1:
+            young = ", ".join(crowded.slice(0, -1)) + " and " + crowded[-1]
+        result.append({"kind": "crowded", "days": 1, "text": "No room for %s: buy land!" % young})
     for food in ["grain", "hay"]:
         var days := feed_days(food)
         if days < 2.0 and days != INF and not _anyone_hungry_for(food):
@@ -269,6 +346,7 @@ func to_data() -> Dictionary:
     return {
         "animals": animals.duplicate(),
         "hungry": hungry.duplicate(),
+        "young_progress": young_progress.duplicate(),
         "store": store.duplicate(),
         "fields": fields.duplicate(true),
         "pasture": pasture,
@@ -282,6 +360,9 @@ func restore(data: Dictionary) -> void:
     for kind in data.get("animals", {}).keys():
         animals[kind] = int(data["animals"][kind])
     hungry = data.get("hungry", {}).duplicate()
+    young_progress = {}
+    for kind in data.get("young_progress", {}).keys():
+        young_progress[kind] = int(data["young_progress"][kind])
     store = {}
     for good in data.get("store", {}).keys():
         store[good] = float(data["store"][good])

@@ -155,21 +155,29 @@ The players' farm lies on the shore of the home lakes, with its own jetty. Grand
 
 ### The animals
 
-| Animal | Costs | Eats (per day) | Gives | Sells for |
-|---|---|---|---|---|
-| Hens | little | A little grain | Eggs | little |
-| Sheep | some | Hay | Wool (and lambs in spring) | some |
-| Goats | some | Hay or leaves | Milk, cheese | some |
-| Pigs | some | Grain and scraps | Piglets | some |
-| Cows | much | Much hay | Milk, butter, calves | much |
-| Bees (hives) | some | Nothing (flowers) | Honey, wax | some |
-| A horse | very much | Hay and oats | Pulls the plough (bigger fields) | much |
+| Animal | Costs | Eats (per day) | Gives | Young (a pair, fed, with room) | Sells for |
+|---|---|---|---|---|---|
+| Hens | little | A little grain | Eggs | A chick every 3 days | little |
+| Sheep | some | Hay | Wool, a little milk | A lamb every 4 days | some |
+| Goats | some | Hay | Milk | A kid every 4 days | some |
+| Pigs | some | Grain and scraps | Piglets | | some |
+| Cows | much | Much hay | Much milk | A calf every 6 days | much |
+| Bees (hives) | some | Nothing (flowers) | Honey, wax | None | some |
+| A horse | very much | Hay and oats | Pulls the plough (bigger fields) | | much |
+
+(The pigs and the horse are not in the game yet.)
 
 * The players **buy** the animals at the markets and the farms of the lakes, and bring them home by boat (a goat in the boat takes the place of a crate, and bleats).
 * The animals **need feed**: hay and grain, from the farm's own fields or bought and brought by boat. The farm's store shows how many days the feed lasts.
 * **Without feed, no animal dies or suffers harm.** It only stops giving (no eggs, no milk) and looks sad, until the players bring feed; Grandmother Åsa reminds them gently. (The game is for children: no animal ever comes to harm.)
 * The animals **give goods** every day of the trips (eggs, wool, milk, honey), which wait in the farm's store; the players take them on the next trip and sell them, or use them for missions.
-* The young (lambs, piglets, calves) grow up over some days and can be **sold** at the markets as living animals (they go to other farms, never to the butcher in the game).
+* **Milk becomes cheese.** The cellar keeps 2 crates of milk; overnight, Grandmother Åsa makes cheese of the milk beyond that, a crate of cheese from 2 crates of milk. So the players find some fresh milk in the store every morning (a little money, sold near home), and the rest waits as cheese (the same silver in half the room of the hold, and it keeps). There is no chance in it: the more cows and goats, the more cheese.
+* **The young come steadily, never faster and faster.** A pair of a kind (or more) has one young every few days (the table), however big the herd: 2 hens and 20 hens have the same chicks. A herd which grows by itself would make the farm a money machine and the game too easy; a steady young is a gift to look forward to ("a lamb in 2 days!"). The days count only when
+  * the **whole herd ate its fill** that day (too little hay for all the sheep: no day towards a lamb), and
+  * the farm has **room** for one more (a full pasture: no young until the players buy land or sell some animals).
+
+  Otherwise the count waits, and goes on when the herd is fed and has room again; nothing is lost and no animal comes to harm. One animal alone has no young, nor have the bees. The farm screen, the morning and the skippers tell the players why: "The sheep are hungry, so no lambs: bring hay!", "No room for lambs and chicks: buy land!", and in the morning "New on the farm: a lamb!".
+* A young is at once one more animal of the farm: it takes its room, eats and gives like the others, and can be **sold** where such animals are dealt in (they go to other farms, never to the butcher in the game).
 * The players can **sell** their animals where such animals are dealt in (the screen "Animals"), from the boat or fetched from the farm, for half their price (to other farms, never to the butcher): a full pasture never keeps a mission which asks for more animals from being done.
 
 ### The land
@@ -394,7 +402,7 @@ Each mission gives 1 to 3 stars, by how many days it took against its "days" (3 
 * **The world** comes from `dev/maps/make_lakes.py`, extended to regions: several lakes, sounds, rivers with a current, portages, settlements on the shores, the routes of the NPC boats. The data lives in `data/world/<region>.json`.
 * **The economy** is plain data: the goods, the settlements (what they make and want), the events (`data/economy/`), and a small simulation (prices, recovery, events) which runs in days, unit-tested.
 * **The NPC boats** follow their routes with the same boat physics as the players (`RowBoat`), and a small set of behaviours (sail, wait at a jetty, hail, offer a trade, need help).
-* **The farm** is plain data too (the animals, the plots, the buildings, the store), with a simulation by days (feed, goods, growth), unit-tested: no animal ever dies, whatever the numbers.
+* **The farm** is plain data too (the animals, the plots, the buildings, the store), with a simulation by days (feed, goods, cheese, young, growth), unit-tested: no animal ever dies, whatever the numbers, and the young come steadily, never faster for a bigger herd.
 * **The news** are made from templates and the state of the economy ("{good} sells for {price} in {place}"), so they are always true when told.
 * **The missions** are data (`data/missions/<nnn>_<id>/mission.json`), built from the steps of section 10, as in Bird Dog; `Missions` checks them when it loads them, and `tests/godot/test_missions.gd` plays all of them through.
 * **Translations** from the start (English, German, Swedish, ...), as in our other games.

@@ -283,6 +283,10 @@ func _sleep() -> void:
         var gained := float(_state.farm.store[good]) - float(before.get(good, 0.0))
         if gained > 0.0:
             _farm_value += gained * _base(good)
+    # NOTE: A young is worth what it sells for (see PortScreens.sale_price).
+    for kind in _state.farm.born:
+        _farm_value += maxi(1, int(_state.farm.animal_kinds[kind]["price"]) / 2)
+        _note("young " + str(kind))
     _note("slept")
     _at_home()
 

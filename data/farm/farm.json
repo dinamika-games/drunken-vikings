@@ -1,12 +1,13 @@
 {
-  "comment": "The animals and the crops of the farm, per day of the game. See scenes/game/farm.gd.",
+  "comment": "The animals and the crops of the farm, per day of the game: what an animal eats and gives a day, and every how many fed days with room a pair of it has a young (0: never). See scenes/game/farm.gd.",
   "animals": {
-    "hen": {"name": "Hen", "price": 4, "eats": "grain", "eats_per_day": 0.2, "gives": "eggs", "gives_per_day": 0.34, "room": 0.25},
-    "sheep": {"name": "Sheep", "price": 14, "eats": "hay", "eats_per_day": 0.5, "gives": "wool", "gives_per_day": 0.34, "room": 1.0},
-    "goat": {"name": "Goat", "price": 12, "eats": "hay", "eats_per_day": 0.4, "gives": "cheese", "gives_per_day": 0.25, "room": 1.0},
-    "cow": {"name": "Cow", "price": 40, "eats": "hay", "eats_per_day": 1.0, "gives": "cheese", "gives_per_day": 0.75, "room": 2.0},
-    "bees": {"name": "Beehive", "price": 18, "eats": "", "eats_per_day": 0.0, "gives": "honey", "gives_per_day": 0.34, "room": 0.25}
+    "hen": {"name": "Hen", "price": 4, "eats": "grain", "eats_per_day": 0.2, "gives": {"eggs": 0.34}, "room": 0.25, "young_days": 3, "young": "chick", "young_plural": "chicks"},
+    "sheep": {"name": "Sheep", "price": 14, "eats": "hay", "eats_per_day": 0.5, "gives": {"wool": 0.34, "milk": 0.15}, "room": 1.0, "young_days": 4, "young": "lamb", "young_plural": "lambs"},
+    "goat": {"name": "Goat", "price": 12, "eats": "hay", "eats_per_day": 0.4, "gives": {"milk": 0.5}, "room": 1.0, "young_days": 4, "young": "kid", "young_plural": "kids"},
+    "cow": {"name": "Cow", "price": 40, "eats": "hay", "eats_per_day": 1.0, "gives": {"milk": 1.5}, "room": 2.0, "young_days": 6, "young": "calf", "young_plural": "calves"},
+    "bees": {"name": "Beehive", "price": 18, "eats": "", "eats_per_day": 0.0, "gives": {"honey": 0.34}, "room": 0.25, "young_days": 0}
   },
+  "cheese": {"comment": "The cellar keeps so many crates of milk; overnight, the rest becomes cheese, so many crates of milk a crate of cheese.", "milk_kept": 2, "milk_per_cheese": 2},
   "crops": {
     "barley": {"name": "Barley", "seed_price": 3, "days": 4, "window": 3, "gives": "grain", "harvest": 4},
     "flax": {"name": "Flax", "seed_price": 4, "days": 5, "window": 3, "gives": "flax", "harvest": 3},
