@@ -150,6 +150,22 @@ venv/bin/gdformat dev/ scenes/
 venv/bin/gdlint dev/ scenes/
 ```
 
+## A class, not a positional array
+
+When a few values of different kinds belong together (a record: e.g., how far a skipper was from the boat, where the boat lay and how it headed), give them a class with named fields rather than an array read by position.
+`before.gap` tells what it is, `before[0]` does not, and a value put in the wrong place goes unnoticed.
+In GDScript, a small inner class does it (see `_Sighting` in `tests/godot/end2end/contracts.gd`):
+
+```gdscript
+class _Sighting:
+    var gap: float
+    var at: Vector2
+    var heading: float
+```
+
+An array stays right for values of the same kind, also when read by position: the two ends of a segment, the left and the right rower (`catches[0]`, `catches[1]`), the first of a list (`offers[0]`), and what the data files keep as an array (a picture as `[sheet, name]`).
+In Python, likewise, a pydantic model rather than a tuple.
+
 ## The dress in the camera picture
 
 The players are dressed up as the vikings of their looks in the camera picture (Ylva's dress, or the boy's tunic in `assets/pictures/dress_boy/`, see below) (`scenes/camera_panel/dress_up.gd`): the hair by the eyes, the bodice from the shoulders to the waist, the skirt over the lap, the sleeves along the arms and the fists on the oar, painted with ChatGPT from the prompts of `~/Downloads/viking/dress/`. Cut them into `assets/pictures/dress/` (with their anchors in `dress.json`), and see how they sit on the poses of a recording (only the key points, no camera picture):
