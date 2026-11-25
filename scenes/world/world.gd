@@ -604,6 +604,7 @@ func _show(title: String, text: String, cards: Array, actions: Array[Callable], 
         _farm_view.farm = _state.farm
         _farm_view.day = _state.day
     _panel.dim = 0.2 if home else ChoicePanel.DIM
+    _panel.clear_rects = _farm_view.clear_rects() if home else ([] as Array[Rect2])
     _arrows.visible = false
     _panel.show_cards(title, text, cards, face)
     if _shots != "":

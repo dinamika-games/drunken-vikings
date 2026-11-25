@@ -39,6 +39,13 @@ var text := ""
 ## How much the screen darkens what lies behind it.
 var dim := DIM
 
+## Where what lies behind the screen shows clearly, neither dimmed nor under
+## the mirror of the players (e.g., the farm at home, see ScreenBackdrop).
+var clear_rects: Array[Rect2] = []:
+    set(value):
+        clear_rects = value
+        _backdrop.clear_rects = value
+
 ## The face of who speaks: {"hair": Color, "braids": bool, "picture": the
 ## name of the painted face (see Pictures), if any} or empty.
 var face := {}
@@ -54,6 +61,7 @@ var hint := "Raise your hand to a card and hold it there to choose."
 var _service: Node
 var _buttons: Array[DwellButton] = []
 var _cursor: HandCursor
+var _backdrop := ScreenBackdrop.new()
 var _dev_keys := false
 var _keys_down := {}
 
@@ -62,11 +70,17 @@ func _init(service: Node = null) -> void:
     _service = service
     _dev_keys = "--dev-keys" in OS.get_cmdline_user_args()
     mouse_filter = Control.MOUSE_FILTER_IGNORE
+    # NOTE (mristin):
+    # The dim and the mirror lie behind all the screen draws.
+    _backdrop.show_behind_parent = true
+    _backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+    add_child(_backdrop)
 
 
 func _ready() -> void:
     _cursor = HandCursor.new()
     add_child(_cursor)
+    _backdrop.cursor = _cursor
 
 
 ## Show the [param new_cards].
@@ -137,9 +151,7 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
     if not visible:
         return
-    draw_rect(Rect2(Vector2.ZERO, size), Color(0.05, 0.07, 0.1, dim))
-    if _cursor != null:
-        _cursor.draw_mirror(self, size)
+    _backdrop.dim = dim
 
     var font := ThemeDB.fallback_font
     var width := 1100.0

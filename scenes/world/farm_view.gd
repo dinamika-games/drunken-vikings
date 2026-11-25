@@ -59,6 +59,10 @@ const STAGES := {
     },
 }
 
+## Where the store and the cat are, between the fields and the pasture.
+const _STORE_AT := Vector2(965, 470)
+const _CAT_AT := Vector2(965, 735)
+
 const _INK := Color("2a1d10")
 const _PAPER := Color("f1f0ea")
 const _SOIL := Color("6a4a2a")
@@ -149,14 +153,50 @@ func _draw() -> void:
     _draw_decor()
 
 
+## Where the fields, the pasture and the rest of the farm are drawn: the
+## screens of home show them clearly, with the fog of their backdrop around
+## them (see ChoicePanel.clear_rects).
+func clear_rects() -> Array[Rect2]:
+    var result: Array[Rect2] = []
+    if farm == null:
+        return result
+    var cells := farm.fields.size()
+    if farm.plot_kinds.size() > farm.plots.size():
+        cells += 1
+    for i in range(cells):
+        # NOTE (mristin):
+        # The label goes under the field.
+        var cell := _field_rect(i)
+        cell.size.y += 40.0
+        result.append(cell)
+    result.append(PASTURE.grow(16.0))
+    if Pictures.of("farm_view", "grandmother") != null:
+        # NOTE (mristin):
+        # Grandmother Åsa walks along the bottom of the fields.
+        result.append(Rect2(FIELDS.position.x, 700.0, FIELDS.size.x, 64.0))
+    var decors := [["store", _STORE_AT, 70.0], ["cat", _CAT_AT, 46.0]]
+    if _birds_come():
+        decors.append(["scarecrow", _scarecrow_at(), 90.0])
+    for decor in decors:
+        if Pictures.of("farm_view", decor[0]) != null:
+            var half := Vector2(decor[2], decor[2]) / 2.0
+            result.append(Rect2(decor[1] - half, half * 2.0))
+    return result
+
+
+## Where the field [param i] is (the land for sale after the last field).
+func _field_rect(i: int) -> Rect2:
+    var per_row := int((FIELDS.size.x + 20.0) / (FIELD + 30.0))
+    var cell := Vector2(i % per_row, i / per_row)
+    var at := FIELDS.position + cell * Vector2(FIELD + 30.0, FIELD + 46.0)
+    return Rect2(at, Vector2(FIELD, FIELD))
+
+
 func _draw_fields() -> void:
     var font := ThemeDB.fallback_font
-    var per_row := int((FIELDS.size.x + 20.0) / (FIELD + 30.0))
     var count := farm.fields.size()
     for i in range(count):
-        var cell := Vector2(i % per_row, i / per_row)
-        var at := FIELDS.position + cell * Vector2(FIELD + 30.0, FIELD + 46.0)
-        var rect := Rect2(at, Vector2(FIELD, FIELD))
+        var rect := _field_rect(i)
         var crop: String = farm.fields[i]["crop"]
         var label := "empty"
         if crop == "":
@@ -183,8 +223,7 @@ func _draw_fields() -> void:
     # The land still for sale, as a sign after the last field.
     var for_sale := farm.plot_kinds.size() - farm.plots.size()
     if for_sale > 0:
-        var cell := Vector2(count % per_row, count / per_row)
-        var at := FIELDS.position + cell * Vector2(FIELD + 30.0, FIELD + 46.0)
+        var at := _field_rect(count).position
         var sign := Pictures.of("farm_view", "plot_sign")
         var center := at + Vector2(FIELD, FIELD) / 2.0
         if sign != null:
@@ -274,23 +313,30 @@ func _draw_pasture() -> void:
 func _draw_decor() -> void:
     var store := Pictures.of("farm_view", "store")
     if store != null:
-        Pictures.draw(self, store, Vector2(965, 470), 70.0)
+        Pictures.draw(self, store, _STORE_AT, 70.0)
     var cat := Pictures.of("farm_view", "cat")
     if cat != null:
-        Pictures.draw(self, cat, Vector2(965, 735), 46.0)
+        Pictures.draw(self, cat, _CAT_AT, 46.0)
     var grandmother := Pictures.of("farm_view", "grandmother")
     if grandmother != null:
         var walk := 0.5 + 0.5 * sin(_time * 0.15)
         var at := Vector2(lerpf(FIELDS.position.x + 40.0, FIELDS.end.x - 60.0, walk), 732.0)
         Pictures.draw(self, grandmother, at, 64.0, sin(_time * 4.0) * 0.06)
     var scarecrow := Pictures.of("farm_view", "scarecrow")
-    if scarecrow != null:
-        for i in range(farm.fields.size()):
-            if farm.fields[i]["crop"] != "" and farm.days_to_harvest(i, day) < 0:
-                Pictures.draw(
-                    self, scarecrow, Vector2(FIELDS.end.x - 70.0, FIELDS.position.y + 260.0), 90.0
-                )
-                break
+    if scarecrow != null and _birds_come():
+        Pictures.draw(self, scarecrow, _scarecrow_at(), 90.0)
+
+
+## Whether the birds peck at a crop harvested late.
+func _birds_come() -> bool:
+    for i in range(farm.fields.size()):
+        if farm.fields[i]["crop"] != "" and farm.days_to_harvest(i, day) < 0:
+            return true
+    return false
+
+
+func _scarecrow_at() -> Vector2:
+    return Vector2(FIELDS.end.x - 70.0, FIELDS.position.y + 260.0)
 
 
 ## A thought bubble with the food the animal misses.
