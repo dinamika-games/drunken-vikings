@@ -282,7 +282,17 @@ def _bodice_anchors(bodice: np.ndarray) -> cut_dress.Bodice:
     first = int(rows.min())
     shoulder_y = first + int(0.03 * a.shape[0])
     sl, sr = cut_dress.extent(a, shoulder_y)
-    last = int(rows.max()) - 3
+    # NOTE: The belt of the boy is outlined and rounded at its bottom, so the
+    # last rows narrow to a sliver; the waist is the lowest row which is
+    # still about as wide as the widest row of the lower quarter (else the
+    # game, which fits the waist to the shoulders, blows the bodice up).
+    widths = {
+        y: np.subtract(*cut_dress.extent(a, y)[::-1])
+        for y in rows
+        if y >= first + 0.75 * (rows.max() - first)
+    }
+    widest = max(widths.values())
+    last = max(y for y, width in widths.items() if width >= 0.97 * widest)
     wl, wr = cut_dress.extent(a, last)
     return cut_dress.Bodice(
         shoulder_left=cut_dress.Point(x=sl, y=first),
