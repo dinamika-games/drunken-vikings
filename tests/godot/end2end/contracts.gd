@@ -432,22 +432,35 @@ func check_world(world: Node) -> void:
         # undocks (it is turned to head out), when the players hail them
         # (they stop beside the boat), and when the players row or turn their
         # boat into them. The skippers only never sail into where the
-        # players' boat lay (nor deeper, once close).
+        # players' boat lay (nor deeper, once close), unless they flee the
+        # boat as it lies now (a long boat turned onto them sweeps its hull
+        # over where it lay).
         var gap: float = npc.gap_to_players()
         var before: _Sighting = _npc_gap.get(
-            npc.get_instance_id(), _Sighting.new(INF, boat.position, boat.heading, _placings)
+            npc.get_instance_id(), _Sighting.new(INF, boat, npc, _placings)
         )
         if before.placings != _placings:
             # NOTE: Put there by the game since the last look: nothing to
             # compare with.
-            before = _Sighting.new(0.0, boat.position, boat.heading, _placings)
-        var sailed_into := _gap_to(npc, before.at, before.heading, npc.players_length)
+            before = _Sighting.new(0.0, boat, npc, _placings)
+        var length := npc.players_length
+        var sailed_into := _gap_to(npc, before.at, before.heading, length)
+        var fled := (
+            _gap_to(npc, boat.position, boat.heading, length)
+            >= (
+                _gap_between(
+                    before.skipper_at, before.skipper_heading, boat.position, boat.heading, length
+                )
+                - SLACK
+            )
+        )
         _expect(
             (
                 not npc.sailing()
                 or boat.speed > NPC_RAMMING
                 or gap >= NPC_GAP
                 or sailed_into >= minf(NPC_GAP, before.gap - SLACK)
+                or fled
             ),
             "the skippers keep clear of the players' boat",
             (
@@ -467,7 +480,7 @@ func check_world(world: Node) -> void:
                 ]
             )
         )
-        _npc_gap[npc.get_instance_id()] = _Sighting.new(gap, boat.position, boat.heading, _placings)
+        _npc_gap[npc.get_instance_id()] = _Sighting.new(gap, boat, npc, _placings)
 
     var panel: ChoicePanel = world._panel
     var chart: bool = world._chart != null
@@ -574,10 +587,19 @@ func _check_boat(map: LakeMap, boat: RowBoat, moving: bool, where: String) -> vo
 ## middle line of a boat [param length] long at [param at], heading
 ## [param heading].
 static func _gap_to(npc: NpcBoat, at: Vector2, heading: float, length: float) -> float:
-    var mine := Vector2.UP.rotated(npc.heading) * NpcBoat.LENGTH / 2.0
+    return _gap_between(npc.position, npc.heading, at, heading, length)
+
+
+## How far the middle line of a skipper's boat lying [param npc_at], heading
+## [param npc_heading], is from the middle line of a boat of the [param length]
+## lying [param at], heading [param heading].
+static func _gap_between(
+    npc_at: Vector2, npc_heading: float, at: Vector2, heading: float, length: float
+) -> float:
+    var mine := Vector2.UP.rotated(npc_heading) * NpcBoat.LENGTH / 2.0
     var theirs := Vector2.UP.rotated(heading) * length / 2.0
     var closest := Geometry2D.get_closest_points_between_segments(
-        npc.position - mine, npc.position + mine, at - theirs, at + theirs
+        npc_at - mine, npc_at + mine, at - theirs, at + theirs
     )
     return closest[0].distance_to(closest[1])
 
@@ -816,16 +838,21 @@ func check_chase(chase: Node) -> void:
 
 
 ## What a skipper saw of the players' boat on a check: how far apart the
-## boats were, where the boat lay and how it headed, and how often the game
-## had put the boat somewhere by then (see Contracts._placings).
+## boats were, where the boat lay and how it headed, where the skipper lay
+## and how it headed, and how often the game had put the boat somewhere by
+## then (see Contracts._placings).
 class _Sighting:
     var gap: float
     var at: Vector2
     var heading: float
+    var skipper_at: Vector2
+    var skipper_heading: float
     var placings: int
 
-    func _init(apart: float, lay_at: Vector2, lay_heading: float, placed: int) -> void:
+    func _init(apart: float, boat: RowBoat, npc: NpcBoat, placed: int) -> void:
         gap = apart
-        at = lay_at
-        heading = lay_heading
+        at = boat.position
+        heading = boat.heading
+        skipper_at = npc.position
+        skipper_heading = npc.heading
         placings = placed
