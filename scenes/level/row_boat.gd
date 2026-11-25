@@ -19,13 +19,13 @@ extends RefCounted
 
 ## How much faster each stroke makes the boat, in metres per second, for a
 ## stroke of the usual depth.
-const STROKE_PUSH := 4.0
+const STROKE_PUSH := 8.0
 
 ## The usual depth of a stroke, in units of the player (see RowingMeter).
 const USUAL_DEPTH := 0.75
 
 ## The boat is never faster than this, in metres per second.
-const MAX_SPEED := 16.0
+const MAX_SPEED := 32.0
 
 ## How long the boat glides: its speed falls to a third in this many seconds.
 const GLIDE_SECONDS := 6.0

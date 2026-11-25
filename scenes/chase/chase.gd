@@ -19,7 +19,7 @@ const LOOK_AHEAD := 45.0
 
 ## The pirates row this fast, in metres per second (the players who keep
 ## rowing go about 9).
-const PIRATE_SPEED := 7.0
+const PIRATE_SPEED := 14.0
 
 ## The pirates set out this many seconds after the players.
 const HEAD_START := 5.0

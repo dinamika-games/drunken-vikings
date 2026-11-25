@@ -436,12 +436,19 @@ func row_towards(boat: RowBoat, wanted: float, beat: float, since: float) -> flo
     var turn := clampf(angle_difference(boat.heading, wanted) * 2.0, -1.0, 1.0)
     if fake.players == 1:
         fake.steer[0] = turn
-        if beat > 0.0 and clock - since >= beat:
+        # NOTE: Like the players, pull only once the bow points about the
+        # right way; otherwise the fast boat circles around where it should go.
+        var aligned := absf(angle_difference(boat.heading, wanted)) < deg_to_rad(35.0)
+        if beat > 0.0 and aligned and clock - since >= beat:
             fake.row()
             return clock
         return since
     # NOTE: Two rowers: the left oar turns the boat right (see RowBoat.stroke_side).
     fake.steer = [0.0, 0.0]
+    # NOTE: Each kick pushes, too: far off the way, let the fast boat glide
+    # slower before kicking it round, or it circles.
+    if absf(angle_difference(boat.heading, wanted)) > deg_to_rad(35.0) and boat.speed > 8.0:
+        return since
     if beat > 0.0 and clock - since >= beat:
         if absf(turn) > 0.5:
             fake.row(0 if turn > 0.0 else 1)
