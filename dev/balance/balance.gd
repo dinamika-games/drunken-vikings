@@ -274,6 +274,19 @@ func _at_home() -> void:
 
 
 func _sleep() -> void:
+    # NOTE (mristin):
+    # The players may sleep only after a day's trip (see GameState.travelled):
+    # the nearest place and back.
+    if not _state.travelled:
+        var nearest := ""
+        for place in _map.places:
+            if (
+                place["id"] != "home"
+                and (nearest == "" or _route("home", place["id"]) < _route("home", nearest))
+            ):
+                nearest = place["id"]
+        _go(nearest)
+        _note("trip to sleep")
     if _state.place != "home":
         _go("home")
     var before: Dictionary = _state.farm.store.duplicate()

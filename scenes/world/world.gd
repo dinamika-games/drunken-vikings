@@ -832,7 +832,7 @@ func _autopilot_choose(delta: float) -> void:
     for wanted in ["Back", "Sleep", "Row out", "Row on", "No, thank you"]:
         var index := titles.find(wanted)
         if index >= 0:
-            if wanted == "Sleep" and _state.day > 3:
+            if wanted == "Sleep" and (_state.day > 3 or not _state.travelled):
                 continue
             _panel.choose(index)
             return

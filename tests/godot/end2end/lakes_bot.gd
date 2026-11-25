@@ -18,9 +18,7 @@ const CHASE := "res://scenes/chase/chase.tscn"
 const START := "res://scenes/start/start.tscn"
 
 const WorldScript := preload("res://scenes/world/world.gd")
-
-## The most tasks the bot carries at once.
-const MAX_TASKS := 2
+const LakesPlan := preload("res://tests/godot/end2end/lakes_plan.gd")
 
 ## Rowing to a place must come at least this much closer to it every
 ## [constant STUCK_SECONDS] seconds of the game, in metres, else the
@@ -32,14 +30,8 @@ const STUCK_SECONDS := 90.0
 ## players are stuck.
 const LEGS_PER_TASK := 40
 
-## The most nights the players sleep in a row for a task.
-const SLEEPS := 12
-
 ## How long hailing a skipper may take, in seconds of the game.
 const HAIL_SECONDS := 900.0
-
-## The silver which the bot keeps when it buys a ship.
-const RESERVE := 20
 
 ## The chances of the detours.
 const TALK_CHANCE := 0.15
@@ -57,12 +49,8 @@ var did := {}
 ## The silver at the start of the party (see Contracts.check_party).
 var party_silver := 0
 
-## A trade under way: {"good", "from", "to"}, or empty.
-var _trade := {}
-## Whether the bot must sleep at home (for the farm to make goods).
-var _must_sleep := false
-## The kind of animal to sell for room on the pasture, or "".
-var _sell_kind := ""
+## Where to go next, and what the tasks need (see lakes_plan.gd).
+var planner := LakesPlan.new(voyage, world_map, func() -> Vector2: return my_boat().position, did)
 var _last_mode := ""
 var _watched_scene := 0
 var _legs := 0
@@ -142,7 +130,10 @@ func play_lakes(tasks: int) -> void:
             var active: Array = voyage().missions.active
             fail("the players are stuck with the tasks %s" % [active], true)
             return
-        var plan := _plan()
+        var plan: Dictionary = planner.next_leg()
+        if planner.problem != "":
+            fail(planner.problem, true)
+            return
         if tracing:
             print(
                 (
@@ -157,252 +148,12 @@ func play_lakes(tasks: int) -> void:
             await row_to(plan["go"])
 
 
-## Where to go next: {"go": place} or {"hail": the picture of the skipper,
-## "" for any}, with "why".
-func _plan() -> Dictionary:
-    var state := voyage()
-    var missions: Missions = state.missions
-    var plan := {}
-    if _next_ship() != "" and not _trade.has("good"):
-        plan = {"go": state.ships.shipyard, "why": "buy the %s" % _next_ship()}
-    if plan.is_empty():
-        plan = _task_plan()
-    if plan.is_empty() and not _trade.is_empty():
-        if int(state.cargo.get(_trade["good"], 0)) > 0:
-            plan = {"go": _trade["to"], "why": "sell " + _trade["good"]}
-        else:
-            _trade = {}
-    if plan.is_empty():
-        var next := missions.available()
-        if not next.is_empty() and missions.active.size() < MAX_TASKS:
-            plan = {"go": missions.missions[next[0]]["giver"]["place"], "why": "take " + next[0]}
-        elif not missions.active.is_empty():
-            plan = _make_room()
-        else:
-            plan = {"go": "home", "why": "rest"}
-    return plan
-
-
-## Where the first task under way which can go on leads, or {}.
-func _task_plan() -> Dictionary:
-    var state := voyage()
-    var missions: Missions = state.missions
-    for entry in missions.active:
-        var id: String = entry["id"]
-        var step := missions.current_step(id)
-        if missions._wait_left(state, entry, step) > 0:
-            return {"go": "home", "why": "wait for " + id}
-        var plan := _step_plan(id, entry, step)
-        if not plan.is_empty():
-            return plan
-    return {}
-
-
-## Where the step of the task [param id] leads, or {} if it waits for room.
-func _step_plan(id: String, entry: Dictionary, step: Dictionary) -> Dictionary:
-    var state := voyage()
-    var count := int(step.get("count", 1))
-    var plan := {}
-    match step["do"]:
-        "visit":
-            plan = {"go": step["at"], "why": id}
-        "carry":
-            var target: String = state.missions.target(state, id)
-            if target != step["from"] or state.has_room():
-                plan = {"go": target, "why": id}
-        "pay":
-            if state.silver >= int(step["silver"]):
-                plan = {"go": step["at"], "why": id}
-            else:
-                plan = _earn(int(step["silver"]))
-        "deliver":
-            plan = _deliver_plan(id, step, count - int(entry["count"]))
-        "hail":
-            plan = {"hail": str(step.get("skipper", "")), "why": id}
-        "have":
-            plan = _have_plan(id, step["animal"], count)
-        "plant":
-            var price := int(state.farm.crop_kinds[step["crop"]]["seed_price"])
-            plan = {"go": "home", "why": id} if state.silver >= price else _earn(price)
-    return plan
-
-
-## Where a task which wants [param count] animals of the [param kind] on the
-## farm leads.
-func _have_plan(id: String, kind: String, count: int) -> Dictionary:
-    var state := voyage()
-    var aboard := int(state.cargo.get("animal:" + kind, 0))
-    if aboard > 0 and not state.farm.has_room_for(kind):
-        return _pasture_plan(id)
-    if int(state.farm.animals.get(kind, 0)) >= count or aboard > 0:
-        return {"go": "home", "why": id}
-    return _buy_plan("animal:" + kind, id)
-
-
-## The animals in the boat need more pasture: earn the silver for the
-## cheapest plot with pasture, and buy it at home.
-func _pasture_plan(id: String) -> Dictionary:
-    var state := voyage()
-    var price := 1 << 30
-    for plot in state.farm.plot_kinds:
-        if not plot["id"] in state.farm.plots and int(plot["pasture"]) > 0:
-            price = mini(price, int(plot["price"]))
-    if price == 1 << 30:
-        # NOTE: No land is left: sell the animal which takes the most room
-        # where such animals are dealt in (see PortScreens._show_animals).
-        var keep: String = state.missions.current_step(id).get("animal", "")
-        for kind in state.farm.animals:
-            if (
-                kind != keep
-                and (
-                    _sell_kind == ""
-                    or (
-                        float(state.farm.animal_kinds[kind]["room"])
-                        > float(state.farm.animal_kinds[_sell_kind]["room"])
-                    )
-                )
-            ):
-                _sell_kind = kind
-        if _sell_kind == "":
-            fail("the farm has no room for the animals of %s, and nothing to sell" % id, true)
-            return {"go": "home", "why": "no land"}
-        var places: Array[String] = []
-        for place in world_map().places:
-            if _sell_kind in PortScreens.ANIMALS_SOLD.get(place["kind"], []):
-                places.append(place["id"])
-        return {"go": _nearest(places), "why": "sell a %s for room for %s" % [_sell_kind, id]}
-    if state.silver >= price:
-        return {"go": "home", "why": "buy land for %s" % id}
-    return _earn(price)
-
-
-func _deliver_plan(id: String, step: Dictionary, left: int) -> Dictionary:
-    var state := voyage()
-    var item: String = step["item"]
-    var have := int(state.cargo.get(item, 0))
-    if have >= left or (have > 0 and not state.has_room()):
-        return {"go": step["at"], "why": id}
-    if not state.has_room():
-        return {}
-    if not item.begins_with("animal:") and step["at"] != "home" and state.farm.crates(item) > 0:
-        return {"go": "home", "why": "load %s for %s" % [item, id]}
-    return _buy_plan(item, id)
-
-
-## Where to buy the [param item] (a good, or "animal:<kind>"), or how to earn
-## the silver for it first.
-func _buy_plan(item: String, id: String) -> Dictionary:
-    var state := voyage()
-    var price := 0
-    var places: Array[String] = []
-    if item.begins_with("animal:"):
-        var kind := item.trim_prefix("animal:")
-        price = int(state.farm.animal_kinds[kind]["price"])
-        for place in world_map().places:
-            if kind in PortScreens.ANIMALS_SOLD.get(place["kind"], []):
-                places.append(place["id"])
-    else:
-        var best: Dictionary = state.economy.best_buy(item)
-        price = int(best["price"])
-        places.append(best["place"])
-    if state.silver < price:
-        return _earn(price)
-    return {"go": _nearest(places), "why": "buy %s for %s" % [item, id]}
-
-
-## How to earn [param silver]: sell what can go, or trade.
-func _earn(silver: int) -> Dictionary:
-    var state := voyage()
-    if not _trade.is_empty() and int(state.cargo.get(_trade["good"], 0)) > 0:
-        return {"go": _trade["to"], "why": "sell %s for %d silver" % [_trade["good"], silver]}
-    var economy: Economy = state.economy
-    var best := {}
-    var best_score := 0.0
-    for place in world_map().places:
-        if not economy.is_market(place["id"]):
-            continue
-        for good in economy.good_ids:
-            if not economy.sells(place["id"], good):
-                continue
-            var price := economy.buy_price(place["id"], good)
-            var sell: Dictionary = economy.best_sell(good)
-            var margin := int(sell["price"]) - price
-            if price > state.silver or margin < 2 or sell["place"] == place["id"]:
-                continue
-            var distance := my_boat().position.distance_to(place["jetty"])
-            var score := float(margin) / (distance + 400.0)
-            if score > best_score:
-                best_score = score
-                best = {"good": good, "from": place["id"], "to": sell["place"]}
-    if best.is_empty():
-        return _earn_from_the_farm(silver)
-    _trade = best
-    tally("trades")
-    return {"go": best["from"], "why": "buy %s to earn %d silver" % [best["good"], silver]}
-
-
-## Without silver to trade, sell what the farm keeps in its store, or sleep
-## so that the farm makes some.
-func _earn_from_the_farm(silver: int) -> Dictionary:
-    var state := voyage()
-    var needed := _needed()
-    var best := ""
-    for good in state.farm.store.keys():
-        if state.farm.crates(good) > 0 and not needed.has(good):
-            if best == "" or state.farm.crates(good) > state.farm.crates(best):
-                best = good
-    tally("earned from the farm")
-    if best == "":
-        _must_sleep = true
-        return {"go": "home", "why": "sleep for the farm to make what sells, %d silver" % silver}
-    _trade = {"good": best, "from": "home", "to": state.economy.best_sell(best)["place"]}
-    return {"go": "home", "why": "load %s to earn %d silver" % [best, silver]}
-
-
-## The boat is full of what the tasks need elsewhere: sell or unload the rest.
-func _make_room() -> Dictionary:
-    var markets: Array[String] = []
-    for place in world_map().places:
-        if voyage().economy.is_market(place["id"]):
-            markets.append(place["id"])
-    return {"go": _nearest(markets), "why": "make room"}
-
-
 func world_map() -> LakeMap:
     return current_scene.map()
 
 
 func my_boat() -> RowBoat:
     return current_scene.boat()
-
-
-func _nearest(places: Array[String]) -> String:
-    var best := ""
-    var best_distance := INF
-    for id in places:
-        var distance := my_boat().position.distance_to(world_map().place(id)["jetty"])
-        if distance < best_distance:
-            best_distance = distance
-            best = id
-    return best
-
-
-## What the tasks under way need: item -> how many; with [param elsewhere],
-## only what goes to other places than home.
-func _needed(elsewhere := false) -> Dictionary:
-    var state := voyage()
-    var needed := {}
-    for entry in state.missions.active:
-        var step: Dictionary = state.missions.current_step(entry["id"])
-        if step["do"] == "deliver" and not (elsewhere and step["at"] == "home"):
-            needed[step["item"]] = (
-                int(needed.get(step["item"], 0)) + int(step.get("count", 1)) - int(entry["count"])
-            )
-        elif step["do"] == "have" and not elsewhere:
-            needed["animal:" + step["animal"]] = int(step.get("count", 1))
-    if not _trade.is_empty():
-        needed[_trade["good"]] = 1 << 20
-    return needed
 
 
 # ---------------------------------------------------------------------------
@@ -632,9 +383,9 @@ func _at_market() -> void:
     await _sell_all(id)
     await _take_tasks(id)
     await _buy_needs(id)
-    if not _trade.is_empty() and _trade["from"] == id and _trade["to"] != id:
-        await _buy(_trade["good"], 1 << 20)
-        _trade["from"] = ""
+    if not planner.trade.is_empty() and planner.trade["from"] == id and planner.trade["to"] != id:
+        await _buy(planner.trade["good"], 1 << 20)
+        planner.trade["from"] = ""
     if id == state.ships.shipyard:
         await _shipyard()
     await _sell_animals(id)
@@ -652,9 +403,9 @@ func _at_market() -> void:
 func _sell_animals(id: String) -> void:
     var state := voyage()
     var dealt: Array = PortScreens.ANIMALS_SOLD.get(world_map().place(id)["kind"], [])
-    var kind := _sell_kind
+    var kind := planner.sell_kind
     if kind == "" and rng.randf() < SELL_ANIMAL_CHANCE:
-        var needed := _needed()
+        var needed := planner.needed()
         for animal in dealt:
             if int(state.farm.animals.get(animal, 0)) > 1 and not needed.has("animal:" + animal):
                 kind = animal
@@ -669,19 +420,19 @@ func _sell_animals(id: String) -> void:
         await choose(name)
         tally("animals sold")
         check(state.silver > silver, "selling an animal pays")
-    _sell_kind = ""
+    planner.sell_kind = ""
     await _settle()
 
 
 ## Sell what no task needs (the goods of a trade only where it sells).
 func _sell_all(id: String) -> void:
     var state := voyage()
-    var needed := _needed()
+    var needed := planner.needed()
     var goods: Array[String] = []
     for item in state.cargo.keys():
         if not state.economy.buys(id, item):
             continue
-        if needed.has(item) and not (not _trade.is_empty() and _trade["to"] == id):
+        if needed.has(item) and not (not planner.trade.is_empty() and planner.trade["to"] == id):
             continue
         goods.append(item)
     if goods.is_empty():
@@ -703,17 +454,17 @@ func _sell_all(id: String) -> void:
                 break
             tally("sold")
             await choose(name, true)
-    if not _trade.is_empty() and _trade["to"] == id:
-        _trade = {}
+    if not planner.trade.is_empty() and planner.trade["to"] == id:
+        planner.trade = {}
     await _settle()
 
 
-## Take the tasks offered here, up to [constant MAX_TASKS].
+## Take the tasks offered here, up to [constant LakesPlan.MAX_TASKS].
 func _take_tasks(id: String) -> void:
     var missions: Missions = voyage().missions
     while (
         not missions.offers_at(id).is_empty()
-        and missions.active.size() < MAX_TASKS
+        and missions.active.size() < LakesPlan.MAX_TASKS
         and not aborted()
     ):
         var offer: String = missions.offers_at(id)[0]
@@ -737,10 +488,10 @@ func _take_tasks(id: String) -> void:
 func _buy_needs(id: String) -> void:
     var state := voyage()
     var kind: String = world_map().place(id)["kind"]
-    var needed := _needed()
+    var needed := planner.needed()
     for item in needed.keys():
         var missing := int(needed[item]) - int(state.cargo.get(item, 0))
-        if missing <= 0 or (not _trade.is_empty() and item == _trade["good"]):
+        if missing <= 0 or (not planner.trade.is_empty() and item == planner.trade["good"]):
             continue
         if item.begins_with("animal:"):
             var animal: String = str(item).trim_prefix("animal:")
@@ -779,25 +530,11 @@ func _buy_animals(kind: String, wanted: int) -> void:
 
 
 ## The next ship which the players can buy with silver to spare, or "".
-func _next_ship() -> String:
-    var state := voyage()
-    var ships: Ships = state.ships
-    for id in ships.ids:
-        if not id in ships.owned:
-            if (
-                state.silver >= int(ships.kinds[id]["price"]) + RESERVE
-                and state.load_count() <= ships.hold(id)
-            ):
-                return id
-            return ""
-    return ""
-
-
 ## Buy the next ship when there is silver to spare, or take another one.
 func _shipyard() -> void:
     var state := voyage()
     var ships: Ships = state.ships
-    var next := _next_ship()
+    var next := planner.next_ship()
     var buying := next != ""
     var other := ""
     for id in ships.owned:
@@ -837,20 +574,16 @@ func _look_at_tasks() -> void:
 func _at_home() -> void:
     var state := voyage()
     await _unload()
-    await _load_needs(_needed(true))
-    if not _trade.is_empty() and _trade["from"] == "home":
-        await _load_from_store(_trade["good"], 1 << 20)
-        _trade["from"] = ""
+    await _load_needs(planner.needed(true))
+    if not planner.trade.is_empty() and planner.trade["from"] == "home":
+        await _load_from_store(planner.trade["good"], 1 << 20)
+        planner.trade["from"] = ""
     await _farm_work()
     await _take_tasks("home")
-    var sleeps := 0
-    var sleep := _must_sleep or rng.randf() < SLEEP_CHANCE
-    _must_sleep = false
-    while (_waiting() or _no_free_field() or (sleeps == 0 and sleep)) and not aborted():
-        sleeps += 1
-        if sleeps > SLEEPS:
-            fail("the players sleep and sleep and the tasks still wait", true)
-            return
+    var sleep := planner.must_sleep or _waiting() or _no_free_field() or rng.randf() < SLEEP_CHANCE
+    planner.must_sleep = false
+    # NOTE: One night at a time (see _night_plan).
+    if sleep and state.travelled and not aborted():
         var day: int = state.day
         await _settle()
         tally("slept")
@@ -874,7 +607,7 @@ func _waiting() -> bool:
 
 ## Unload the boat at home, unless it carries what the tasks need elsewhere.
 func _unload() -> void:
-    var needed := _needed(true)
+    var needed := planner.needed(true)
     for item in voyage().cargo.keys():
         if needed.has(item):
             return

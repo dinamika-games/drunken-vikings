@@ -63,7 +63,17 @@ var ships := Ships.new()
 var day := 1
 
 ## The id of the place where the boat lies (at its jetty), or "" on the water.
-var place := "home"
+var place := "home":
+    set(value):
+        place = value
+        if value != "" and value != "home":
+            travelled = true
+
+## Whether the boat came to another place than home since the players last
+## slept: they may sleep only after a day's trip, so
+## that the farm does not make goods and young night after night without the
+## players rowing.
+var travelled := false
 
 ## The economy of the lakes.
 var economy := Economy.new()
@@ -254,6 +264,7 @@ func new_voyage() -> void:
     cargo = {}
     day = 1
     place = "home"
+    travelled = false
     price_book = {}
     news = []
     looks = [Looks.default_look(0), Looks.default_look(1)]
@@ -345,6 +356,7 @@ func hear(text: String, at := "", good := "") -> void:
 ## The players sleep at home: a day passes for the lakes and the farm.
 func next_day() -> void:
     day += 1
+    travelled = false
     economy.next_day()
     farm.next_day()
 
@@ -363,6 +375,7 @@ func save() -> bool:
         "cargo": cargo,
         "ships": ships.to_data(),
         "day": day,
+        "travelled": travelled,
         "place": place,
         "economy": economy.to_data(),
         "farm": farm.to_data(),
@@ -417,6 +430,9 @@ func load_voyage() -> bool:
     ships.restore(data.get("ships", {}), int(data.get("capacity", 4)))
     day = int(data.get("day", 1))
     place = str(data.get("place", "home"))
+    # NOTE (mristin):
+    # The saves from before the trips counted may sleep at once.
+    travelled = bool(data.get("travelled", true))
     economy.restore(data.get("economy", {}))
     farm.restore(data.get("farm", {}))
     missions.restore(data.get("missions", {}))

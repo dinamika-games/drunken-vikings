@@ -385,7 +385,11 @@ func _show_home(message := "") -> void:
             "enabled": not _store_goods().is_empty() and _state.has_room()
         },
         _tasks_card("home"),
-        {"title": "Sleep", "detail": "end the day"},
+        {
+            "title": "Sleep",
+            "detail": "end the day" if _state.travelled else "row a trip first",
+            "enabled": _state.travelled
+        },
         {"title": "Row out", "detail": ""},
     ]
     var actions: Array[Callable] = [
