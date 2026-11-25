@@ -113,7 +113,7 @@ static func joints(center: float, height: float, pose: Dictionary) -> Dictionary
 ## hands up and pointing; the rower rows by reaching and pulling, upright,
 ## leans to steer by tilting the holding pose, and the poses which are not
 ## painted fall back on the nearest ones.
-static func painted_pose(pose: Dictionary, look: int) -> Array:
+static func painted_pose(pose: Dictionary, look: int) -> PaintedPose:
     var lean := float(pose.get("lean", 0.0))
     var up := float(pose.get("up", 0.0))
     var name := "rest"
@@ -135,8 +135,8 @@ static func painted_pose(pose: Dictionary, look: int) -> Array:
     var who: String = NAMES[look]
     for fallback in [name] + FALLBACKS.get(name, []):
         if Pictures.of("how_to", "%s_%s" % [who, fallback]) != null:
-            return ["%s_%s" % [who, fallback], tilt]
-    return ["", 0.0]
+            return PaintedPose.new("%s_%s" % [who, fallback], tilt)
+    return PaintedPose.new("", 0.0)
 
 
 ## Draw the painted rower (see [method painted_pose]), her lap at the bottom
@@ -145,11 +145,11 @@ static func _draw_painted(
     canvas: CanvasItem, center: float, height: float, pose: Dictionary, look: int
 ) -> bool:
     var chosen := painted_pose(pose, look)
-    if chosen[0] == "":
+    if chosen.picture == "":
         return false
-    var picture := Pictures.of("how_to", chosen[0])
+    var picture := Pictures.of("how_to", chosen.picture)
     var size := Vector2(picture.get_size()) * (height * PAINTED_SCALE)
-    var angle := deg_to_rad(TILT_DEGREES) * float(chosen[1])
+    var angle := deg_to_rad(TILT_DEGREES) * chosen.tilt
     # NOTE (mristin):
     # The frame cuts the rower at her lap; leaning, she turns about the lap,
     # and goes down by as much as the corners of the cut rise, so that the cut
@@ -214,3 +214,14 @@ static func draw(
     canvas.draw_arc(
         head + Vector2(0, 0.02) * unit, 0.035 * unit, 0.3, PI - 0.3, 10, INK, 0.006 * unit
     )
+
+
+## A painted pose (see [method painted_pose]): the name of its picture (empty
+## if none is painted), and how far it leans (-1 to 1).
+class PaintedPose:
+    var picture: String
+    var tilt: float
+
+    func _init(name: String, lean: float) -> void:
+        picture = name
+        tilt = lean

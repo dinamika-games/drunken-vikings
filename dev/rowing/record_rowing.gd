@@ -41,33 +41,66 @@ const _RED := Color("ff5a4f")
 ## The colors of the players.
 const _PLAYER_COLORS := [Color("f2c14e"), Color("5ec8f2")]
 
-## The signals to graph, and the least range of each graph, so that noise
-## does not look like a movement: [name, least range, what it shows].
-const _GRAPHS := [
-    ["torso_up", 0.5, "shoulders above hips"],
-    ["head_y", 0.1, "head down in picture"],
-    ["hands_up", 0.5, "hands above shoulders"],
-    ["reach_left", 0.5, "left wrist to shoulder"],
-    ["reach_right", 0.5, "right wrist to shoulder"],
-    ["elbow_spread", 0.5, "elbows apart"],
-    ["hands_side", 0.5, "hands to the right"],
-    ["torso_lean", 20.0, "torso lean right, deg"],
-    ["shoulder_tilt", 20.0, "shoulder tilt right, deg"],
-    ["shoulder_width", 0.3, "shoulder width (twist)"],
-    ["head_side", 0.3, "nose to the right"],
-]
+
+## A graph of a signal: its [member name], the [member least] range of the
+## graph, so that noise does not look like a movement, and the [member label]
+## telling what it shows.
+class _Graph:
+    var name: String
+    var least: float
+    var label: String
+
+    func _init(signal_name: String, least_range: float, shows: String) -> void:
+        name = signal_name
+        least = least_range
+        label = shows
+
+
+## The signals of a player at the time [member at], in seconds.
+class _Sample:
+    var at: float
+    var values: PackedFloat32Array
+
+    func _init(time: float, signals: PackedFloat32Array) -> void:
+        at = time
+        values = signals
+
+
+## A call (e.g., the mark "space") at the time [member at], in seconds.
+class _Call:
+    var at: float
+    var name: String
+
+    func _init(time: float, call_name: String) -> void:
+        at = time
+        name = call_name
 
 
 ## The signals of the players over the last seconds, one graph per signal.
 class SignalGraphs:
     extends Control
 
+    ## The signals to graph.
+    var graphs: Array[_Graph] = [
+        _Graph.new("torso_up", 0.5, "shoulders above hips"),
+        _Graph.new("head_y", 0.1, "head down in picture"),
+        _Graph.new("hands_up", 0.5, "hands above shoulders"),
+        _Graph.new("reach_left", 0.5, "left wrist to shoulder"),
+        _Graph.new("reach_right", 0.5, "right wrist to shoulder"),
+        _Graph.new("elbow_spread", 0.5, "elbows apart"),
+        _Graph.new("hands_side", 0.5, "hands to the right"),
+        _Graph.new("torso_lean", 20.0, "torso lean right, deg"),
+        _Graph.new("shoulder_tilt", 20.0, "shoulder tilt right, deg"),
+        _Graph.new("shoulder_width", 0.3, "shoulder width (twist)"),
+        _Graph.new("head_side", 0.3, "nose to the right"),
+    ]
+
     var service: Node
     var names: PackedStringArray
-    ## [player] -> Array of [t, PackedFloat32Array].
+    ## [player] -> Array of [_Sample].
     var history: Array = [[], []]
-    ## The calls of late: Array of [t, name].
-    var calls: Array = []
+    ## The calls of late.
+    var calls: Array[_Call] = []
 
     func _process(_delta: float) -> void:
         if service == null:
@@ -78,25 +111,25 @@ class SignalGraphs:
         for player in range(2):
             var samples: Array = history[player]
             if player < service.GetPlayerCount() and service.HasPlayer(player):
-                samples.append([now, service.GetSignals(player)])
-            while not samples.is_empty() and now - samples[0][0] > _HISTORY_SECONDS:
+                samples.append(_Sample.new(now, service.GetSignals(player)))
+            while not samples.is_empty() and now - (samples[0] as _Sample).at > _HISTORY_SECONDS:
                 samples.pop_front()
-        while not calls.is_empty() and now - calls[0][0] > _HISTORY_SECONDS:
+        while not calls.is_empty() and now - calls[0].at > _HISTORY_SECONDS:
             calls.pop_front()
         queue_redraw()
 
     func mark(name: String) -> void:
-        calls.append([Time.get_ticks_msec() / 1000.0, name])
+        calls.append(_Call.new(Time.get_ticks_msec() / 1000.0, name))
 
     func _draw() -> void:
         if names.is_empty():
             return
         var font := get_theme_default_font()
         var now := Time.get_ticks_msec() / 1000.0
-        var row := size.y / _GRAPHS.size()
-        for g in range(_GRAPHS.size()):
-            var graph: Array = _GRAPHS[g]
-            var index := names.find(graph[0])
+        var row := size.y / graphs.size()
+        for g in range(graphs.size()):
+            var graph := graphs[g]
+            var index := names.find(graph.name)
             if index < 0:
                 continue
             var top := g * row
@@ -109,22 +142,22 @@ class SignalGraphs:
             var low := INF
             var high := -INF
             for samples in history:
-                for sample in samples:
-                    var value: float = sample[1][index]
+                for sample: _Sample in samples:
+                    var value := sample.values[index]
                     if not is_nan(value):
                         low = minf(low, value)
                         high = maxf(high, value)
             if low == INF:
                 low = 0.0
                 high = 0.0
-            var least: float = graph[1]
+            var least := graph.least
             if high - low < least:
                 var middle := (high + low) / 2.0
                 low = middle - least / 2.0
                 high = middle + least / 2.0
 
             for call in calls:
-                var x: float = (1.0 - (now - call[0]) / _HISTORY_SECONDS) * size.x
+                var x := (1.0 - (now - call.at) / _HISTORY_SECONDS) * size.x
                 draw_line(Vector2(x, box.position.y), Vector2(x, box.end.y), Color(_RED, 0.6), 2.0)
 
             var latest := ""
@@ -132,25 +165,25 @@ class SignalGraphs:
                 var samples: Array = history[player]
                 var color: Color = _PLAYER_COLORS[player]
                 var previous := Vector2.INF
-                for sample in samples:
-                    var value: float = sample[1][index]
+                for sample: _Sample in samples:
+                    var value := sample.values[index]
                     if is_nan(value):
                         previous = Vector2.INF
                         continue
-                    var x: float = (1.0 - (now - sample[0]) / _HISTORY_SECONDS) * size.x
+                    var x := (1.0 - (now - sample.at) / _HISTORY_SECONDS) * size.x
                     var y: float = box.end.y - (value - low) / (high - low) * box.size.y
                     var point := Vector2(x, y)
                     if previous != Vector2.INF:
                         draw_line(previous, point, color, 2.5)
                     previous = point
                 if not samples.is_empty():
-                    var value: float = samples[-1][1][index]
+                    var value: float = (samples[-1] as _Sample).values[index]
                     latest += ("  %+.2f" % value) if not is_nan(value) else "  ?"
 
             draw_string(
                 font,
                 Vector2(6, top + 22),
-                "%s%s" % [graph[2], latest],
+                "%s%s" % [graph.label, latest],
                 HORIZONTAL_ALIGNMENT_LEFT,
                 -1,
                 18,

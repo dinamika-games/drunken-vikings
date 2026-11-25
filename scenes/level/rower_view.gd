@@ -96,9 +96,11 @@ const OAR_GOLD := Color("f2c14e")
 const SKIN := Color("f0c8a0")
 const BELT := Color("5a3a1e")
 
-## The looks of the rowers: [hair, hair in shadow, band, tunic].
-const YLVA := [Color("e8c25a"), Color("c9a03e"), Color("b8332a"), Color("2f6f6a")]
-const SIGRID := [Color("c9602a"), Color("a04a20"), Color("2f5f8a"), Color("7a3a6a")]
+## The colours of the rowers when they are not painted.
+static var _ylva := _Colours.new(Color("e8c25a"), Color("c9a03e"), Color("b8332a"), Color("2f6f6a"))
+static var _sigrid := _Colours.new(
+    Color("c9602a"), Color("a04a20"), Color("2f5f8a"), Color("7a3a6a")
+)
 
 ## The boat to draw.
 var boat: RowBoat
@@ -265,10 +267,10 @@ func _draw() -> void:
 
     _draw_hull()
     if pair:
-        _draw_rower(Vector2(-0.45, 0.35), [swings[0], swings[0]], YLVA, 0.8, [0])
-        _draw_rower(Vector2(0.45, 0.35), [swings[1], swings[1]], SIGRID, 0.8, [1])
+        _draw_rower(Vector2(-0.45, 0.35), [swings[0], swings[0]], _ylva, 0.8, [0])
+        _draw_rower(Vector2(0.45, 0.35), [swings[1], swings[1]], _sigrid, 0.8, [1])
     else:
-        _draw_rower(Vector2(0, 0.35), swings, YLVA, 1.0, [0, 1])
+        _draw_rower(Vector2(0, 0.35), swings, _ylva, 1.0, [0, 1])
 
 
 ## The boat, its oars and its rowers, painted.
@@ -277,7 +279,7 @@ func _draw_painted(swings: Array, golden: bool) -> void:
     var tint := Color(1.0, 0.85, 0.4) if golden else Color.WHITE
     for side in [0, 1]:
         var oar := _painted_oar(side, swings)
-        var inboard: float = oar[2]
+        var inboard := oar.inboard
         # NOTE (mristin):
         # The handle of the painted oar is at its left, the blade at its right;
         # it turns around the oarlock, its handle in the hand of the rower.
@@ -285,8 +287,8 @@ func _draw_painted(swings: Array, golden: bool) -> void:
             self,
             _pictures["oar"],
             base,
-            oar[0],
-            oar[1],
+            oar.pivot,
+            oar.angle,
             inboard + OUTBOARD,
             inboard / (inboard + OUTBOARD),
             maxf(_lift[side], _shipped[side]),
@@ -303,13 +305,13 @@ func _draw_painted(swings: Array, golden: bool) -> void:
         )
     for side in [0, 1]:
         var oar := _painted_oar(side, swings)
-        var inboard: float = oar[2]
+        var inboard := oar.inboard
         OarDrawing.draw(
             self,
             _pictures["oar"],
             base,
-            oar[0],
-            oar[1],
+            oar.pivot,
+            oar.angle,
             inboard + OUTBOARD,
             inboard / (inboard + OUTBOARD),
             maxf(_lift[side], _shipped[side]),
@@ -318,28 +320,27 @@ func _draw_painted(swings: Array, golden: bool) -> void:
         )
     draw_set_transform(Vector2.ZERO, 0.0, Vector2(SCALE, SCALE))
     for seat in _seats(swings):
-        _draw_painted_rower(seat[0], seat[1], seat[2], seat[3])
+        _draw_painted_rower(seat.who, seat.at, seat.swing, seat.size)
 
 
-## Who sits where: Array of [who, seat, swing, size] (see _draw_painted_rower).
-func _seats(swings: Array) -> Array:
+## Who sits where (see _draw_painted_rower).
+func _seats(swings: Array) -> Array[_Seat]:
     if pair:
         return [
-            ["ylva", Vector2(-0.5, SEAT_Y), float(swings[0]), 0.8],
-            ["sigrid", Vector2(0.5, SEAT_Y), float(swings[1]), 0.8],
+            _Seat.new("ylva", Vector2(-0.5, SEAT_Y), float(swings[0]), 0.8),
+            _Seat.new("sigrid", Vector2(0.5, SEAT_Y), float(swings[1]), 0.8),
         ]
-    return [["ylva", Vector2(0, SEAT_Y), (float(swings[0]) + float(swings[1])) / 2.0, 1.0]]
+    return [_Seat.new("ylva", Vector2(0, SEAT_Y), (float(swings[0]) + float(swings[1])) / 2.0, 1.0)]
 
 
-## The painted oar of the [param side] (0 left, 1 right): [its lock, its
-## angle, how long it is from the lock to the end of its handle]. The oar
-## runs from the hand of its rower through the lock.
-func _painted_oar(side: int, swings: Array) -> Array:
+## The painted oar of the [param side] (0 left, 1 right). The oar runs from
+## the hand of its rower through the lock.
+func _painted_oar(side: int, swings: Array) -> _Oar:
     var sign := -1.0 if side == 0 else 1.0
     var lock := Vector2(sign * LOCK.x, LOCK.y)
     var seats := _seats(swings)
-    var seat: Array = seats[side] if pair else seats[0]
-    var hand := _hand(seat[0], seat[1], seat[2], seat[3], side)
+    var seat := seats[side] if pair else seats[0]
+    var hand := _hand(seat.who, seat.at, seat.swing, seat.size, side)
     var out := (lock - hand).normalized()
     var angle := out.angle()
     var shipped: float = _shipped[side]
@@ -347,7 +348,7 @@ func _painted_oar(side: int, swings: Array) -> Array:
         # Pulled in: the oar lies along the hull, its blade towards the stern.
         var along := Vector2(-sign * 0.12, 1.0).angle()
         angle = lerp_angle(angle, along, smoothstep(0.0, 1.0, shipped))
-    return [lock, angle, lock.distance_to(hand) + HANDLE_PAST_HAND]
+    return _Oar.new(lock, angle, lock.distance_to(hand) + HANDLE_PAST_HAND)
 
 
 ## Where the hand of the rower [param who] holds the oar of the [param side]
@@ -431,7 +432,7 @@ func blade_position(side: int) -> Vector2:
     var sign := -1.0 if side == 0 else 1.0
     if not _pictures.is_empty():
         var oar := _painted_oar(side, [swing_of(0), swing_of(1)])
-        return to_global((oar[0] + Vector2.RIGHT.rotated(oar[1]) * OUTBOARD * 0.9) * SCALE)
+        return to_global((oar.pivot + Vector2.RIGHT.rotated(oar.angle) * OUTBOARD * 0.9) * SCALE)
     var out := Vector2(sign, 0).rotated(sign * swing_of(side) * 0.6)
     return to_global((Vector2(sign * 1.0, 0.2) + out * 4.1) * SCALE)
 
@@ -484,11 +485,13 @@ func _draw_hull() -> void:
 
 ## A rower at [param seat], facing the stern (down), pulling the oars of the
 ## [param sides] (each with its swing in [param swings]); the pull leans her
-## back towards the bow. [param looks] are her colors (see [constant YLVA]).
-func _draw_rower(seat: Vector2, swings: Array, looks: Array, size: float, sides: Array) -> void:
+## back towards the bow, in her [param colours].
+func _draw_rower(
+    seat: Vector2, swings: Array, colours: _Colours, size: float, sides: Array
+) -> void:
     var swing: float = (swings[0] + swings[1]) / 2.0
     var body := seat + Vector2(0, -0.35 * swing)
-    var tunic: Color = looks[3]
+    var tunic := colours.tunic
     for side in sides:
         var sign := -1.0 if side == 0 else 1.0
         var shoulder := body + Vector2(sign * 0.45 * size, 0)
@@ -506,9 +509,9 @@ func _draw_rower(seat: Vector2, swings: Array, looks: Array, size: float, sides:
     # Her head, seen from above: her hair, a band, and two braids down her
     # back (towards the bow, since she faces the stern).
     var head := body + Vector2(0, -0.05)
-    var hair: Color = looks[0]
-    var shadow: Color = looks[1]
-    var band: Color = looks[2]
+    var hair := colours.hair
+    var shadow := colours.shadow
+    var band := colours.band
     for sign in [-1.0, 1.0]:
         var from := head + Vector2(sign * 0.22, -0.2) * size
         var sway := 0.08 * sin(Time.get_ticks_msec() / 400.0 + sign)
@@ -520,3 +523,47 @@ func _draw_rower(seat: Vector2, swings: Array, looks: Array, size: float, sides:
     draw_circle(head, 0.4 * size, hair)
     draw_arc(head, 0.4 * size, 0.0, TAU, 24, band, 0.08 * size)
     draw_circle(head + Vector2(0, 0.22 * size), 0.17 * size, SKIN)
+
+
+## A painted oar: where it turns (its lock), its angle, and how long it is
+## from the lock to the end of its handle.
+class _Oar:
+    var pivot: Vector2
+    var angle: float
+    var inboard: float
+
+    func _init(lock: Vector2, turned: float, handle: float) -> void:
+        pivot = lock
+        angle = turned
+        inboard = handle
+
+
+## A painted rower on her seat: who she is ("ylva" or "sigrid", see
+## _rower_picture), where she sits, how far she swings (-1 to 1), and how
+## large she is drawn.
+class _Seat:
+    var who: String
+    var at: Vector2
+    var swing: float
+    var size: float
+
+    func _init(rower: String, seat: Vector2, swinging: float, large: float) -> void:
+        who = rower
+        at = seat
+        swing = swinging
+        size = large
+
+
+## The colours of a rower when she is not painted: her hair, her hair in
+## shadow, her band and her tunic.
+class _Colours:
+    var hair: Color
+    var shadow: Color
+    var band: Color
+    var tunic: Color
+
+    func _init(hairs: Color, shaded: Color, headband: Color, dress: Color) -> void:
+        hair = hairs
+        shadow = shaded
+        band = headband
+        tunic = dress

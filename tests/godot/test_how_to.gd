@@ -162,7 +162,7 @@ func _check_inside(how: HowTo, data: Dictionary, t: float, who: int, where: Stri
     var at := HowToFigure.joints(center, height, pose)
     if Pictures.of("how_to", "ylva_rest") != null:
         _check(
-            HowToFigure.painted_pose(pose, who)[0] != "",
+            HowToFigure.painted_pose(pose, who).picture != "",
             "%s: the rower %d is painted in the pose %s" % [where, who, pose]
         )
     var points: Array = [at["head"] - Vector2(0, HowToFigure.HEAD * height)]

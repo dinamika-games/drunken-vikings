@@ -174,13 +174,15 @@ func clear_rects() -> Array[Rect2]:
         # NOTE (mristin):
         # Grandmother Åsa walks along the bottom of the fields.
         result.append(Rect2(FIELDS.position.x, 700.0, FIELDS.size.x, 64.0))
-    var decors := [["store", _STORE_AT, 70.0], ["cat", _CAT_AT, 46.0]]
+    var decors: Array[_Decor] = [
+        _Decor.new("store", _STORE_AT, 70.0), _Decor.new("cat", _CAT_AT, 46.0)
+    ]
     if _birds_come():
-        decors.append(["scarecrow", _scarecrow_at(), 90.0])
+        decors.append(_Decor.new("scarecrow", _scarecrow_at(), 90.0))
     for decor in decors:
-        if Pictures.of("farm_view", decor[0]) != null:
-            var half := Vector2(decor[2], decor[2]) / 2.0
-            result.append(Rect2(decor[1] - half, half * 2.0))
+        if Pictures.of("farm_view", decor.picture) != null:
+            var half := Vector2(decor.size, decor.size) / 2.0
+            result.append(Rect2(decor.at - half, half * 2.0))
     return result
 
 
@@ -395,3 +397,16 @@ func _draw_fence(rect: Rect2) -> void:
 func _outlined(font: Font, at: Vector2, text: String, width: float, font_size: int) -> void:
     draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_CENTER, width, font_size, 8, _INK)
     draw_string(font, at, text, HORIZONTAL_ALIGNMENT_CENTER, width, font_size, _PAPER)
+
+
+## A thing about the farm (see FarmView._draw_decor): its picture on the
+## sheet "farm_view", where it stands, and how large it is drawn.
+class _Decor:
+    var picture: String
+    var at: Vector2
+    var size: float
+
+    func _init(painted: String, stands_at: Vector2, drawn: float) -> void:
+        picture = painted
+        at = stands_at
+        size = drawn

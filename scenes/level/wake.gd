@@ -26,8 +26,8 @@ const FOAM := Color(0.92, 0.97, 1.0)
 var width := 2.0
 var spread := 6.0
 
-## The points of the trail: Array of [position, time, strength (0..1)].
-var _points: Array = []
+## The points of the trail, the oldest first.
+var _points: Array[_Point] = []
 var _head := Vector2.INF
 var _head_strength := 0.0
 var _time := 0.0
@@ -39,9 +39,9 @@ func follow(at: Vector2, delta: float, speed := FULL_SPEED) -> void:
     _time += delta
     _head = at
     _head_strength = clampf(speed / FULL_SPEED, 0.0, 1.0)
-    if _points.is_empty() or (_points[-1][0] as Vector2).distance_to(at) >= SPACING:
-        _points.append([at, _time, _head_strength])
-    while not _points.is_empty() and _time - float(_points[0][1]) > SECONDS:
+    if _points.is_empty() or _points[-1].at.distance_to(at) >= SPACING:
+        _points.append(_Point.new(at, _time, _head_strength))
+    while not _points.is_empty() and _time - _points[0].time > SECONDS:
         _points.pop_front()
     queue_redraw()
 
@@ -55,9 +55,9 @@ func _draw() -> void:
     var ages := PackedFloat32Array()
     var strengths := PackedFloat32Array()
     for point in _points:
-        line.append(point[0])
-        ages.append(clampf((_time - float(point[1])) / SECONDS, 0.0, 1.0))
-        strengths.append(point[2])
+        line.append(point.at)
+        ages.append(clampf((_time - point.time) / SECONDS, 0.0, 1.0))
+        strengths.append(point.strength)
     if _head != Vector2.INF and line[-1].distance_to(_head) > 0.05:
         line.append(_head)
         ages.append(0.0)
@@ -135,3 +135,16 @@ func _side(line: PackedVector2Array, i: int, before: Vector2) -> Vector2:
     if before != Vector2.ZERO and side.dot(before) < 0.0:
         side = -side
     return side
+
+
+## A point of the trail: where the boat was, when (see Wake._time), and how
+## bright its trail is there (0 to 1).
+class _Point:
+    var at: Vector2
+    var time: float
+    var strength: float
+
+    func _init(where: Vector2, when: float, bright: float) -> void:
+        at = where
+        time = when
+        strength = bright

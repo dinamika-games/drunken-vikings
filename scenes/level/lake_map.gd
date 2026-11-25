@@ -194,17 +194,16 @@ var _shores := Shores.new([])
 ## The length of the route up to each of its points, in metres.
 var _route_lengths := PackedFloat32Array()
 
-var _trees: Array = []
+var _trees: Array[LakeGrowth.GrowingTree] = []
 
-## The details on the grass: Array of [at, picture, length, angle, whether on
-## an island].
-var _details: Array = []
+## The details on the grass.
+var _details: Array[LakeGrowth.GrassDetail] = []
 
 ## The shader of the grass on the land and the islands, or null.
 var _ground: ShaderMaterial
 
-## The reeds and the water lilies by the shores: Array of [at, picture, size, angle].
-var _water_plants: Array = []
+## The reeds and the water lilies by the shores.
+var _water_plants: Array[LakeGrowth.WaterPlant] = []
 var _water_nodes: Array[Node2D] = []
 var _above: Node2D
 
@@ -466,7 +465,9 @@ func _plant_trees() -> void:
         if by_houses or p.distance_to(start["at"]) < 70.0 or p.distance_to(goal["at"]) < 70.0:
             continue
         _trees.append(
-            [p, rng.randf_range(4.0, 8.0), rng.randf() < 0.5, _pick_tree(rng), rng.randf() * TAU]
+            LakeGrowth.GrowingTree.new(
+                p, rng.randf_range(4.0, 8.0), rng.randf() < 0.5, _pick_tree(rng), rng.randf() * TAU
+            )
         )
 
 
@@ -510,12 +511,12 @@ func _plant_in_water(rng: RandomNumberGenerator) -> void:
                 if not is_water(at):
                     continue
                 _water_plants.append(
-                    [
+                    LakeGrowth.WaterPlant.new(
                         at,
                         "reeds" if reeds else "lilies",
                         rng.randf_range(9.0, 14.0) if reeds else rng.randf_range(7.0, 10.0),
                         rng.randf() * TAU
-                    ]
+                    )
                 )
 
 
@@ -547,7 +548,9 @@ func _scatter_details() -> void:
             pick -= int(GRASS_DETAILS[name][0])
             if pick < 0:
                 var length: float = GRASS_DETAILS[name][1] * rng.randf_range(1.2, 1.9)
-                _details.append([p, name, length, rng.randf() * TAU, _on_island(p)])
+                _details.append(
+                    LakeGrowth.GrassDetail.new(p, name, length, rng.randf() * TAU, _on_island(p))
+                )
                 break
 
 
@@ -563,11 +566,11 @@ func _on_island(point: Vector2) -> bool:
 ## ([param islands]), or those of the land (see LandDetails and IslandLand).
 func draw_details(canvas: CanvasItem, islands := false) -> void:
     for detail in _details:
-        if bool(detail[4]) != islands:
+        if detail.island != islands:
             continue
-        var picture := Pictures.of("grass_details", detail[1])
+        var picture := Pictures.of("grass_details", detail.picture)
         if picture != null:
-            Pictures.draw(canvas, picture, detail[0], detail[2], detail[3])
+            Pictures.draw(canvas, picture, detail.at, detail.length, detail.angle)
 
 
 ## A painted tree or plant, by how often each grows.
@@ -698,20 +701,20 @@ func _draw() -> void:
 ## the villages.
 func draw_above(canvas: CanvasItem) -> void:
     for plant in _water_plants:
-        var picture := Pictures.of("nature", plant[1])
+        var picture := Pictures.of("nature", plant.picture)
         if picture != null:
-            Pictures.draw(canvas, picture, plant[0], plant[2], plant[3])
+            Pictures.draw(canvas, picture, plant.at, plant.size, plant.angle)
     for tree in _trees:
-        var at: Vector2 = tree[0]
-        var radius: float = tree[1]
-        var key: String = tree[3]
+        var at := tree.at
+        var radius := tree.radius
+        var key := tree.picture
         var painted := Pictures.of(key.get_slice("/", 0), key.get_slice("/", 1))
         if painted != null:
             var scale := BUSH_SCALE if key.begins_with("bushes/") else 1.0
-            Pictures.draw(canvas, painted, at, radius * 2.6 * scale, tree[4])
+            Pictures.draw(canvas, painted, at, radius * 2.6 * scale, tree.angle)
             continue
         canvas.draw_circle(at + Vector2(1.5, 1.5), radius, FOREST_DARK)
-        canvas.draw_circle(at, radius, FOREST if tree[2] else FOREST.lightened(0.08))
+        canvas.draw_circle(at, radius, FOREST if tree.dark else FOREST.lightened(0.08))
     if places.is_empty():
         _draw_village(canvas, start["at"])
         _draw_village(canvas, goal["at"])

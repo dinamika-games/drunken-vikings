@@ -221,7 +221,7 @@ func _observe_hands(
     var width := 0.25 * size.x
     if p[Kp.LEFT_SHOULDER] != null and p[Kp.RIGHT_SHOULDER] != null:
         width = (p[Kp.LEFT_SHOULDER] as Vector2).distance_to(p[Kp.RIGHT_SHOULDER])
-    var pairs: Array = []
+    var pairs: Array[HandCursor.NearPair] = []
     for side in [0, 1]:
         var near: Variant = p[Kp.LEFT_WRIST + side]
         var reach := width * HAND_REACH
@@ -233,14 +233,10 @@ func _observe_hands(
         for i in range(hands.size()):
             var distance := (hands[i] * size).distance_to(near)
             if distance <= reach:
-                pairs.append([distance, side, i])
-    pairs.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+                pairs.append(HandCursor.NearPair.new(distance, side, i))
     var found: Array = [null, null]
-    var taken := {}
-    for pair in pairs:
-        if found[pair[1]] == null and not taken.has(pair[2]):
-            found[pair[1]] = hands[pair[2]] * size
-            taken[pair[2]] = true
+    for pair in HandCursor.NearPair.nearest_first(pairs):
+        found[pair.one] = hands[pair.other] * size
     for side in [0, 1]:
         if found[side] != null:
             var glided: Variant = _hands[player][side]

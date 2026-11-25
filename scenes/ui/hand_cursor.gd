@@ -180,21 +180,16 @@ func _follow_hands() -> void:
     for hand in _service.GetHands():
         if hand.y <= lowest:
             found.append(hand)
-    var pairs := []
+    var pairs: Array[NearPair] = []
     for h in _hands.size():
         for f in found.size():
             var distance := _hands[h].raw.distance_to(found[f])
             if distance <= _SAME_HAND:
-                pairs.append([distance, h, f])
-    pairs.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
-    var taken_hands := {}
+                pairs.append(NearPair.new(distance, h, f))
     var taken_found := {}
-    for pair in pairs:
-        if taken_hands.has(pair[1]) or taken_found.has(pair[2]):
-            continue
-        taken_hands[pair[1]] = true
-        taken_found[pair[2]] = true
-        _hands[pair[1]].see(found[pair[2]], now)
+    for pair in NearPair.nearest_first(pairs):
+        taken_found[pair.other] = true
+        _hands[pair.one].see(found[pair.other], now)
     for f in found.size():
         if not taken_found.has(f):
             var born := Hand.new()
@@ -330,3 +325,33 @@ class OneEuro:
     func _alpha(cutoff: float, dt: float) -> float:
         var tau := 1.0 / (TAU * cutoff)
         return 1.0 / (1.0 + tau / dt)
+
+
+## Something [member one] near to something [member other] (e.g., a hand
+## followed before and a hand found now), by their indices, and how far apart
+## they are. Match them, nearest first, with [method nearest_first].
+class NearPair:
+    extends RefCounted
+    var distance: float
+    var one: int
+    var other: int
+
+    func _init(apart: float, one_index: int, other_index: int) -> void:
+        distance = apart
+        one = one_index
+        other = other_index
+
+    ## Pick of the [param pairs] the nearest first, so that each one and each
+    ## other is in one pair at most.
+    static func nearest_first(pairs: Array[NearPair]) -> Array[NearPair]:
+        pairs.sort_custom(func(a: NearPair, b: NearPair) -> bool: return a.distance < b.distance)
+        var picked: Array[NearPair] = []
+        var taken_ones := {}
+        var taken_others := {}
+        for pair in pairs:
+            if taken_ones.has(pair.one) or taken_others.has(pair.other):
+                continue
+            taken_ones[pair.one] = true
+            taken_others[pair.other] = true
+            picked.append(pair)
+        return picked

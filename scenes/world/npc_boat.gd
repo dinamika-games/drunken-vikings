@@ -296,7 +296,7 @@ func _keep_clear(direct: Vector2, speed: float) -> Vector2:
     var now := gap_to_players()
     var best := direct * speed
     var best_look := _look(best)
-    if is_inf(best_look[0]):
+    if is_inf(best_look.conflict):
         _swerve_side = 0.0
         return best
     var side := _swerve_side
@@ -328,13 +328,13 @@ func _keep_clear(direct: Vector2, speed: float) -> Vector2:
         # The course kept counts as further clear only while it sails no
         # closer than the boat is now; otherwise, the bonus would let the
         # skipper sail into the players' boat once too close beside it.
-        if velocity == kept and look[1] >= minf(now, CLEARANCE):
-            look[1] += KEEP_BONUS
-        if not is_inf(look[0]) and not _better(look, best_look):
+        if velocity == kept and look.closest >= minf(now, CLEARANCE):
+            look.closest += KEEP_BONUS
+        if not is_inf(look.conflict) and not look.better(best_look):
             continue
         if velocity != Vector2.ZERO and not _open(velocity.normalized(), SWERVE_LOOK):
             continue
-        if is_inf(look[0]):
+        if is_inf(look.conflict):
             _swerve_side = signf(direct.cross(velocity)) if velocity != Vector2.ZERO else side
             return velocity
         best = velocity
@@ -466,16 +466,13 @@ func _gap_along(middle: Vector2, ahead: Vector2, theirs: PackedVector2Array) -> 
     return closest[0].distance_to(closest[1])
 
 
-## What the skipper sees ahead, going at [param velocity], as
-## [in how many seconds the boat comes closer to the players' boat than
-## [constant CLEARANCE] (0 if it is now, INF if not within
-## [constant LOOK_AHEAD]), the closest it comes after now, the gap at the end].
+## What the skipper sees ahead, going at [param velocity] (see _Look).
 ##
 ## Once already closer than [constant CLEARANCE], the skipper looks only at
 ## where the players' boat lies now, not where it glides: else it would pass
 ## behind the gliding boat, through where the boat lies, which it must
 ## never sail into (the boat may stop any time).
-func _look(velocity: Vector2) -> Array:
+func _look(velocity: Vector2) -> _Look:
     var conflict := INF
     var closest := INF
     var gap := INF
@@ -488,18 +485,7 @@ func _look(velocity: Vector2) -> Array:
         if seconds > 0.0:
             closest = minf(closest, gap)
         seconds += LOOK_STEP
-    return [conflict, closest, gap]
-
-
-## Whether the [param look] (see [method _look]) keeps clearer than the
-## [param other]: it comes too close later; or, as late, it never comes as
-## close; or it ends further away.
-static func _better(look: Array, other: Array) -> bool:
-    if look[0] != other[0]:
-        return look[0] > other[0]
-    if absf(look[1] - other[1]) > 0.01:
-        return look[1] > other[1]
-    return look[2] > other[2]
+    return _Look.new(conflict, closest, gap)
 
 
 func _set_out() -> void:
@@ -595,3 +581,29 @@ func _draw_bubble() -> void:
             return
         draw_circle(Vector2(2.4, -3.4 + bob), 0.7, Color(1, 1, 1, 0.9))
         draw_circle(Vector2(1.8, -2.7 + bob), 0.25, Color(1, 1, 1, 0.9))
+
+
+## What the skipper sees ahead on a way (see [method _look]): in how many
+## seconds the boat comes closer to the players' boat than
+## [constant CLEARANCE] (0 if it is now, INF if not within
+## [constant LOOK_AHEAD]), the closest it comes after now, and the gap at
+## the end.
+class _Look:
+    var conflict: float
+    var closest: float
+    var end_gap: float
+
+    func _init(too_close_in: float, closest_after_now: float, gap_at_end: float) -> void:
+        conflict = too_close_in
+        closest = closest_after_now
+        end_gap = gap_at_end
+
+    ## Whether this look keeps clearer than the [param other]: it comes too
+    ## close later; or, as late, it never comes as close; or it ends further
+    ## away.
+    func better(other: _Look) -> bool:
+        if conflict != other.conflict:
+            return conflict > other.conflict
+        if absf(closest - other.closest) > 0.01:
+            return closest > other.closest
+        return end_gap > other.end_gap

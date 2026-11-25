@@ -111,12 +111,12 @@ func _draw() -> void:
         for hole in polygon["holes"]:
             draw_colored_polygon(hole, _LAND)
 
-    # Where the tasks lead: Array of [place, title].
-    var leads: Array = []
+    # Where the tasks lead.
+    var leads: Array[_Lead] = []
     for entry in state.missions.active:
         var target: String = state.missions.target(state, entry["id"])
         if target != "":
-            leads.append([target, state.missions.missions[entry["id"]]["title"]])
+            leads.append(_Lead.new(target, state.missions.missions[entry["id"]]["title"]))
             var ring := _at(map.place(target)["jetty"])
             var pulse := 1.0 + 0.12 * sin(Time.get_ticks_msec() / 200.0)
             draw_arc(ring, 22.0 * pulse, 0.0, TAU, 32, _INK, 8.0)
@@ -175,7 +175,7 @@ func _draw() -> void:
         draw_multiline_string(
             font,
             Vector2(x + 44, y),
-            "%s: to %s" % [lead[1], state.place_name(lead[0])],
+            "%s: to %s" % [lead.title, state.place_name(lead.place)],
             HORIZONTAL_ALIGNMENT_LEFT,
             _SIDE - 210,
             28,
@@ -241,3 +241,13 @@ func _draw_title(state: Node) -> void:
     var serpent := Pictures.of("chart", "serpent")
     if serpent != null:
         Pictures.draw(self, serpent, Vector2(_SIDE / 2.0, 900), 300.0)
+
+
+## Where a task leads: the place, and the title of the task.
+class _Lead:
+    var place: String
+    var title: String
+
+    func _init(target: String, task: String) -> void:
+        place = target
+        title = task

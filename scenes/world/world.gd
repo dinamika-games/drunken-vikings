@@ -263,19 +263,19 @@ func _add_shipyard() -> void:
     var toward := (Vector2(place["jetty"]) - at).normalized()
     var side := toward.orthogonal()
     # The bow of the ship on the slipway points to the water.
-    var things := [
-        ["slipway", at + toward * 8.0 + side * 24.0, toward.angle() + PI / 2.0, 30.0],
-        ["timber", at + toward * 4.0 - side * 26.0, toward.angle() - PI / 2.0, 22.0],
+    var things: Array[_YardThing] = [
+        _YardThing.new("slipway", at + toward * 8.0 + side * 24.0, toward.angle() + PI / 2.0, 30.0),
+        _YardThing.new("timber", at + toward * 4.0 - side * 26.0, toward.angle() - PI / 2.0, 22.0),
     ]
     for thing in things:
-        var picture := Pictures.of("ships", thing[0])
+        var picture := Pictures.of("ships", thing.picture)
         if picture == null:
             continue
         var sprite := Sprite2D.new()
         sprite.texture = picture
-        sprite.position = thing[1]
-        sprite.rotation = thing[2]
-        sprite.scale = Vector2.ONE * (thing[3] / maxf(picture.get_width(), picture.get_height()))
+        sprite.position = thing.at
+        sprite.rotation = thing.angle
+        sprite.scale = Vector2.ONE * (thing.size / maxf(picture.get_width(), picture.get_height()))
         add_child(sprite)
 
 
@@ -836,3 +836,19 @@ func _autopilot_choose(delta: float) -> void:
                 continue
             _panel.choose(index)
             return
+
+
+## A thing on the shore of the shipyard (see _add_shipyard): its picture
+## on the sheet "ships", where it lies, how it is turned, and how large it is
+## drawn, in metres.
+class _YardThing:
+    var picture: String
+    var at: Vector2
+    var angle: float
+    var size: float
+
+    func _init(painted: String, lies_at: Vector2, turned: float, drawn: float) -> void:
+        picture = painted
+        at = lies_at
+        angle = turned
+        size = drawn
