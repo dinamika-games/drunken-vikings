@@ -18,7 +18,7 @@
     "madder": {
       "name": "Madder",
       "color": "b8332a",
-      "one": "the madder roots",
+      "counted": "the madder roots",
       "picture": ["items", "madder"]
     }
   },

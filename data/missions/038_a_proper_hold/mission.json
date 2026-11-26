@@ -18,8 +18,7 @@
     "plank": {
       "name": "Plank",
       "color": "c8a878",
-      "one": "a plank",
-      "many": "planks",
+      "counted": "{count|a plank|{count} planks}",
       "picture": ["items", "plank"]
     }
   },

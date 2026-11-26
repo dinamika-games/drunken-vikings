@@ -18,7 +18,7 @@
     "cub": {
       "name": "Bear cub",
       "color": "6a4320",
-      "one": "the bear cub",
+      "counted": "the bear cub",
       "picture": ["items", "bear_cub"]
     }
   },

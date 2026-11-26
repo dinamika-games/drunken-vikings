@@ -16,13 +16,13 @@
     "letter": {
       "name": "Letter",
       "color": "f1e6cc",
-      "one": "the letter",
+      "counted": "the letter",
       "picture": ["items", "letter"]
     },
     "answer": {
       "name": "Answer",
       "color": "f1e6cc",
-      "one": "the answer",
+      "counted": "the answer",
       "picture": ["items", "rune_stick"]
     }
   },

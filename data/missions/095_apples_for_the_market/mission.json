@@ -18,8 +18,7 @@
     "apples": {
       "name": "Apples",
       "color": "b8332a",
-      "one": "a basket of apples",
-      "many": "baskets of apples",
+      "counted": "{count|a basket of apples|{count} baskets of apples}",
       "picture": ["treats", "apple"]
     }
   },

@@ -16,7 +16,7 @@
     "ring": {
       "name": "Ring",
       "color": "d8d8d0",
-      "one": "the ring",
+      "counted": "the ring",
       "picture": ["items", "ring"]
     }
   },

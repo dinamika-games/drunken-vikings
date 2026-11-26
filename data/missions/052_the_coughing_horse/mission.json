@@ -17,7 +17,7 @@
       "name": "Syrup",
       "color": "e8a830",
       "picture": ["items", "syrup"],
-      "one": "the syrup"
+      "counted": "the syrup"
     }
   },
   "steps": [

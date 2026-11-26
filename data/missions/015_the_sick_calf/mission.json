@@ -17,12 +17,12 @@
       "name": "Chamomile",
       "color": "f2e48a",
       "picture": ["items", "chamomile"],
-      "one": "the chamomile"
+      "counted": "the chamomile"
     },
     "stone": {
       "name": "Hot stone",
       "color": "8a8070",
-      "one": "the hot stone",
+      "counted": "the hot stone",
       "picture": ["items", "hot_stone"]
     }
   },

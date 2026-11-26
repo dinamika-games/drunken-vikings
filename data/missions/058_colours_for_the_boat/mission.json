@@ -17,8 +17,7 @@
     "paint": {
       "name": "Paint",
       "color": "b8332a",
-      "one": "a pot of paint",
-      "many": "pots of paint",
+      "counted": "{count|a pot of paint|{count} pots of paint}",
       "picture": ["items", "paint"]
     }
   },

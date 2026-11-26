@@ -18,7 +18,7 @@
       "name": "Thyme",
       "color": "6a9a4a",
       "picture": ["items", "thyme"],
-      "one": "the bundle of thyme"
+      "counted": "the bundle of thyme"
     }
   },
   "steps": [

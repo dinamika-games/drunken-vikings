@@ -18,8 +18,7 @@
       "name": "Fish",
       "color": "9aa6b0",
       "picture": ["goods", "fish"],
-      "one": "a bundle of fish",
-      "many": "bundles of fish"
+      "counted": "{count|a bundle of fish|{count} bundles of fish}"
     }
   },
   "steps": [

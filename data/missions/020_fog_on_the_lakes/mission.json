@@ -17,8 +17,7 @@
     "child": {
       "name": "Child",
       "color": "e8c25a",
-      "one": "a child",
-      "many": "children",
+      "counted": "{count|a child|{count} children}",
       "picture": ["faces", "children"]
     }
   },

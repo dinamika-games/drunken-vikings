@@ -17,7 +17,7 @@
     "sven": {
       "name": "Sven",
       "color": "a04a20",
-      "one": "Uncle Sven",
+      "counted": "Uncle Sven",
       "picture": ["faces", "sven"]
     }
   },

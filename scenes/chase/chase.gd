@@ -375,13 +375,13 @@ func _check_outcome() -> void:
         print("Escaped to %s in %.0f s" % [_target["name"], _elapsed])
         Audio.play("jingle")
         _show_end(
-            "You made it!",
-            (
+            Grammar.text("You made it!"),
+            Grammar.text(
                 (
-                    "You reached %s before the pirates! The people of %s chase the pirates "
-                    + "away, and give you %d silver."
-                )
-                % [_target["name"], _target["name"], REWARD]
+                    "You reached {place} before the pirates! The people of {place} chase the "
+                    + "pirates away, and give you {silver} silver."
+                ),
+                {"place": _target["name"], "silver": REWARD}
             )
         )
     elif _elapsed > HEAD_START and _boat.position.distance_to(_pirates.position) < CATCH_DISTANCE:
@@ -391,19 +391,21 @@ func _check_outcome() -> void:
         print("Caught after %.0f s" % _elapsed)
         Audio.play("pirates_laugh")
         _show_end(
-            "Caught!",
-            (
-                "The pirates caught you! They laugh, kiss the prow of your boat, "
-                + "and sail away. Try again?"
+            Grammar.text("Caught!"),
+            Grammar.text(
+                (
+                    "The pirates caught you! They laugh, kiss the prow of your boat, "
+                    + "and sail away. Try again?"
+                )
             )
         )
 
 
 func _show_end(title: String, text: String) -> void:
     var cards: Array = [
-        {"title": "Another chase!", "detail": ""},
-        {"title": "To the start", "detail": "other games"},
-        {"title": "Stop for today", "detail": "see you!"},
+        ChoicePanel.card("Another chase!"),
+        ChoicePanel.card("To the start", ChoicePanel.detail("other games")),
+        ChoicePanel.card("Stop for today", ChoicePanel.detail("see you!")),
     ]
     _actions = [get_tree().reload_current_scene, _to_start, _quit]
     _panel.show_cards(
@@ -424,16 +426,21 @@ func _update_hud() -> void:
     var gap := _boat.position.distance_to(_pirates.position)
     var to_go := _boat.position.distance_to(_target["jetty"])
     if _outcome != "":
-        _banner.text = "You made it!" if _outcome == "escaped" else "Caught!"
+        _banner.text = (
+            Grammar.text("You made it!") if _outcome == "escaped" else Grammar.text("Caught!")
+        )
         return
     if _elapsed < HEAD_START:
-        _banner.text = "Pirates! Row to %s before they catch you!" % _target["name"]
+        _banner.text = Grammar.text(
+            "Pirates! Row to {place} before they catch you!", {"place": _target["name"]}
+        )
     elif gap < 80.0:
-        _banner.text = "The pirates are right behind you! Row, row!"
+        _banner.text = Grammar.text("The pirates are right behind you! Row, row!")
     else:
-        _banner.text = "Row to %s!" % _target["name"]
-    _info.text = (
-        "%s: %d m to go.   The pirates: %d m behind you." % [_target["name"], int(to_go), int(gap)]
+        _banner.text = Grammar.text("Row to {place}!", {"place": _target["name"]})
+    _info.text = Grammar.text(
+        "{place}: {metres} m to go.   The pirates: {gap} m behind you.",
+        {"place": _target["name"], "metres": int(to_go), "gap": int(gap)}
     )
 
 

@@ -164,6 +164,37 @@ The script exports the presets, adds `LICENSE`, `THIRD_PARTY_NOTICES.md` and the
 Export with the script rather than from the editor, or the Windows package has no camera.
 It fails if Godot reports an error (Godot exits with zero even if it fails to build the C# part) or a package misses ONNX Runtime.
 
+## Translations
+
+The game is written in English and translated to Arabic (`ar`), Danish (`da`), German (`de`), Spanish (`es`), French (`fr`), Hindi (`hi`), Italian (`it`), Japanese (`ja`), Korean (`ko`), Norwegian Bokmål (`nb`), Russian (`ru`), Bosnian, Croatian and Serbian as one text (`sh`), Albanian (`sq`), Swedish (`sv`), Turkish (`tr`) and Chinese (`zh`); see DESIGN.md, "Technical design".
+The players choose the language on the very first screen (and later with the card "Language" of the journeys); `-- --lang=<code>` starts the game in a language.
+
+* **In the code,** every text a player sees goes through `Grammar.text("...")` (or `ChoicePanel.card("...")` for the title of a card and `ChoicePanel.detail("...")` for its second line) with the whole sentence and named placeholders: `Grammar.text("Row to {place}.", {"place": place_name})`. Never glue a sentence together from pieces. A string value of a placeholder is itself an English message (a name of the data), translated when filled; `Grammar.phrase(...)` inserts a phrase with placeholders of its own, `Grammar.raw(...)` a text which is not translated, and an Array a list. A comment `# TRANSLATORS: ...` right above the call reaches the translators. A constant whose texts are messages gets the comment `# TRANSLATORS[<field>@<kind or context>]: ...` (see `dev/translations/extract.py`).
+* **Numbers, cases and the rowers** (see `scenes/languages/grammar.gd`): `{count|crate|crates}` picks the form for the number by the plural rule of the language (English writes these, too); `{place@to}` asks for a form of an inserted name, a message of its own with that context (the places have `to`, `in` and `from`, the persons `acc` and `dat`, the goods `acc` and `gen`, the counted things, the crops, the plots, the ships and the gifts `acc`); `{crew|one boy|one girl|two rowers|two girls}` picks the words for the rowers who are addressed.
+* **The data** holds the nouns as they stand in a sentence ("salt", "the sunny hill"; a card shows them with a capital letter) and counted phrases (`"counted": "{count|a barrel of ale|{count} barrels of ale}"`).
+* **Collect the messages** after changing texts:
+
+  ```
+  venv/bin/python dev/translations/extract.py
+  ```
+
+  This updates `translations/messages.pot` and merges it into every `translations/<code>.po`, keeping the existing translations.
+* **Translate** the `.po` files with any PO editor (e.g., Poedit), or in batches of JSON with `venv/bin/python dev/translations/batch.py dump <code> --missing` and `... apply <code> <file.json>`. A new translation stays marked as *fuzzy* until a native speaker has reviewed it in the game; the game shows it anyway (see `scenes/languages/languages.gd`).
+* **Check** the placeholders and the forms (`--verbose` lists the open messages):
+
+  ```
+  venv/bin/python dev/translations/check.py --verbose
+  ```
+
+* **The fonts:** after the translations change, cut the fonts of Chinese, Japanese and Korean to their characters again (and copy the Arabic and Devanagari fonts) from the Noto fonts of the system (`fonts-noto-core`, `fonts-noto-cjk`):
+
+  ```
+  venv/bin/python dev/translations/make_fonts.py
+  ```
+
+* **The texts fit:** `tests/godot/test_text_fit.gd` lays out every text of the cards in every language (every value of its placeholders, the longest form for the rowers) and checks that it fits its card, and that the fonts show every letter; `-- --lang=<code>` checks one language. The end-to-end test plays in any language, too (`-- --lang=<code>`), and its contracts check every screen it sees.
+* **Add a language** with one entry in `translations/languages.json` (the code, its name in itself, an optional second line, "Choose your language" in itself, optionally a short name for the card "Language", and `"rtl": true` if it is written from right to left; keep English first and the rest sorted by the code), then run `extract.py`, which creates its `.po` file; add its plural rule to `Grammar.plural_index` and `PLURAL_FORMS` of `extract.py` if it is not "one and other", and its font to `make_fonts.py` and `Languages` if Godot's font lacks its letters.
+
 ## A class, not a positional array
 
 When a few values of different kinds belong together (a record: e.g., how far a skipper was from the boat, where the boat lay and how it headed), give them a class with named fields rather than an array read by position.

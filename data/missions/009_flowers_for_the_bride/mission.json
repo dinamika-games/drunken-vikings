@@ -20,14 +20,13 @@
       "name": "Flowers",
       "color": "e86a9a",
       "picture": ["goods", "flowers"],
-      "one": "a basket of flowers",
-      "many": "baskets of flowers"
+      "counted": "{count|a basket of flowers|{count} baskets of flowers}"
     },
     "ribbon": {
       "name": "Ribbon",
       "color": "2f5f8a",
       "picture": ["items", "ribbon"],
-      "one": "the blue ribbon"
+      "counted": "the blue ribbon"
     }
   },
   "steps": [

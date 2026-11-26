@@ -18,15 +18,13 @@
     "clay": {
       "name": "Clay",
       "color": "8a8070",
-      "one": "a basket of clay",
-      "many": "baskets of clay",
+      "counted": "{count|a basket of clay|{count} baskets of clay}",
       "picture": ["items", "clay"]
     },
     "charcoal": {
       "name": "Charcoal",
       "color": "2a2a2a",
-      "one": "a sack of charcoal",
-      "many": "sacks of charcoal",
+      "counted": "{count|a sack of charcoal|{count} sacks of charcoal}",
       "picture": ["items", "charcoal"]
     }
   },

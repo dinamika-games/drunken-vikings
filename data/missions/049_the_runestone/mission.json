@@ -16,8 +16,7 @@
     "stone": {
       "name": "Stone",
       "color": "8a8070",
-      "one": "a piece of the stone",
-      "many": "pieces of the stone",
+      "counted": "{count|a piece of the stone|{count} pieces of the stone}",
       "picture": ["items", "rune_stone"]
     }
   },

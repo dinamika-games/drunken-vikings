@@ -17,16 +17,14 @@
     "oak": {
       "name": "Oak",
       "color": "6a4320",
-      "one": "an oak branch",
-      "many": "oak branches",
+      "counted": "{count|an oak branch|{count} oak branches}",
       "picture": ["items", "oak"]
     },
     "rivets": {
       "name": "Rivets",
       "color": "6a7078",
       "picture": ["items", "rivets"],
-      "one": "a box of rivets",
-      "many": "boxes of rivets"
+      "counted": "{count|a box of rivets|{count} boxes of rivets}"
     }
   },
   "steps": [

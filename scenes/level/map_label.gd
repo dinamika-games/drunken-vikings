@@ -25,7 +25,9 @@ func _draw() -> void:
         return
     var font := ThemeDB.fallback_font
     var font_size: int = FONT_SIZES.get(kind, 24)
-    var shown := text if kind != "lake" else text.to_upper()
+    var shown := String(TranslationServer.translate(text))
+    if kind == "lake":
+        shown = shown.to_upper()
     var size := font.get_string_size(shown, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
     # NOTE (mristin):
     # Draw at the size of the screen, so that the letters stay sharp.

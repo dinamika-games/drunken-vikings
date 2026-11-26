@@ -19,8 +19,7 @@
       "name": "Pots",
       "color": "b8693a",
       "picture": ["goods", "pots"],
-      "one": "a crate of pots",
-      "many": "crates of pots"
+      "counted": "{count|a crate of pots|{count} crates of pots}"
     }
   },
   "steps": [

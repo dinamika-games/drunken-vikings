@@ -16,20 +16,20 @@
     "grim": {
       "name": "Grim",
       "color": "d8d8d0",
-      "one": "Old Grim",
+      "counted": "Old Grim",
       "picture": ["faces", "grim"]
     },
     "halvard": {
       "name": "Halvard",
       "color": "d8d8d0",
       "picture": ["faces", "halvard"],
-      "one": "Old Halvard"
+      "counted": "Old Halvard"
     },
     "tova": {
       "name": "Tova",
       "color": "6a9a4a",
       "picture": ["faces", "healer"],
-      "one": "Tova"
+      "counted": "Tova"
     }
   },
   "steps": [

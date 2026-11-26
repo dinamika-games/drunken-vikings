@@ -69,6 +69,14 @@ Both pose models were trained on the Body7 collection of datasets, some of which
 
 We distribute the models unmodified.
 
+### Noto fonts (the letters of Arabic, Hindi, Chinese, Japanese and Korean)
+
+* Files: `assets/fonts/NotoSansDevanagari-Regular.ttf` (unmodified), `assets/fonts/NotoNaskhArabic-Regular.ttf` (**altered:** a smaller descent in its metrics, by `dev/translations/make_fonts.py`), and `assets/fonts/NotoSans{SC,JP,KR}-Regular.otf` (Noto Sans CJK SC, JP and KR, **altered:** cut to the characters of the translations by `dev/translations/make_fonts.py`)
+* License: SIL Open Font License 1.1
+* Copyright 2010-2020 Google Inc., 2015-2020 Google LLC; Noto Sans CJK copyright 2014-2021 Adobe, with Reserved Font Name 'Source'
+* Source: https://github.com/notofonts and https://github.com/notofonts/noto-cjk (as packaged by Debian/Ubuntu in fonts-noto-core and fonts-noto-cjk)
+* License text: [licenses/noto/OFL.txt](licenses/noto/OFL.txt)
+
 ### The paintings
 
 * Files: `assets/pictures/`

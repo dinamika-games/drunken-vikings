@@ -111,7 +111,7 @@ func _check_hold(state: Node) -> void:
         "title": "Test",
         "giver": {"place": "home", "name": "Grandmother Åsa"},
         "offer": "",
-        "items": {"hay": {"name": "Hay", "one": "a bale of hay", "many": "bales of hay"}},
+        "items": {"hay": {"name": "Hay", "counted": "{count|a bale of hay|{count} bales of hay}"}},
         "steps": [{"do": "carry", "item": "hay", "count": 6, "from": "home", "to": "horse_farm"}],
         "reward": {"silver": 5},
     }

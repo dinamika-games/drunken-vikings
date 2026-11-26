@@ -17,8 +17,7 @@
       "name": "Salt",
       "color": "ffffff",
       "picture": ["goods", "salt"],
-      "one": "a sack of salt",
-      "many": "sacks of salt"
+      "counted": "{count|a sack of salt|{count} sacks of salt}"
     }
   },
   "steps": [

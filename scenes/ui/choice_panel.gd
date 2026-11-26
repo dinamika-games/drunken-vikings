@@ -55,8 +55,8 @@ var cards: Array = []
 ## The highlighted card, for the developers' keys.
 var highlight := 0
 
-## A hint under the cards.
-var hint := "Raise your hand to a card and hold it there to choose."
+## A hint under the cards, or "" for how to choose.
+var hint := ""
 
 var _service: Node
 var _buttons: Array[DwellButton] = []
@@ -81,6 +81,28 @@ func _ready() -> void:
     _cursor = HandCursor.new()
     add_child(_cursor)
     _backdrop.cursor = _cursor
+
+
+## A card whose title is the [param msgid], translated (see Grammar), with the
+## [param detail] and the [param extra] keys (see the class description); its
+## "id" stays the [param msgid], so that the game can tell the cards apart in
+## every language (e.g., for their icons).
+static func card(msgid: String, detail := "", extra := {}) -> Dictionary:
+    var result := {"id": msgid, "title": Grammar.text(msgid), "detail": detail}
+    result.merge(extra, true)
+    return result
+
+
+## The title of a card made without [method card]: the [param msgid],
+## translated and filled with the [param args] (see Grammar).
+static func title_of(msgid: String, args := {}) -> String:
+    return Grammar.text(msgid, args)
+
+
+## The second line of a card: the [param msgid], translated and filled with
+## the [param args] (see Grammar).
+static func detail(msgid: String, args := {}) -> String:
+    return Grammar.text(msgid, args)
 
 
 ## Show the [param new_cards].
@@ -163,10 +185,15 @@ func _draw() -> void:
     if not face.is_empty():
         _draw_face(box.position + Vector2(90, 110), 60.0)
         left += 140.0
-    draw_string(
-        font, Vector2(left, box.position.y + 60.0), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 40, _WOOD
-    )
-    var fitted := fit_text(font, text, box.end.x - left - 40.0)
+    # NOTE (mristin):
+    # A language written from right to left (Arabic) aligns its lines right.
+    var width_left := box.end.x - left - 40.0
+    var languages := get_node_or_null("/root/Languages")
+    var align := HORIZONTAL_ALIGNMENT_LEFT
+    if languages != null and languages.is_rtl():
+        align = HORIZONTAL_ALIGNMENT_RIGHT
+    draw_string(font, Vector2(left, box.position.y + 60.0), title, align, width_left, 40, _WOOD)
+    var fitted := fit_text(font, text, width_left)
     var lines: Array[String] = fitted["lines"]
     var font_size: int = fitted["size"]
     for i in range(lines.size()):
@@ -174,13 +201,18 @@ func _draw() -> void:
             font,
             Vector2(left, box.position.y + 110.0 + i * (font_size + 8.0)),
             lines[i],
-            HORIZONTAL_ALIGNMENT_LEFT,
-            -1,
+            align,
+            width_left,
             font_size,
             _INK
         )
+    var shown_hint := (
+        hint
+        if hint != ""
+        else Grammar.text("Raise your hand to a card and hold it there to choose.")
+    )
     draw_string(
-        font, Vector2(0, size.y - 40.0), hint, HORIZONTAL_ALIGNMENT_CENTER, size.x, 26, _PAPER
+        font, Vector2(0, size.y - 40.0), shown_hint, HORIZONTAL_ALIGNMENT_CENTER, size.x, 26, _PAPER
     )
     if _dev_keys and highlight < _buttons.size():
         var rect := _buttons[highlight].get_rect().grow(14.0)
@@ -234,20 +266,6 @@ static func fit_text(font: Font, text: String, width: float) -> Dictionary:
     return {"lines": lines, "size": TEXT_SIZES[0], "all": true}
 
 
-## Break the [param line] into lines which fit the [param width].
+## Break the [param line] into lines which fit the [param width] (see Wrapping).
 static func wrap_text(font: Font, line: String, width: float, font_size: int) -> Array[String]:
-    var result: Array[String] = []
-    var current := ""
-    for word in line.split(" ", false):
-        var candidate := word if current == "" else current + " " + word
-        if (
-            font.get_string_size(candidate, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > width
-            and current != ""
-        ):
-            result.append(current)
-            current = word
-        else:
-            current = candidate
-    if current != "":
-        result.append(current)
-    return result
+    return Wrapping.wrap(line, font, font_size, width)

@@ -19,14 +19,13 @@
     "dowry": {
       "name": "Dowry",
       "color": "6a4320",
-      "one": "a chest of dowry",
-      "many": "chests of dowry",
+      "counted": "{count|a chest of dowry|{count} chests of dowry}",
       "picture": ["items", "dowry"]
     },
     "ingrid": {
       "name": "Ingrid",
       "color": "e8c25a",
-      "one": "Ingrid the bride",
+      "counted": "Ingrid the bride",
       "picture": ["faces", "ingrid"]
     }
   },

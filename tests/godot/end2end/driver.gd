@@ -288,29 +288,47 @@ func panel() -> ChoicePanel:
     return null
 
 
-## The titles of the cards on the screen.
+## The cards on the screen: the English title of each (its id, see
+## ChoicePanel.card), or its title as shown.
 func cards() -> Array[String]:
     var titles: Array[String] = []
     var shown := panel()
     if shown != null:
         for data: Dictionary in shown.cards:
-            titles.append(str(data.get("title", "")))
+            titles.append(str(data.get("id", data.get("title", ""))))
     return titles
 
 
+## Whether the card of the [param data] is the card [param title]: its title
+## as shown, or in English (its id, or its title translated), so that the
+## test plays in every language.
+static func is_card(data: Dictionary, title: String, prefix := false) -> bool:
+    var name := str(data.get("title", ""))
+    return (
+        name == title
+        or str(data.get("id", "")) == title
+        or name == String(TranslationServer.translate(title))
+        or (prefix and name.begins_with(title))
+    )
+
+
+## Whether the screen of choices which shows now has the [param title] (in
+## English, or as shown).
+func screen_is(title: String) -> bool:
+    var shown := panel()
+    return shown != null and shown.title in [title, Grammar.text(title)]
+
+
 ## The index of the first card which can be chosen and whose title is
-## [param title] (or begins with it, if [param prefix]), or -1.
+## [param title] (see [method is_card]; or begins with it, if [param
+## prefix]), or -1.
 func card(title: String, prefix := false) -> int:
     var shown := panel()
     if shown == null:
         return -1
     for i in range(shown.cards.size()):
         var data: Dictionary = shown.cards[i]
-        var name := str(data.get("title", ""))
-        if (
-            (name == title or (prefix and name.begins_with(title)))
-            and bool(data.get("enabled", true))
-        ):
+        if is_card(data, title, prefix) and bool(data.get("enabled", true)):
             return i
     return -1
 
@@ -386,7 +404,7 @@ func loose_button(title: String) -> DwellButton:
         if (
             button.is_visible_in_tree()
             and not button.get_parent() is ChoicePanel
-            and str(button.card.get("title", "")) == title
+            and is_card(button.card, title)
         ):
             return button
     return null

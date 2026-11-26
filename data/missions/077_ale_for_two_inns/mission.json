@@ -18,8 +18,7 @@
       "name": "Ale",
       "color": "a8743c",
       "picture": ["goods", "ale"],
-      "one": "a barrel of ale",
-      "many": "barrels of ale"
+      "counted": "{count|a barrel of ale|{count} barrels of ale}"
     }
   },
   "steps": [

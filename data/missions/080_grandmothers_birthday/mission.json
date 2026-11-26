@@ -1,7 +1,7 @@
 {
   "number": 80,
   "id": "grandmothers_birthday",
-  "title": "Grandmother's Birthday",
+  "title": "Grandma's Birthday",
   "kind": "fetch",
   "requires": [
     "the_smiths_bellows"
@@ -18,19 +18,19 @@
       "name": "Shawl",
       "color": "2f5f8a",
       "picture": ["items", "shawl"],
-      "one": "the shawl"
+      "counted": "the shawl"
     },
     "cake": {
       "name": "Cake",
       "color": "d8a050",
-      "one": "the cake",
+      "counted": "the cake",
       "picture": ["items", "cake"]
     },
     "tova": {
       "name": "Tova",
       "color": "6a9a4a",
       "picture": ["faces", "healer"],
-      "one": "Tova"
+      "counted": "Tova"
     }
   },
   "steps": [

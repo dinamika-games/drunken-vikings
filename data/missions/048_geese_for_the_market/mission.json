@@ -16,8 +16,7 @@
     "goose": {
       "name": "Goose",
       "color": "f1f0ea",
-      "one": "a goose",
-      "many": "geese",
+      "counted": "{count|a goose|{count} geese}",
       "picture": ["items", "goose"]
     }
   },

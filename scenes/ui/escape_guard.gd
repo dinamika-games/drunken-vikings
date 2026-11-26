@@ -14,8 +14,8 @@ const SECONDS := 3.0
 const _INK := Color(0.1, 0.07, 0.03, 0.9)
 const _GOLD := Color("f2c14e")
 
-## What the first Escape asks.
-var question := "Press Esc again to end the journey."
+## What the first Escape asks, or "" for ending the journey.
+var question := ""
 
 var _left := 0.0
 
@@ -66,14 +66,15 @@ func _draw() -> void:
         return
     var font := ThemeDB.fallback_font
     var font_size := 36
-    var width := font.get_string_size(question, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+    var shown := question if question != "" else Grammar.text("Press Esc again to end the journey.")
+    var width := font.get_string_size(shown, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
     var alpha := clampf(_left / 0.4, 0.0, 1.0)
     var box := Rect2(Vector2((size.x - width) / 2.0 - 30.0, 400.0), Vector2(width + 60.0, 70.0))
     draw_rect(box, Color(_INK, 0.85 * alpha))
     draw_string(
         font,
         Vector2(box.position.x + 30.0, box.position.y + 48.0),
-        question,
+        shown,
         HORIZONTAL_ALIGNMENT_LEFT,
         -1,
         font_size,

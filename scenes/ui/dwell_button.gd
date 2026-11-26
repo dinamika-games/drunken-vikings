@@ -38,9 +38,10 @@ const PAPER_INSET := 23.0
 const PADDING := 12.0
 
 ## The sizes of the text: the title, and the detail (each as large as fits
-## clear of the nails, down to the smallest).
-const TITLE_SIZES := [26, 24, 22, 20]
-const DETAIL_SIZES := [24, 22, 20, 18, 16, 14]
+## clear of the nails, down to the smallest; the smallest sizes of the title
+## only for a long title which would otherwise run into the detail).
+const TITLE_SIZES := [26, 24, 22, 20, 18, 16]
+const DETAIL_SIZES := [24, 22, 20, 18, 16, 14, 13]
 
 ## The picture (or the stars, or the crate) fits in a box this large at the
 ## top of the card, padded within the frame and between the nails, and
@@ -202,7 +203,8 @@ func _draw() -> void:
         draw_line(at, at + Vector2(0, 16 if up else -16), color, 6.0)
 
     var title := str(card.get("title", ""))
-    var title_font := title_size(font, title, rect.size, top, _painted)
+    var detail := str(card.get("detail", ""))
+    var title_font := title_size(font, title, rect.size, top, _painted, detail != "")
     var lines := wrap_title(font, title, rect.size, top, _painted, title_font)
     for i in range(lines.size()):
         draw_string(
@@ -214,7 +216,6 @@ func _draw() -> void:
             title_font,
             ink
         )
-    var detail := str(card.get("detail", ""))
     if detail != "":
         draw_string(
             font,
@@ -318,8 +319,8 @@ static func wrap_title(
 ) -> Array[String]:
     var lines: Array[String] = []
     var current := ""
-    for word in title.split(" ", false):
-        var candidate := word if current == "" else current + " " + word
+    for piece in Wrapping.pieces(title):
+        var candidate: String = piece[0] if current == "" else current + piece[1] + piece[0]
         var at := baseline + lines.size() * TITLE_LINE
         var width := line_width(font, card, at, font_size, painted)
         if (
@@ -327,7 +328,7 @@ static func wrap_title(
             and current != ""
         ):
             lines.append(current)
-            current = word
+            current = piece[0]
         else:
             current = candidate
     if current != "":
@@ -337,10 +338,13 @@ static func wrap_title(
 
 ## The size of the [param title] on a card of the [param card] size, its
 ## first line at the [param baseline]: as large as lets every line fit its
-## row (a word alone may be too wide for a row by the nails).
+## row (a word alone may be too wide for a row by the nails) and, on a card
+## [param with_detail], the last line end above the detail; if no size lets
+## the lines end above the detail, the largest which fits the rows.
 static func title_size(
-    font: Font, title: String, card: Vector2, baseline: float, painted: bool
+    font: Font, title: String, card: Vector2, baseline: float, painted: bool, with_detail := false
 ) -> int:
+    var fitting := -1
     for font_size in TITLE_SIZES:
         var lines := wrap_title(font, title, card, baseline, painted, font_size)
         var fits := true
@@ -349,9 +353,20 @@ static func title_size(
             if font.get_string_size(lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > width:
                 fits = false
                 break
-        if fits:
+        if not fits:
+            continue
+        if fitting < 0:
+            fitting = font_size
+        var last := baseline + (lines.size() - 1) * TITLE_LINE + font.get_descent(font_size)
+        if not with_detail or last <= detail_top(font, card, painted):
             return font_size
-    return TITLE_SIZES[-1]
+    return fitting if fitting > 0 else TITLE_SIZES[-1]
+
+
+## Where the letters of the detail begin on a card of the [param card] size
+## (at the largest size of the detail).
+static func detail_top(font: Font, card: Vector2, painted: bool) -> float:
+    return detail_baseline(card, painted) - font.get_ascent(DETAIL_SIZES[0])
 
 
 ## Where the detail lies on a card of the [param card] size.

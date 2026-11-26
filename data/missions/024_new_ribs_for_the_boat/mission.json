@@ -17,8 +17,7 @@
     "oak": {
       "name": "Oak",
       "color": "6a4320",
-      "one": "an oak branch",
-      "many": "oak branches",
+      "counted": "{count|an oak branch|{count} oak branches}",
       "picture": ["items", "oak"]
     }
   },

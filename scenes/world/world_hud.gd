@@ -57,7 +57,7 @@ func _outlined(at: Vector2, text: String, font_size: int, color := _PAPER) -> vo
 ## The day, the silver and the crates in the boat.
 func _draw_purse() -> void:
     var state: Node = world.state()
-    _outlined(Vector2(30, 50), "Day %d" % state.day, 34, _GOLD)
+    _outlined(Vector2(30, 50), Grammar.text("Day {day}", {"day": state.day}), 34, _GOLD)
     if int(state.silver) != _silver:
         _pop = 1.0 if _silver >= 0 else 0.0
         _silver = int(state.silver)
@@ -74,7 +74,9 @@ func _draw_purse() -> void:
         var rect := Rect2(Vector2(x, 172), Vector2(52, 44))
         if slot < items.size():
             _draw_crate(state, rect, items[slot])
-            _outlined(rect.position + Vector2(2, 62), state.good_name(items[slot]), 14)
+            _outlined(
+                rect.position + Vector2(2, 62), Grammar.title(state.good_name(items[slot])), 14
+            )
         elif Pictures.of("ui", "crate") != null:
             draw_texture_rect(
                 Pictures.of("ui", "crate"), rect.grow(4.0), false, Color(1, 1, 1, 0.5)
@@ -92,7 +94,7 @@ func _draw_hold_grouped(state: Node) -> void:
     for item in state.cargo.keys():
         var rect := Rect2(Vector2(x, 172), Vector2(52, 44))
         _draw_crate(state, rect, item)
-        _outlined(rect.position + Vector2(2, 62), state.good_name(item), 14)
+        _outlined(rect.position + Vector2(2, 62), Grammar.title(state.good_name(item)), 14)
         _outlined(rect.end + Vector2(-22, -4), "%d" % int(state.cargo[item]), 22, _GOLD)
         x += 60.0
     var bar := Rect2(Vector2(x + 6, 182), Vector2(160, 24))
@@ -101,7 +103,11 @@ func _draw_hold_grouped(state: Node) -> void:
     var used := float(state.load_count()) / float(state.capacity)
     draw_rect(Rect2(bar.position, Vector2(bar.size.x * used, bar.size.y)), Color("c8a878"))
     _outlined(
-        bar.position + Vector2(8, 20), "%d of %d crates" % [state.load_count(), state.capacity], 18
+        bar.position + Vector2(8, 20),
+        Grammar.text(
+            "{count} of {crates} crates", {"count": state.load_count(), "crates": state.capacity}
+        ),
+        18
     )
 
 
@@ -154,7 +160,7 @@ func _draw_tasks() -> void:
     var y := 270.0
     for entry in state.missions.active:
         var id: String = entry["id"]
-        _outlined(Vector2(30, y), state.missions.missions[id]["title"], 26, _GOLD)
+        _outlined(Vector2(30, y), Grammar.text(state.missions.missions[id]["title"]), 26, _GOLD)
         _outlined(Vector2(30, y + 30), state.missions.hint(state, id), 20)
         y += 72.0
 
@@ -163,19 +169,22 @@ func _draw_tasks() -> void:
 func _draw_reminder() -> void:
     var state: Node = world.state()
     var font := ThemeDB.fallback_font
-    var lines: Array[String] = []
+    var lines: Array = []
     var toast: String = world.toast()
     if toast != "":
-        lines.append(toast)
+        lines.append([toast, _PAPER])
     var reminders: Array = state.farm.reminders(state.day)
     if not reminders.is_empty():
-        lines.append("Farm: " + reminders[0]["text"])
+        lines.append(
+            [
+                Grammar.text("Farm: {reminder}", {"reminder": Grammar.raw(reminders[0]["text"])}),
+                _GOLD
+            ]
+        )
     var y := 50.0
     for line in lines:
-        var width := font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x
-        _outlined(
-            Vector2(960 - width / 2.0, y), line, 28, _GOLD if line.begins_with("Farm") else _PAPER
-        )
+        var width := font.get_string_size(line[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x
+        _outlined(Vector2(960 - width / 2.0, y), line[0], 28, line[1])
         y += 40.0
 
 

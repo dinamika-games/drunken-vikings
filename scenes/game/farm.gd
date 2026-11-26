@@ -35,6 +35,10 @@ var crop_kinds := {}
 ## The plots of land to buy: Array of {"id", "name", "price", "fields", "pasture"}.
 var plot_kinds: Array = []
 
+## The names of the goods (id -> name), for the texts; set by the game (see
+## GameState), the ids themselves without.
+var good_names := {}
+
 ## How many of each animal the farm has: id -> count.
 var animals := {}
 
@@ -276,23 +280,39 @@ func reminders(day: int) -> Array:
                 {
                     "kind": "ripe",
                     "days": to_ripe,
-                    "text": "%s is ripe in %d day%s." % [name, to_ripe, "" if to_ripe == 1 else "s"]
+                    "text":
+                    Grammar.text(
+                        "{crop} is ripe in {days} {days|day|days}.", {"crop": name, "days": to_ripe}
+                    )
                 }
             )
         else:
             var left := days_to_harvest(i, day)
-            var text := (
-                "%s is ripe: harvest within %d day%s!" % [name, left + 1, "" if left == 0 else "s"]
+            var text := Grammar.text(
+                "{crop} is ripe: harvest within {days} {days|day|days}!",
+                {"crop": name, "days": left + 1}
             )
             if left < 0:
-                text = "%s is ripe, the birds are eating it: harvest it now!" % name
+                text = Grammar.text(
+                    "{crop} is ripe, the birds are eating it: harvest it now!", {"crop": name}
+                )
             result.append({"kind": "harvest", "days": left, "text": text})
     for kind in hungry.keys():
-        var text := "The %s are hungry: bring %s!" % [_plural(kind), animal_kinds[kind]["eats"]]
+        var text := Grammar.text(
+            "The {animals} are hungry: bring {good}!",
+            {
+                "animals": animal_kinds[kind]["plural"],
+                "good": _good_name(animal_kinds[kind]["eats"])
+            }
+        )
         if may_have_young(kind):
-            text = (
-                "The %s are hungry, so no %s: bring %s!"
-                % [_plural(kind), animal_kinds[kind]["young_plural"], animal_kinds[kind]["eats"]]
+            text = Grammar.text(
+                "The {animals} are hungry, so no {young}: bring {good}!",
+                {
+                    "animals": animal_kinds[kind]["plural"],
+                    "young": animal_kinds[kind]["young_plural"],
+                    "good": _good_name(animal_kinds[kind]["eats"])
+                }
             )
         result.append({"kind": "hungry", "days": -1, "text": text})
     # NOTE (mristin):
@@ -303,10 +323,13 @@ func reminders(day: int) -> Array:
         if may_have_young(kind) and not hungry.has(kind) and not has_room_for(kind):
             crowded.append(animal_kinds[kind]["young_plural"])
     if not crowded.is_empty():
-        var young := crowded[0]
-        if crowded.size() > 1:
-            young = ", ".join(crowded.slice(0, -1)) + " and " + crowded[-1]
-        result.append({"kind": "crowded", "days": 1, "text": "No room for %s: buy land!" % young})
+        result.append(
+            {
+                "kind": "crowded",
+                "days": 1,
+                "text": Grammar.text("No room for {young}: buy land!", {"young": crowded})
+            }
+        )
     for food in ["grain", "hay"]:
         var days := feed_days(food)
         if days < 2.0 and days != INF and not _anyone_hungry_for(food):
@@ -315,9 +338,9 @@ func reminders(day: int) -> Array:
                     "kind": "feed",
                     "days": int(days),
                     "text":
-                    (
-                        "The %s lasts only %d more day%s."
-                        % [food, int(days), "" if int(days) == 1 else "s"]
+                    Grammar.text(
+                        "The {good} lasts only {days} more {days|day|days}.",
+                        {"good": _good_name(food), "days": int(days)}
                     )
                 }
             )
@@ -334,11 +357,10 @@ func _anyone_hungry_for(food: String) -> bool:
     return false
 
 
-func _plural(kind: String) -> String:
-    var name: String = String(animal_kinds[kind]["name"]).to_lower()
-    if name == "sheep" or name.ends_with("s"):
-        return name
-    return name + "s"
+## The name of the [param good] (an English message ID, see Grammar), e.g.,
+## "grain".
+func _good_name(good: String) -> String:
+    return str(good_names.get(good, good))
 
 
 ## The farm as plain data for the save.

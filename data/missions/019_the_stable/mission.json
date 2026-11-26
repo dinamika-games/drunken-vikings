@@ -16,14 +16,13 @@
     "log": {
       "name": "Log",
       "color": "8a5a2b",
-      "one": "a log",
-      "many": "logs",
+      "counted": "{count|a log|{count} logs}",
       "picture": ["items", "log"]
     },
     "tar": {
       "name": "Tar",
       "color": "3a2a1a",
-      "one": "the pot of tar",
+      "counted": "the pot of tar",
       "picture": ["items", "tar"]
     }
   },

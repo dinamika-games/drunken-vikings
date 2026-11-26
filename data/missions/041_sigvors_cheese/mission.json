@@ -17,8 +17,7 @@
       "name": "Cheese",
       "color": "f2c14e",
       "picture": ["items", "cheese"],
-      "one": "a wheel of cheese",
-      "many": "wheels of cheese"
+      "counted": "{count|a wheel of cheese|{count} wheels of cheese}"
     }
   },
   "steps": [

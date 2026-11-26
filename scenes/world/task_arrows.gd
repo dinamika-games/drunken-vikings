@@ -40,7 +40,7 @@ func _draw() -> void:
         if target != "" and target != state.place:
             if not titles.has(target):
                 titles[target] = []
-            titles[target].append(state.missions.missions[entry["id"]]["title"])
+            titles[target].append(Grammar.text(state.missions.missions[entry["id"]]["title"]))
     # The arrows which point nearly the same way become one, with all the names.
     var arrows: Array = []
     for target in titles.keys():
@@ -51,7 +51,7 @@ func _draw() -> void:
         var joined := false
         for arrow in arrows:
             if absf(arrow["direction"].angle_to(direction)) < MERGE_ANGLE:
-                arrow["names"].append(state.place_name(target))
+                arrow["names"].append(Grammar.text(state.place_name(target)))
                 arrow["titles"].append_array(titles[target])
                 joined = true
                 break
@@ -59,13 +59,18 @@ func _draw() -> void:
             arrows.append(
                 {
                     "direction": direction,
-                    "names": [state.place_name(target)],
+                    "names": [Grammar.text(state.place_name(target))],
                     "titles": titles[target].duplicate()
                 }
             )
     for arrow in arrows:
         _draw_arrow(
-            center, arrow["direction"], " · ".join(arrow["names"]), ", ".join(arrow["titles"])
+            center,
+            arrow["direction"],
+            " · ".join(arrow["names"]),
+            Grammar.fill(
+                arrow["titles"].map(func(title: String) -> Dictionary: return Grammar.raw(title))
+            )
         )
 
 

@@ -8,7 +8,9 @@ extends RefCounted
 ## there first (see Missions), and the card "Tasks" shows the missions the
 ## people offer there and those under way.
 
-## What each kind of settlement is called on the screens.
+## What each kind of settlement is called on the screens (English message
+## IDs, see Grammar).
+# TRANSLATORS[]: what a settlement is, after its name in a title, e.g., "Kråkhamn, the market"
 const KIND_NAMES := {
     "home": "your farm",
     "market": "the market village",
@@ -52,18 +54,22 @@ var _world: Node
 var _state: Node
 var _map: LakeMap
 var _rng := RandomNumberGenerator.new()
+var _shipyard: ShipyardScreens
 
 
 func _init(world: Node, state: Node, map: LakeMap) -> void:
     _world = world
     _state = state
     _map = map
+    _shipyard = ShipyardScreens.new(world, state, show_port)
     _rng.seed = Time.get_ticks_usec()
 
 
 func place_title(id: String) -> String:
     var place := _map.place(id)
-    return "%s, %s" % [place["name"], KIND_NAMES.get(place["kind"], "")]
+    return Grammar.text(
+        "{place}, {kind}", {"place": place["name"], "kind": KIND_NAMES.get(place["kind"], "")}
+    )
 
 
 func show_port(message := "") -> void:
@@ -76,36 +82,40 @@ func show_port(message := "") -> void:
         return
     var economy: Economy = _state.economy
     var sellable := _sellable(id)
-    var text := message if message != "" else "Welcome! What would you like to do?"
+    var text := message if message != "" else Grammar.text("Welcome! What would you like to do?")
     if message == "":
         text = " ".join([text] + _task_notes(id))
         if id == _state.ships.shipyard:
-            text += " %s builds ships here." % _state.ships.shipwright["name"]
+            text += (
+                " "
+                + Grammar.text(
+                    "{person} builds ships here.", {"person": _state.ships.shipwright["name"]}
+                )
+            )
     var cards: Array = [
-        {
-            "title": "Sell",
-            "detail":
-            "%d crates" % sellable.size() if not sellable.is_empty() else "nothing to sell",
-            "enabled": not sellable.is_empty()
-        },
-        {
-            "title": "Buy",
-            "detail": "%d silver" % _state.silver,
-            "enabled": _goods_sold(id).size() > 0
-        },
+        ChoicePanel.card(
+            "Sell",
+            (
+                ChoicePanel.detail("{count} {count|crate|crates}", {"count": sellable.size()})
+                if not sellable.is_empty()
+                else ChoicePanel.detail("nothing to sell")
+            ),
+            {"enabled": not sellable.is_empty()}
+        ),
+        ChoicePanel.card("Buy", silver(_state.silver), {"enabled": _goods_sold(id).size() > 0}),
     ]
     var actions: Array[Callable] = [_show_sell.bind(0), _show_buy.bind(0)]
     if ANIMALS_SOLD.has(place["kind"]):
-        cards.append({"title": "Animals", "detail": "for your farm"})
+        cards.append(ChoicePanel.card("Animals", ChoicePanel.detail("for your farm")))
         actions.append(_show_animals)
     if id == _state.ships.shipyard:
-        cards.append({"title": "Shipyard", "detail": _state.ships.shipwright["name"].split(" ")[0]})
-        actions.append(_show_shipyard)
+        cards.append(ChoicePanel.card("Shipyard", Grammar.text(_state.ships.shipwright["short"])))
+        actions.append(_shipyard.show)
     cards.append(_tasks_card(id))
     actions.append(_show_tasks.bind(0))
-    cards.append({"title": "Talk", "detail": "the news"})
+    cards.append(ChoicePanel.card("Talk", ChoicePanel.detail("the news")))
     actions.append(_talk)
-    cards.append({"title": "Row on", "detail": ""})
+    cards.append(ChoicePanel.card("Row on"))
     actions.append(_world.undock.bind(id))
     if economy.is_market(id):
         for good in economy.good_ids:
@@ -114,6 +124,11 @@ func show_port(message := "") -> void:
     if Pictures.of("faces", place["kind"]) != null:
         face = {"picture": place["kind"]}
     _world.show_screen(place_title(id), text, cards, actions, face)
+
+
+## So much silver, short enough for a card, e.g., "12 silver".
+static func silver(amount: int) -> String:
+    return ChoicePanel.detail("{silver} silver", {"silver": amount})
 
 
 func _sellable(id: String) -> Array:
@@ -148,9 +163,9 @@ func _show_list(
         cards.append(items[i])
         actions.append(item_actions[i])
     if first + PAGE < items.size():
-        cards.append({"title": "More", "detail": "→"})
+        cards.append(ChoicePanel.card("More", "→"))
         actions.append(again.bind(page + 1))
-    cards.append({"title": "Back", "detail": ""})
+    cards.append(ChoicePanel.card("Back"))
     actions.append(show_port)
     _world.show_screen(title, text, cards, actions)
 
@@ -165,9 +180,13 @@ func _show_sell(page: int, message := "") -> void:
             items
             . append(
                 {
+                    "id": "Sell {good} ({count})",
                     "title":
-                    "Sell %s (%d)" % [_state.good_name(good).to_lower(), int(_state.cargo[good])],
-                    "detail": "%d silver" % economy.sell_price(id, good),
+                    ChoicePanel.title_of(
+                        "Sell {good} ({count})",
+                        {"good": _state.good_name(good), "count": int(_state.cargo[good])}
+                    ),
+                    "detail": silver(economy.sell_price(id, good)),
                     "color": economy.goods[good]["color"],
                     "picture": ["goods", good],
                     "mood": economy.mood(id, good),
@@ -176,9 +195,13 @@ func _show_sell(page: int, message := "") -> void:
         )
         actions.append(_sell.bind(good, page))
     if items.is_empty():
-        show_port(message if message != "" else "Nothing more to sell here.")
+        show_port(message if message != "" else Grammar.text("Nothing more to sell here."))
         return
-    var text := message if message != "" else "What do you sell? Silver: %d." % _state.silver
+    var text := (
+        message
+        if message != ""
+        else Grammar.text("What do you sell? Silver: {silver}.", {"silver": _state.silver})
+    )
     _show_list(place_title(id), text, items, actions, page, _show_sell)
 
 
@@ -189,9 +212,9 @@ func _sell(good: String, page: int) -> void:
         Audio.play("coins")
         _show_sell(
             page,
-            (
-                "Sold a crate of %s for %d silver. Silver: %d."
-                % [_state.good_name(good).to_lower(), price, _state.silver]
+            Grammar.text(
+                "Sold a crate of {good} for {price} silver. Silver: {silver}.",
+                {"good": _state.good_name(good), "price": price, "silver": _state.silver}
             )
         )
 
@@ -207,8 +230,9 @@ func _show_buy(page: int, message := "") -> void:
             items
             . append(
                 {
-                    "title": "Buy %s" % _state.good_name(good).to_lower(),
-                    "detail": "%d silver" % price,
+                    "id": "Buy {good}",
+                    "title": ChoicePanel.title_of("Buy {good}", {"good": _state.good_name(good)}),
+                    "detail": silver(price),
                     "color": economy.goods[good]["color"],
                     "picture": ["goods", good],
                     "mood": economy.mood(id, good),
@@ -219,9 +243,13 @@ func _show_buy(page: int, message := "") -> void:
         actions.append(_buy.bind(good, page))
     var text := message
     if text == "":
-        text = (
-            "Silver: %d. Room in the boat: %d of %d crates."
-            % [_state.silver, _state.capacity - _state.load_count(), _state.capacity]
+        text = Grammar.text(
+            "Silver: {silver}. Room in the boat: {room} of {crates} crates.",
+            {
+                "silver": _state.silver,
+                "room": _state.capacity - _state.load_count(),
+                "crates": _state.capacity
+            }
         )
     _show_list(place_title(id), text, items, actions, page, _show_buy)
 
@@ -233,14 +261,17 @@ func _buy(good: String, page: int) -> void:
         Audio.play("coins")
         _show_buy(
             page,
-            (
-                "Bought a crate of %s for %d silver. Silver: %d, room for %d more."
-                % [
-                    _state.good_name(good).to_lower(),
-                    price,
-                    _state.silver,
-                    _state.capacity - _state.load_count()
-                ]
+            Grammar.text(
+                (
+                    "Bought a crate of {good} for {price} silver. Silver: "
+                    + "{silver}, room for {room} more."
+                ),
+                {
+                    "good": _state.good_name(good),
+                    "price": price,
+                    "silver": _state.silver,
+                    "room": _state.capacity - _state.load_count()
+                }
             )
         )
 
@@ -256,8 +287,9 @@ func _show_animals(message := "") -> void:
             items
             . append(
                 {
-                    "title": "Buy a %s" % String(animal["name"]).to_lower(),
-                    "detail": "%d silver" % price,
+                    "id": "Buy {animal}",
+                    "title": ChoicePanel.title_of("Buy {animal}", {"animal": _one(kind)}),
+                    "detail": silver(price),
                     "picture": ["farm", "beehive" if kind == "bees" else kind],
                     "enabled": _state.silver >= price and _state.has_room(),
                 }
@@ -272,13 +304,13 @@ func _show_animals(message := "") -> void:
         var owned := _animals_owned(kind)
         if owned == 0:
             continue
-        var animal: Dictionary = _state.farm.animal_kinds[kind]
         (
             items
             . append(
                 {
-                    "title": "Sell a %s" % String(animal["name"]).to_lower(),
-                    "detail": "+%d silver" % sale_price(kind),
+                    "id": "Sell {animal}",
+                    "title": ChoicePanel.title_of("Sell {animal}", {"animal": _one(kind)}),
+                    "detail": ChoicePanel.detail("+{silver} silver", {"silver": sale_price(kind)}),
                     "picture": ["farm", "beehive" if kind == "bees" else kind],
                 }
             )
@@ -287,7 +319,10 @@ func _show_animals(message := "") -> void:
     var text := (
         message
         if message != ""
-        else "An animal takes the room of a crate in the boat. Silver: %d." % _state.silver
+        else Grammar.text(
+            "An animal takes the room of a crate in the boat. Silver: {silver}.",
+            {"silver": _state.silver}
+        )
     )
     _show_list(
         place_title(_state.place),
@@ -307,11 +342,13 @@ func _buy_animal(kind: String) -> void:
     _state.add_cargo("animal:" + kind)
     Audio.play(Audio.ANIMALS.get(kind, "coins"))
     _show_animals(
-        (
-            "The %s is in the boat. Row it home to your farm!"
-            % String(_state.farm.animal_kinds[kind]["name"]).to_lower()
-        )
+        Grammar.text("{animal} is in the boat. Row it home to your farm!", {"animal": _one(kind)})
     )
+
+
+## One animal of the [param kind], e.g., "a goat" (see Grammar.phrase).
+func _one(kind: String) -> Dictionary:
+    return Missions.crates(_state, "animal:" + kind, 1)
 
 
 ## What a place pays for an animal of the [param kind]: half its price.
@@ -326,25 +363,27 @@ func _animals_owned(kind: String) -> int:
 
 
 func _sell_animal(kind: String) -> void:
-    var name := String(_state.farm.animal_kinds[kind]["name"]).to_lower()
+    var args := {"animal": _one(kind), "price": sale_price(kind)}
     var text := ""
     if _state.remove_cargo("animal:" + kind) == 1:
-        text = "You sold the %s from your boat for %d silver."
+        text = Grammar.text("You sold {animal} from your boat for {price} silver.", args)
     elif _state.farm.remove_animal(kind):
-        text = "You sold a %s from your farm for %d silver; they fetch it tomorrow."
+        text = Grammar.text(
+            "You sold {animal} from your farm for {price} silver; they fetch it tomorrow.", args
+        )
     else:
         _show_animals()
         return
     _state.silver += sale_price(kind)
     Audio.play("coins")
-    _show_animals(text % [name, sale_price(kind)] + " Silver: %d." % _state.silver)
+    _show_animals(text + " " + Grammar.text("Silver: {silver}.", {"silver": _state.silver}))
 
 
 func _talk() -> void:
     var who := {"name": "", "goods": [], "hair": Color("8a5a2b"), "braids": _rng.randf() < 0.5}
     var news := Gossip.news(_state, who, _rng)
     _state.hear(news["text"], news["place"], news["good"])
-    var cards: Array = [{"title": "Thank you!", "detail": ""}]
+    var cards: Array = [ChoicePanel.card("Thank you!")]
     var actions: Array[Callable] = [show_port]
     _world.show_screen(
         place_title(_state.place),
@@ -368,29 +407,38 @@ func _show_home(message := "") -> void:
     if text == "":
         var reminders := farm.reminders(_state.day)
         text = (
-            "Grandmother Åsa waves from the jetty. "
-            + (reminders[0]["text"] if not reminders.is_empty() else "All is well on the farm.")
+            Grammar.text("Grandmother Åsa waves from the jetty.")
+            + " "
+            + (
+                reminders[0]["text"]
+                if not reminders.is_empty()
+                else Grammar.text("All is well on the farm.")
+            )
         )
         text = " ".join([text] + _task_notes("home"))
     var cards: Array = [
-        {"title": "The farm", "detail": _animals_count()},
-        {
-            "title": "Unload the boat",
-            "detail": "%d crates" % _unloadable(),
-            "enabled": _unloadable() > 0
-        },
-        {
-            "title": "Load from the store",
-            "detail": "",
-            "enabled": not _store_goods().is_empty() and _state.has_room()
-        },
+        ChoicePanel.card("The farm", _animals_count()),
+        ChoicePanel.card(
+            "Unload the boat",
+            ChoicePanel.detail("{count} {count|crate|crates}", {"count": _unloadable()}),
+            {"enabled": _unloadable() > 0}
+        ),
+        ChoicePanel.card(
+            "Load from the store",
+            "",
+            {"enabled": not _store_goods().is_empty() and _state.has_room()}
+        ),
         _tasks_card("home"),
-        {
-            "title": "Sleep",
-            "detail": "end the day" if _state.travelled else "row a trip first",
-            "enabled": _state.travelled
-        },
-        {"title": "Row out", "detail": ""},
+        ChoicePanel.card(
+            "Sleep",
+            (
+                ChoicePanel.detail("end the day")
+                if _state.travelled
+                else ChoicePanel.detail("row a trip first")
+            ),
+            {"enabled": _state.travelled}
+        ),
+        ChoicePanel.card("Row out"),
     ]
     var actions: Array[Callable] = [
         _show_farm,
@@ -408,22 +456,15 @@ func _animals_count() -> String:
     var total := 0
     for kind in _state.farm.animals.keys():
         total += int(_state.farm.animals[kind])
-    return "%d animal%s" % [total, "" if total == 1 else "s"]
+    return ChoicePanel.detail("{count} {count|animal|animals}", {"count": total})
 
 
-func _animals_line() -> String:
-    var parts: Array[String] = []
+## The animals of the farm, e.g., [3 hens, a sheep] (see Grammar.phrase).
+func _animals_line() -> Array:
+    var parts: Array = []
     for kind in _state.farm.animals.keys():
-        parts.append(
-            (
-                "%d %s"
-                % [
-                    _state.farm.animals[kind],
-                    String(_state.farm.animal_kinds[kind]["name"]).to_lower()
-                ]
-            )
-        )
-    return ", ".join(parts)
+        parts.append(Missions.crates(_state, "animal:" + kind, int(_state.farm.animals[kind])))
+    return parts
 
 
 func _store_goods() -> Array:
@@ -439,12 +480,20 @@ func _show_farm(message := "") -> void:
     var lines: Array[String] = []
     if message != "":
         lines.append(message)
-    lines.append("Animals: %s (room for %d)." % [_animals_line(), int(farm.pasture)])
-    var store: Array[String] = []
+    lines.append(
+        Grammar.text(
+            "Animals: {animals} (room for {room}).",
+            {"animals": _animals_line(), "room": int(farm.pasture)}
+        )
+    )
+    var store: Array = []
     for good in farm.store.keys():
         if farm.crates(good) > 0:
-            store.append("%d %s" % [farm.crates(good), _state.good_name(good).to_lower()])
-    lines.append("Store: %s." % (", ".join(store) if not store.is_empty() else "empty"))
+            store.append(Missions.crates(_state, good, farm.crates(good)))
+    if store.is_empty():
+        lines.append(Grammar.text("Store: empty."))
+    else:
+        lines.append(Grammar.text("Store: {goods}.", {"goods": store}))
     # NOTE: The board has room for the two most pressing reminders.
     for reminder in farm.reminders(_state.day).slice(0, 2):
         lines.append(reminder["text"])
@@ -456,17 +505,21 @@ func _show_farm(message := "") -> void:
         elif farm.fields[i]["crop"] != "" and farm.days_to_ripe(i, _state.day) == 0:
             ripe = true
     var cards: Array = [
-        {
-            "title": "Plant",
-            "detail": "an empty field" if empty >= 0 else "no empty field",
-            "enabled": empty >= 0
-        },
-        {"title": "Harvest", "detail": "", "enabled": ripe},
-        {"title": "Buy land", "detail": "%d silver" % _state.silver},
-        {"title": "Back", "detail": ""},
+        ChoicePanel.card(
+            "Plant",
+            (
+                ChoicePanel.detail("an empty field")
+                if empty >= 0
+                else ChoicePanel.detail("no empty field")
+            ),
+            {"enabled": empty >= 0}
+        ),
+        ChoicePanel.card("Harvest", "", {"enabled": ripe}),
+        ChoicePanel.card("Buy land", silver(_state.silver)),
+        ChoicePanel.card("Back"),
     ]
     var actions: Array[Callable] = [_show_plant.bind(empty), _harvest, _show_land, _show_home]
-    _world.show_screen("The farm", " ".join(lines), cards, actions, GRANDMOTHER)
+    _world.show_screen(Grammar.text("The farm"), " ".join(lines), cards, actions, GRANDMOTHER)
 
 
 func _show_plant(field: int) -> void:
@@ -479,8 +532,13 @@ func _show_plant(field: int) -> void:
             items
             . append(
                 {
-                    "title": String(kind["name"]),
-                    "detail": "%d silver, %d days" % [price, int(kind["days"])],
+                    "id": crop,
+                    "title": Grammar.title(kind["name"]),
+                    "detail":
+                    Grammar.text(
+                        "{silver} silver, {days} {days|day|days}",
+                        {"silver": price, "days": int(kind["days"])}
+                    ),
                     "color": _state.economy.goods[kind["gives"]]["color"],
                     "picture": ["farm", CROP_PICTURES.get(crop, "")],
                     "enabled": _state.silver >= price,
@@ -489,8 +547,10 @@ func _show_plant(field: int) -> void:
         )
         actions.append(_plant.bind(field, crop))
     _show_list(
-        "Plant a field",
-        "What do you plant? It grows while you trade; come back to harvest it in time.",
+        Grammar.text("Plant a field"),
+        Grammar.text(
+            "What do you plant? It grows while you trade; come back to harvest it in time."
+        ),
         items,
         actions,
         0,
@@ -503,23 +563,21 @@ func _plant(field: int, crop: String) -> void:
     _state.silver -= int(kind["seed_price"])
     _state.farm.plant(field, crop, _state.day)
     _show_farm(
-        (
-            "You planted %s. It is ripe in %d days."
-            % [String(kind["name"]).to_lower(), int(kind["days"])]
+        Grammar.text(
+            "You planted {crop}. It is ripe in {days} {days|day|days}.",
+            {"crop": kind["name"], "days": int(kind["days"])}
         )
     )
 
 
 func _harvest() -> void:
-    var parts: Array[String] = []
+    var parts: Array = []
     for i in range(_state.farm.fields.size()):
         var crop: String = _state.farm.fields[i]["crop"]
         if crop != "" and _state.farm.days_to_ripe(i, _state.day) == 0:
             var result: Dictionary = _state.farm.harvest(i, _state.day)
-            parts.append(
-                "%d crates of %s" % [result["count"], _state.good_name(result["good"]).to_lower()]
-            )
-    _show_farm("You harvested %s." % ", ".join(parts))
+            parts.append(Missions.crates(_state, result["good"], int(result["count"])))
+    _show_farm(Grammar.text("You harvested {goods}.", {"goods": parts}))
 
 
 func _show_land() -> void:
@@ -532,16 +590,17 @@ func _show_land() -> void:
             items
             . append(
                 {
-                    "title": plot["name"],
-                    "detail": "%d silver" % int(plot["price"]),
+                    "id": plot["id"],
+                    "title": Grammar.title(plot["name"]),
+                    "detail": silver(int(plot["price"])),
                     "enabled": _state.silver >= int(plot["price"]),
                 }
             )
         )
         actions.append(_buy_land.bind(plot))
     _show_list(
-        "Buy land",
-        "More land: more fields and more room for the animals.",
+        Grammar.text("Buy land"),
+        Grammar.text("More land: more fields and more room for the animals."),
         items,
         actions,
         0,
@@ -552,12 +611,13 @@ func _show_land() -> void:
 func _buy_land(plot: Dictionary) -> void:
     _state.silver -= int(plot["price"])
     _state.farm.add_plot(plot["id"])
-    _show_farm("%s is yours now!" % plot["name"])
+    _show_farm(Grammar.text("{plot} is yours now!", {"plot": plot["name"]}))
 
 
 func _unload() -> void:
     Audio.play("creak")
-    var parts: Array[String] = []
+    var parts: Array = []
+    var animals := {}
     for item in _state.cargo.keys():
         var count := int(_state.cargo[item])
         if Missions.is_item(item):
@@ -569,15 +629,19 @@ func _unload() -> void:
                 if _state.farm.has_room_for(kind):
                     _state.farm.add_animal(kind)
                     _state.remove_cargo(item)
-                    parts.append("a %s" % String(_state.farm.animal_kinds[kind]["name"]).to_lower())
+                    animals[item] = int(animals.get(item, 0)) + 1
         else:
             _state.farm.put(item, count)
             _state.remove_cargo(item, count)
-            parts.append("%d %s" % [count, _state.good_name(item).to_lower()])
+            parts.append(Missions.crates(_state, item, count))
+    for item in animals.keys():
+        parts.append(Missions.crates(_state, item, int(animals[item])))
     var text := (
-        "Unloaded: %s." % ", ".join(parts)
+        Grammar.text("Unloaded: {things}.", {"things": parts})
         if not parts.is_empty()
-        else "Nothing to unload: no room for the animals, or only what your tasks carry."
+        else Grammar.text(
+            "Nothing to unload: no room for the animals, or only what your tasks carry."
+        )
     )
     _show_home(text)
 
@@ -590,8 +654,10 @@ func _show_load(page: int, message := "") -> void:
             items
             . append(
                 {
-                    "title": "Load %s" % _state.good_name(good).to_lower(),
-                    "detail": "%d in the store" % _state.farm.crates(good),
+                    "id": "Load {good}",
+                    "title": ChoicePanel.title_of("Load {good}", {"good": _state.good_name(good)}),
+                    "detail":
+                    ChoicePanel.detail("{count} in the store", {"count": _state.farm.crates(good)}),
                     "color": _state.economy.goods[good]["color"],
                     "picture": ["goods", good],
                     "enabled": _state.has_room(),
@@ -599,18 +665,19 @@ func _show_load(page: int, message := "") -> void:
             )
         )
         actions.append(_load_good.bind(good, page))
-    var text := (
-        message
-        if message != ""
-        else "Room in the boat: %d crates." % (_state.capacity - _state.load_count())
-    )
-    _show_list("The store", text, items, actions, page, _show_load)
+    var text := message if message != "" else _room()
+    _show_list(Grammar.text("The store"), text, items, actions, page, _show_load)
+
+
+func _room() -> String:
+    var room: int = _state.capacity - _state.load_count()
+    return Grammar.text("Room in the boat: {room} {room|crate|crates}.", {"room": room})
 
 
 func _load_good(good: String, page: int) -> void:
     if _state.has_room() and _state.farm.take(good, 1) == 1:
         _state.add_cargo(good)
-    _show_load(page, "Room in the boat: %d crates." % (_state.capacity - _state.load_count()))
+    _show_load(page, _room())
 
 
 func _sleep() -> void:
@@ -618,36 +685,36 @@ func _sleep() -> void:
     _state.next_day()
     Audio.play("rooster")
     _state.save()
-    var made: Array[String] = []
+    var made: Array = []
     for good in _state.farm.store.keys():
         var gained := float(_state.farm.store[good]) - float(before.get(good, 0.0))
         if gained > 0.05:
-            made.append("%.1f %s" % [gained, _state.good_name(good).to_lower()])
-    var lines: Array[String] = ["Good morning! It is day %d." % _state.day]
+            var args := {"crates": Grammar.decimal(gained), "good": _state.good_name(good)}
+            # TRANSLATORS: a share of crates of a good, e.g., "1.5 crates of eggs"
+            made.append(Grammar.phrase("{crates} crates of {good}", args))
+    var lines: Array[String] = [Grammar.text("Good morning! It is day {day}.", {"day": _state.day})]
     if not made.is_empty():
-        lines.append("The farm made %s overnight." % ", ".join(made))
-    var young: Array[String] = []
+        lines.append(Grammar.text("The farm made {goods} overnight.", {"goods": made}))
+    var young: Array = []
     for kind in _state.farm.born.keys():
-        young.append("a %s" % _state.farm.animal_kinds[kind]["young"])
-    if not young.is_empty():
-        var last: String = young.pop_back()
-        lines.append(
-            (
-                "New on the farm: %s!"
-                % (", ".join(young) + " and " + last if young.size() > 0 else last)
+        young.append(
+            Grammar.phrase(
+                str(_state.farm.animal_kinds[kind]["young"]), {"count": int(_state.farm.born[kind])}
             )
         )
+    if not young.is_empty():
+        lines.append(Grammar.text("New on the farm: {young}!", {"young": young}))
     # NOTE: The board has room for the two most pressing reminders.
     for reminder in _state.farm.reminders(_state.day).slice(0, 2):
         lines.append(reminder["text"])
-    lines.append("The voyage is saved: you can stop here and come back another day.")
+    lines.append(Grammar.text("The voyage is saved: you can stop here and come back another day."))
     var cards: Array = [
-        {"title": "Row out", "detail": "a new day"},
-        {"title": "Stop for today", "detail": "see you!"},
-        {"title": "The farm", "detail": ""}
+        ChoicePanel.card("Row out", ChoicePanel.detail("a new day")),
+        ChoicePanel.card("Stop for today", ChoicePanel.detail("see you!")),
+        ChoicePanel.card("The farm")
     ]
     var actions: Array[Callable] = [_world.undock.bind("home"), _world.quit, _show_farm]
-    _world.show_screen("A new day", " ".join(lines), cards, actions, GRANDMOTHER)
+    _world.show_screen(Grammar.text("A new day"), " ".join(lines), cards, actions, GRANDMOTHER)
 
 
 ## How many crates of the boat can be unloaded at home (not the items of the missions).
@@ -703,13 +770,19 @@ func _show_events(events: Array, index: int, then: Callable) -> void:
     var who: Dictionary = event["who"]
     var text: String = event["text"]
     if str(who.get("name", "")) != "":
-        text = '%s: "%s"' % [who["name"], text]
-    var cards: Array = [{"title": "Hooray!" if event["done"] else "Go on", "detail": ""}]
+        text = said(who["name"], text)
+    var cards: Array = [ChoicePanel.card("Hooray!") if event["done"] else ChoicePanel.card("Go on")]
     if event["done"]:
         cards[0]["stars"] = int(event.get("stars", 0))
         Audio.play("hooray")
     var actions: Array[Callable] = [_show_events.bind(events, index + 1, then)]
     _world.show_screen(event["title"], text, cards, actions, _face(who, event["place"]))
+
+
+## What the [param person] says: their name and the [param text] in quotes.
+static func said(person: String, text: String) -> String:
+    # TRANSLATORS: who says what, e.g., Ulf: "Welcome!"; use the quotes of your language
+    return Grammar.text('{person}: "{text}"', {"person": person, "text": Grammar.raw(text)})
 
 
 ## What the missions ask at the [param place] and can not be done yet, and
@@ -719,16 +792,16 @@ func _task_notes(place: String) -> Array[String]:
     var offers: Array[String] = _state.missions.offers_at(place)
     if not offers.is_empty():
         var giver: Dictionary = _state.missions.missions[offers[0]]["giver"]
-        notes.append("%s has a task for you!" % giver["name"])
+        notes.append(Grammar.text("{person} has a task for you!", {"person": giver["name"]}))
     return notes
 
 
 func _tasks_card(place: String) -> Dictionary:
     var offers: int = _state.missions.offers_at(place).size()
-    var detail := "%d under way" % _state.missions.active.size()
+    var detail := ChoicePanel.detail("{count} under way", {"count": _state.missions.active.size()})
     if offers > 0:
-        detail = "%d new!" % offers
-    return {"title": "Tasks", "detail": detail}
+        detail = ChoicePanel.detail("{count} new!", {"count": offers})
+    return ChoicePanel.card("Tasks", detail)
 
 
 ## The missions offered here, and those under way.
@@ -737,7 +810,13 @@ func _show_tasks(page: int, message := "") -> void:
     var items: Array = []
     var actions: Array[Callable] = []
     for id in missions.offers_at(_state.place):
-        items.append({"title": missions.missions[id]["title"], "detail": "new task!"})
+        items.append(
+            {
+                "id": id,
+                "title": Grammar.text(missions.missions[id]["title"]),
+                "detail": ChoicePanel.detail("new task!")
+            }
+        )
         actions.append(_show_offer.bind(id))
     for entry in missions.active:
         var id: String = entry["id"]
@@ -746,8 +825,14 @@ func _show_tasks(page: int, message := "") -> void:
             items
             . append(
                 {
-                    "title": missions.missions[id]["title"],
-                    "detail": _state.place_name(where) if where != "" else "on the lakes",
+                    "id": id,
+                    "title": Grammar.text(missions.missions[id]["title"]),
+                    "detail":
+                    (
+                        Grammar.text(_state.place_name(where))
+                        if where != ""
+                        else ChoicePanel.detail("on the lakes")
+                    ),
                 }
             )
         )
@@ -756,37 +841,51 @@ func _show_tasks(page: int, message := "") -> void:
     if text == "":
         var lines: Array[String] = []
         if missions.active.is_empty():
-            lines.append("No task under way.")
-        var elsewhere: Array[String] = []
+            lines.append(Grammar.text("No task under way."))
+        var elsewhere: Array = []
         for id in missions.available():
             var giver: Dictionary = missions.missions[id]["giver"]
             if giver["place"] != _state.place:
-                elsewhere.append("%s in %s" % [giver["name"], _state.place_name(giver["place"])])
+                elsewhere.append(
+                    Grammar.phrase(
+                        "{person} in {place}",
+                        {"person": giver["name"], "place": _state.place_name(giver["place"])}
+                    )
+                )
         if not elsewhere.is_empty():
-            lines.append("Tasks wait for you: %s." % ", ".join(elsewhere.slice(0, 3)))
-        lines.append("Done: %d tasks, %d stars." % [missions.done.size(), missions.stars()])
+            lines.append(
+                Grammar.text("Tasks wait for you: {people}.", {"people": elsewhere.slice(0, 3)})
+            )
+        lines.append(
+            Grammar.text(
+                "Done: {tasks} {tasks|task|tasks}, {stars} {stars|star|stars}.",
+                {"tasks": missions.done.size(), "stars": missions.stars()}
+            )
+        )
         text = " ".join(lines)
-    _show_list("Tasks", text, items, actions, page, _show_tasks)
+    _show_list(Grammar.text("Tasks"), text, items, actions, page, _show_tasks)
 
 
 func _show_offer(id: String) -> void:
     var missions: Missions = _state.missions
     var mission: Dictionary = missions.missions[id]
     var giver: Dictionary = mission["giver"]
-    var text := '%s: "%s"' % [giver["name"], mission["offer"]]
+    var text := said(giver["name"], Grammar.text(mission["offer"]))
     if mission.has("days"):
         var days := int(mission["days"])
-        text += " (Three stars within %d day%s.)" % [days, "" if days == 1 else "s"]
+        text += (" " + Grammar.text("(Three stars within {days} {days|day|days}.)", {"days": days}))
     var cards: Array = [
-        {
-            "title": "Yes, I will help!",
-            "detail": "" if missions.can_accept() else "first finish a task",
-            "enabled": missions.can_accept(),
-        },
-        {"title": "Not now", "detail": ""},
+        ChoicePanel.card(
+            "Yes, I will help!",
+            "" if missions.can_accept() else ChoicePanel.detail("first finish a task"),
+            {"enabled": missions.can_accept()}
+        ),
+        ChoicePanel.card("Not now"),
     ]
     var actions: Array[Callable] = [_accept.bind(id), _show_tasks.bind(0)]
-    _world.show_screen(mission["title"], text, cards, actions, _face(giver, giver["place"]))
+    _world.show_screen(
+        Grammar.text(mission["title"]), text, cards, actions, _face(giver, giver["place"])
+    )
 
 
 func _accept(id: String) -> void:
@@ -797,158 +896,13 @@ func _accept(id: String) -> void:
         # NOTE: The first step is right here: do it at once.
         show_port()
         return
-    show_port("Off you go! " + hint)
+    show_port(Grammar.text("Off you go!") + " " + hint)
 
 
 func _show_task(id: String) -> void:
     var missions: Missions = _state.missions
-    var cards: Array = [{"title": "Back", "detail": ""}]
+    var cards: Array = [ChoicePanel.card("Back")]
     var actions: Array[Callable] = [_show_tasks.bind(0)]
-    _world.show_screen(missions.missions[id]["title"], missions.hint(_state, id), cards, actions)
-
-
-# ---------------------------------------------------------------------------
-# The shipyard
-# ---------------------------------------------------------------------------
-
-
-func _shipwright_face() -> Dictionary:
-    var who: Dictionary = _state.ships.shipwright
-    return {
-        "hair": Color(str(who.get("hair", "8a5a2b"))),
-        "braids": bool(who.get("braids", false)),
-        "picture": str(who.get("picture", ""))
-    }
-
-
-## The ships of the shipwright, and the players' own.
-func _show_shipyard(message := "") -> void:
-    var ships: Ships = _state.ships
-    var cards: Array = []
-    var actions: Array[Callable] = []
-    for id in ships.ids:
-        var kind: Dictionary = ships.kinds[id]
-        var detail := "%d silver" % int(kind["price"])
-        if id == ships.current:
-            detail = "your ship"
-        elif id in ships.owned:
-            detail = "yours"
-        (
-            cards
-            . append(
-                {
-                    "title": str(kind["name"]),
-                    "detail": "%d crates, %s" % [ships.hold(id), detail],
-                    "picture": kind["drawn"]["hull"] if kind.has("drawn") else ["rowboat", "hull"],
-                }
-            )
-        )
-        actions.append(_show_ship.bind(id))
-    cards.append({"title": "Back", "detail": ""})
-    actions.append(show_port)
-    var text := message
-    if text == "":
-        text = (
-            "Welcome to my shipyard! A bigger ship carries more, and its crew rows to your beat. "
-            + "A ship you buy stays yours: take any of them, any time. Silver: %d." % _state.silver
-        )
     _world.show_screen(
-        "%s's shipyard" % ships.shipwright["name"].split(" ")[0],
-        text,
-        cards,
-        actions,
-        _shipwright_face()
+        Grammar.text(missions.missions[id]["title"]), missions.hint(_state, id), cards, actions
     )
-
-
-## How a share of the rowing boat reads, e.g., "faster" for 1.3.
-static func _compared(share: float, more: String, less: String) -> String:
-    if share >= 1.45:
-        return "much " + more
-    if share >= 1.1:
-        return more
-    if share <= 0.7:
-        return "much " + less
-    if share <= 0.9:
-        return less
-    return "as the rowing boat"
-
-
-func _show_ship(id: String) -> void:
-    var ships: Ships = _state.ships
-    var kind: Dictionary = ships.kinds[id]
-    var lines: Array[String] = [str(kind.get("about", ""))]
-    (
-        lines
-        . append(
-            (
-                "Hold: %d crates. Crew: %s. Speed: %s. Turns: %s. Glides: %s."
-                % [
-                    ships.hold(id),
-                    "%d rowers" % int(kind["crew"]) if int(kind["crew"]) > 0 else "just you",
-                    _compared(float(kind["top"]), "faster", "slower"),
-                    _compared(float(kind["turn"]), "quicker", "slower"),
-                    _compared(float(kind["glide"]), "longer", "shorter"),
-                ]
-            )
-        )
-    )
-    var cards: Array = []
-    var actions: Array[Callable] = []
-    if id == ships.current:
-        lines.append("You row her now.")
-    elif id in ships.owned:
-        var fits: bool = _state.load_count() <= ships.hold(id)
-        if not fits:
-            lines.append("Your cargo does not fit in her: sell or unload some first.")
-        cards.append({"title": "Take her", "detail": "free", "enabled": fits})
-        actions.append(_take_ship.bind(id))
-    else:
-        var price := int(kind["price"])
-        var fits: bool = _state.load_count() <= ships.hold(id)
-        (
-            cards
-            . append(
-                {
-                    "title": "Buy her",
-                    "detail": "%d silver" % price,
-                    "enabled": _state.silver >= price and fits,
-                }
-            )
-        )
-        actions.append(_buy_ship.bind(id))
-    cards.append({"title": "Back", "detail": ""})
-    actions.append(_show_shipyard.bind(""))
-    _world.show_screen(kind["name"], " ".join(lines), cards, actions, _shipwright_face())
-
-
-func _buy_ship(id: String) -> void:
-    var ships: Ships = _state.ships
-    if not ships.buy(_state, id):
-        return
-    ships.take(id, _state.load_count())
-    Audio.play("jingle")
-    _world.refit()
-    _state.save()
-    _show_shipyard(
-        (
-            "She is yours! Your cargo is aboard, and %s rows to your beat. Fair winds! Silver: %d."
-            % [
-                (
-                    "her crew of %d" % int(ships.kinds[id]["crew"])
-                    if int(ships.kinds[id]["crew"]) > 0
-                    else "she"
-                ),
-                _state.silver
-            ]
-        )
-    )
-
-
-func _take_ship(id: String) -> void:
-    var ships: Ships = _state.ships
-    if ships.take(id, _state.load_count()):
-        Audio.play("creak")
-        _world.refit()
-        _state.save()
-        _show_shipyard("Your cargo goes over into the %s. She is ready!" % ships.kinds[id]["name"])

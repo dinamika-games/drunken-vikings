@@ -19,8 +19,7 @@
       "name": "Mead",
       "color": "c9802a",
       "picture": ["items", "mead"],
-      "one": "a cask of mead",
-      "many": "casks of mead"
+      "counted": "{count|a cask of mead|{count} casks of mead}"
     }
   },
   "steps": [

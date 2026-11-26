@@ -19,8 +19,7 @@
       "name": "Honey",
       "color": "e8a830",
       "picture": ["goods", "honey"],
-      "one": "a pot of honey",
-      "many": "pots of honey"
+      "counted": "{count|a pot of honey|{count} pots of honey}"
     }
   },
   "steps": [

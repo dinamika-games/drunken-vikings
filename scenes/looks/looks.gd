@@ -18,6 +18,7 @@ const FIGURES := ["girl", "boy"]
 ## The colours to choose from: {"name", "color"}. The colour is the average
 ## of the area as painted (its outlines and shadows included, see
 ## Recoloring.cs), so it is darker than the colour one sees.
+# TRANSLATORS[name@skin]: the colour of the skin of a rower, on a card
 const SKINS := [
     {"name": "Fair", "color": Color("e8b08a")},
     {"name": "Light", "color": Color("d8955f")},
@@ -25,6 +26,7 @@ const SKINS := [
     {"name": "Brown", "color": Color("865034")},
     {"name": "Dark", "color": Color("553222")},
 ]
+# TRANSLATORS[name@hair]: the colour of the hair of a rower, on a card
 const HAIRS := [
     {"name": "Blond", "color": Color("cc9035")},
     {"name": "Red", "color": Color("b65a20")},
@@ -32,6 +34,7 @@ const HAIRS := [
     {"name": "Dark brown", "color": Color("4a2c1a")},
     {"name": "Black", "color": Color("262220")},
 ]
+# TRANSLATORS[name@clothes]: the colour of the clothes of a rower, on a card
 const CLOTHES := [
     {"name": "Teal", "color": Color("36574c")},
     {"name": "Plum", "color": Color("69363f")},

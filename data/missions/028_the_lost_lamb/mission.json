@@ -18,7 +18,7 @@
       "name": "Lamb",
       "color": "e8e0d0",
       "picture": ["farm", "lamb"],
-      "one": "the lamb"
+      "counted": "the lamb"
     }
   },
   "steps": [

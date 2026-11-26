@@ -7,3 +7,4 @@ matplotlib==3.10.9
 shapely==2.0.6
 pillow==11.0.0
 pydantic==2.14.4
+polib==1.2.0

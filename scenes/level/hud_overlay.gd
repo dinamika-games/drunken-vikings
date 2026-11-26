@@ -57,9 +57,10 @@ func _draw_progress() -> void:
     var right := Vector2(1360, 100)
     draw_line(left, right, _INK, 14.0)
     draw_line(left, left.lerp(right, progress), _GOLD, 8.0)
-    var start_width := font.get_string_size(map.start["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x
-    _outlined(font, left + Vector2(-16 - start_width, 8), map.start["name"], 24)
-    _outlined(font, right + Vector2(16, 8), map.goal["name"], 24)
+    var start := Grammar.text(map.start["name"])
+    var start_width := font.get_string_size(start, HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x
+    _outlined(font, left + Vector2(-16 - start_width, 8), start, 24)
+    _outlined(font, right + Vector2(16, 8), Grammar.text(map.goal["name"]), 24)
     var ship := Pictures.of("longships", "hull_wedding")
     var boat := Pictures.of("rowboat", "hull")
     if ship != null and boat != null:

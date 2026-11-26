@@ -18,8 +18,7 @@
       "name": "Garland",
       "color": "e86a9a",
       "picture": ["items", "garland"],
-      "one": "a garland",
-      "many": "garlands"
+      "counted": "{count|a garland|{count} garlands}"
     }
   },
   "steps": [

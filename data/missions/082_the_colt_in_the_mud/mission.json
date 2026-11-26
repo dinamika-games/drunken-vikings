@@ -17,7 +17,7 @@
     "rope": {
       "name": "Rope",
       "color": "c8a878",
-      "one": "the long rope",
+      "counted": "the long rope",
       "picture": ["items", "rope"]
     }
   },

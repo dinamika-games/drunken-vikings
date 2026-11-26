@@ -19,13 +19,12 @@
       "name": "Blanket",
       "color": "b8332a",
       "picture": ["items", "blanket"],
-      "one": "a blanket",
-      "many": "blankets"
+      "counted": "{count|a blanket|{count} blankets}"
     },
     "milk": {
       "name": "Milk",
       "color": "f1f0ea",
-      "one": "the jug of milk",
+      "counted": "the jug of milk",
       "picture": ["items", "milk"]
     }
   },

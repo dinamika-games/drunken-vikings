@@ -531,19 +531,19 @@ func _finish() -> void:
     if _state != null:
         _state.save()
     var cards: Array = [
-        {"title": "Another party!", "detail": ""},
-        {"title": "To the farm", "detail": "trade and farm"},
-        {"title": "Stop for today", "detail": "see you!"},
+        ChoicePanel.card("Another party!"),
+        ChoicePanel.card("To the farm", ChoicePanel.detail("trade and farm")),
+        ChoicePanel.card("Stop for today", ChoicePanel.detail("see you!")),
     ]
     _actions = [get_tree().reload_current_scene, _to_farm, _quit]
     _panel.show_cards(
-        "What a wedding!",
-        (
+        Grammar.text("What a wedding!"),
+        Grammar.text(
             (
-                "The wedding party is in %s. You picked up %d things from the water: "
-                + "%d silver coins for your purse!"
-            )
-            % [_map.goal["name"], _coins, _coins]
+                "The wedding party is in {place}. You picked up {count} {count|thing|things} "
+                + "from the water: {count} silver {count|coin|coins} for your purse!"
+            ),
+            {"place": _map.goal["name"], "count": _coins}
         ),
         cards,
         {"hair": Color("e8c25a"), "braids": true, "picture": "ylva"}
@@ -562,25 +562,36 @@ func _on_chosen(index: int) -> void:
 func _update_hud(progress: float) -> void:
     var goal: String = _map.goal["name"]
     if _done:
-        _banner.text = "What a wedding!"
-        _info.text = "%d silver coins!" % _coins
+        _banner.text = Grammar.text("What a wedding!")
+        _info.text = Grammar.text("{count} silver {count|coin|coins}!", {"count": _coins})
     else:
         if _ship.arrived:
-            _banner.text = "The wedding party is in %s. Row to the jetty!" % goal
+            _banner.text = Grammar.text(
+                "The wedding party is in {place}. Row to the jetty!", {"place": goal}
+            )
         elif _ship.waiting:
-            _banner.text = "The wedding longship waits for you. Row!"
+            _banner.text = Grammar.text("The wedding longship waits for you. Row!")
         else:
-            _banner.text = "Follow the wedding to %s, and pick up what falls into the water!" % goal
+            _banner.text = Grammar.text(
+                "Follow the wedding to {place}, and pick up what falls into the water!",
+                {"place": goal}
+            )
         _info.text = (
-            (
-                "Strokes: %d    %d:%02d\n"
-                + (
-                    "Row in time to go straight; the stronger rower turns the boat."
-                    if players() == 2
-                    else "Row: lean back and forth.   Steer: go to the side with your head."
+            Grammar.text(
+                "Strokes: {strokes}    {time}",
+                {
+                    "strokes": _boat.strokes,
+                    "time": Grammar.raw("%d:%02d" % [int(_elapsed) / 60, int(_elapsed) % 60])
+                }
+            )
+            + "\n"
+            + (
+                Grammar.text("Row in time to go straight; the stronger rower turns the boat.")
+                if players() == 2
+                else Grammar.text(
+                    "Row: lean back and forth.   Steer: go to the side with your head."
                 )
             )
-            % [_boat.strokes, int(_elapsed) / 60, int(_elapsed) % 60]
         )
     _overlay.progress = progress / maxf(_map.route_length(), 1.0)
     _overlay.ship_progress = _ship.progress / maxf(_map.route_length(), 1.0)

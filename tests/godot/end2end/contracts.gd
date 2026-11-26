@@ -244,7 +244,7 @@ func _check_card(font: Font, card: Dictionary, where: String) -> void:
     # nails of the painted card (see DwellButton.line_width).
     var top := DwellButton.title_top(card)
     var painted := Pictures.of("ui", "card") != null
-    var title_font := DwellButton.title_size(font, title, CARD, top, painted)
+    var title_font := DwellButton.title_size(font, title, CARD, top, painted, detail != "")
     var lines := DwellButton.wrap_title(font, title, CARD, top, painted, title_font)
     for i in range(lines.size()):
         var at := top + i * DwellButton.TITLE_LINE

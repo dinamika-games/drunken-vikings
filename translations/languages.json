@@ -1,0 +1,19 @@
+[
+    {"code": "en", "name": "English", "subtitle": "", "prompt": "Choose your language"},
+    {"code": "ar", "name": "العربية", "subtitle": "", "prompt": "اختر لغتك", "rtl": true},
+    {"code": "da", "name": "Dansk", "subtitle": "", "prompt": "Vælg dit sprog"},
+    {"code": "de", "name": "Deutsch", "subtitle": "", "prompt": "Wähle deine Sprache"},
+    {"code": "es", "name": "Español", "subtitle": "", "prompt": "Elige tu idioma"},
+    {"code": "fr", "name": "Français", "subtitle": "", "prompt": "Choisis ta langue"},
+    {"code": "hi", "name": "हिन्दी", "subtitle": "", "prompt": "अपनी भाषा चुनो"},
+    {"code": "it", "name": "Italiano", "subtitle": "", "prompt": "Scegli la tua lingua"},
+    {"code": "ja", "name": "日本語", "subtitle": "", "prompt": "ことばを えらんでね"},
+    {"code": "ko", "name": "한국어", "subtitle": "", "prompt": "언어를 골라 봐"},
+    {"code": "nb", "name": "Norsk", "subtitle": "", "prompt": "Velg språket ditt"},
+    {"code": "ru", "name": "Русский", "subtitle": "", "prompt": "Выбери язык"},
+    {"code": "sh", "name": "Bosanski Hrvatski Srpski", "short": "BHS", "subtitle": "", "prompt": "Izaberi jezik"},
+    {"code": "sq", "name": "Shqip", "subtitle": "", "prompt": "Zgjidh gjuhën"},
+    {"code": "sv", "name": "Svenska", "subtitle": "", "prompt": "Välj ditt språk"},
+    {"code": "tr", "name": "Türkçe", "subtitle": "", "prompt": "Dilini seç"},
+    {"code": "zh", "name": "中文", "subtitle": "简体", "prompt": "选择你的语言"}
+]

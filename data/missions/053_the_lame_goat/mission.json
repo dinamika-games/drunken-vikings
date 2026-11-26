@@ -17,7 +17,7 @@
       "name": "Hedda",
       "color": "e8e0d0",
       "picture": ["items", "hedda"],
-      "one": "Hedda the goat"
+      "counted": "Hedda the goat"
     }
   },
   "steps": [

@@ -19,13 +19,13 @@
       "name": "Hive",
       "color": "c8a050",
       "picture": ["items", "skep"],
-      "one": "the empty hive"
+      "counted": "the empty hive"
     },
     "swarm": {
       "name": "Swarm",
       "color": "e8a830",
       "picture": ["items", "swarm"],
-      "one": "the hive with the swarm"
+      "counted": "the hive with the swarm"
     }
   },
   "steps": [

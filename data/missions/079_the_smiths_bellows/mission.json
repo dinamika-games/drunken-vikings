@@ -16,14 +16,13 @@
     "hide": {
       "name": "Hide",
       "color": "8a5a2b",
-      "one": "a goat hide",
-      "many": "goat hides",
+      "counted": "{count|a goat hide|{count} goat hides}",
       "picture": ["items", "hide"]
     },
     "tar": {
       "name": "Tar",
       "color": "3a2a1a",
-      "one": "the pot of tar",
+      "counted": "the pot of tar",
       "picture": ["items", "tar"]
     }
   },

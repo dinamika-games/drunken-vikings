@@ -18,12 +18,12 @@
       "name": "Shears",
       "color": "6a7078",
       "picture": ["items", "shears"],
-      "one": "the shears"
+      "counted": "the shears"
     },
     "net": {
       "name": "Old net",
       "color": "9aa6b0",
-      "one": "the old net",
+      "counted": "the old net",
       "picture": ["items", "net"]
     }
   },

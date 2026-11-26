@@ -10,6 +10,7 @@ extends RefCounted
 ## The skippers: each has a name, their picture (of the sheets "skippers" and
 ## "faces", see Pictures), a kind (what they know best), their looks (for the
 ## face drawn in code) and the color of their sail.
+# TRANSLATORS[name@person]: the name of a skipper on the lakes
 const SKIPPERS := [
     {
         "name": "Ragna the fisher",
@@ -67,7 +68,9 @@ const SKIPPERS := [
     },
 ]
 
-## The fun facts of the time, which the skippers tell now and then.
+## The fun facts of the time, which the skippers tell now and then (English
+## message IDs, see Grammar).
+# TRANSLATORS[]: a fun fact of the viking times, which a skipper tells, at most 2 short sentences
 const FACTS := [
     (
         "The traders weigh their silver on small scales: a broken piece of a bracelet "
@@ -107,9 +110,13 @@ static func news(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> Di
                 if best["place"] != "" and economy.mood(best["place"], good) > 0:
                     return {
                         "text":
-                        (
-                            "They pay %d silver for %s in %s! Bring them some."
-                            % [best["price"], _lower(state, good), state.place_name(best["place"])]
+                        Grammar.text(
+                            "They pay {silver} silver for {good} in {place}! Bring them some.",
+                            {
+                                "silver": best["price"],
+                                "good": state.good_name(good),
+                                "place": state.place_name(best["place"])
+                            }
                         ),
                         "place": best["place"],
                         "good": good
@@ -119,13 +126,13 @@ static func news(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> Di
                 if best["place"] != "":
                     return {
                         "text":
-                        (
-                            "%s costs only %d silver in %s."
-                            % [
-                                state.good_name(good),
-                                best["price"],
-                                state.place_name(best["place"])
-                            ]
+                        Grammar.text(
+                            "{good} costs only {silver} silver in {place}.",
+                            {
+                                "good": state.good_name(good),
+                                "silver": best["price"],
+                                "place": state.place_name(best["place"])
+                            }
                         ),
                         "place": best["place"],
                         "good": good
@@ -140,9 +147,16 @@ static func news(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> Di
                 if worst != "" and float(economy.pressure.get("%s|%s" % [worst, good], 1.0)) < 0.9:
                     return {
                         "text":
-                        (
-                            "Don't bring %s to %s, they have plenty: only %d silver."
-                            % [_lower(state, good), state.place_name(worst), lowest]
+                        Grammar.text(
+                            (
+                                "Don't bring {good} to {place}, they have plenty: "
+                                + "only {silver} silver."
+                            ),
+                            {
+                                "good": state.good_name(good),
+                                "place": state.place_name(worst),
+                                "silver": lowest
+                            }
                         ),
                         "place": worst,
                         "good": good
@@ -152,13 +166,13 @@ static func news(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> Di
                     var event: Dictionary = economy.events[rng.randi() % economy.events.size()]
                     return {
                         "text":
-                        (
-                            "%s in %s! They want %s there."
-                            % [
-                                event["title"],
-                                state.place_name(event["place"]),
-                                _lower(state, event["good"])
-                            ]
+                        Grammar.text(
+                            "{event} in {place}! They want {good} there.",
+                            {
+                                "event": event["title"],
+                                "place": state.place_name(event["place"]),
+                                "good": state.good_name(event["good"])
+                            }
                         ),
                         "place": event["place"],
                         "good": event["good"]
@@ -167,7 +181,11 @@ static func news(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> Di
                 var reminders: Array = state.farm.reminders(state.day)
                 if not reminders.is_empty():
                     return {
-                        "text": "Your grandmother asked me to tell you: " + reminders[0]["text"],
+                        "text":
+                        Grammar.text(
+                            "Your grandmother asked me to tell you: {reminder}",
+                            {"reminder": Grammar.raw(reminders[0]["text"])}
+                        ),
                         "place": "home",
                         "good": ""
                     }
@@ -180,9 +198,13 @@ static func news(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> Di
                     var giver: Dictionary = mission["giver"]
                     return {
                         "text":
-                        (
-                            "%s in %s is looking for help: %s."
-                            % [giver["name"], state.place_name(giver["place"]), mission["title"]]
+                        Grammar.text(
+                            "{person} in {place} is looking for help: {task}.",
+                            {
+                                "person": giver["name"],
+                                "place": state.place_name(giver["place"]),
+                                "task": mission["title"]
+                            }
                         ),
                         "place": giver["place"],
                         "good": ""
@@ -193,27 +215,36 @@ static func news(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> Di
                     if not id in ships.owned:
                         return {
                             "text":
-                            (
-                                "%s in %s builds ships: a %s carries %d crates, for %d silver!"
-                                % [
-                                    ships.shipwright["name"],
-                                    state.place_name(ships.shipyard),
-                                    String(ships.kinds[id]["name"]).to_lower(),
-                                    int(ships.kinds[id]["hold"]),
-                                    int(ships.kinds[id]["price"])
-                                ]
+                            Grammar.text(
+                                (
+                                    "{person} in {place} builds ships: a {ship} carries "
+                                    + "{crates} crates, for {silver} silver!"
+                                ),
+                                {
+                                    "person": ships.shipwright["name"],
+                                    "place": state.place_name(ships.shipyard),
+                                    "ship": ships.kinds[id]["name"],
+                                    "crates": int(ships.kinds[id]["hold"]),
+                                    "silver": int(ships.kinds[id]["price"])
+                                }
                             ),
                             "place": ships.shipyard,
                             "good": ""
                         }
             "fact":
                 return {
-                    "text": "Did you know? " + FACTS[rng.randi() % FACTS.size()],
+                    "text":
+                    Grammar.text(
+                        "Did you know? {fact}", {"fact": FACTS[rng.randi() % FACTS.size()]}
+                    ),
                     "place": "",
                     "good": ""
                 }
     return {
-        "text": "Fair winds to you! " + FACTS[rng.randi() % FACTS.size()], "place": "", "good": ""
+        "text":
+        Grammar.text("Fair winds to you! {fact}", {"fact": FACTS[rng.randi() % FACTS.size()]}),
+        "place": "",
+        "good": ""
     }
 
 
@@ -242,9 +273,9 @@ static func offer(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> D
                     "count": 1,
                     "price": 0,
                     "text":
-                    (
-                        "Swap a crate of your %s for a crate of my %s?"
-                        % [_lower(state, good), _lower(state, other)]
+                    Grammar.text(
+                        "Swap a crate of your {good} for a crate of my {other}?",
+                        {"good": state.good_name(good), "other": state.good_name(other)}
                     )
                 }
         var best := economy.best_sell(good)
@@ -257,9 +288,12 @@ static func offer(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> D
             "count": count,
             "price": price,
             "text":
-            (
-                "You carry %s? I give you %d silver a crate for %d crate%s, right now."
-                % [_lower(state, good), price, count, "" if count == 1 else "s"]
+            Grammar.text(
+                (
+                    "You carry {good}? I give you {silver} silver a crate for "
+                    + "{count} {count|crate|crates}, right now."
+                ),
+                {"good": state.good_name(good), "silver": price, "count": count}
             )
         }
     if who["goods"].is_empty():
@@ -277,9 +311,12 @@ static func offer(state: Node, who: Dictionary, rng: RandomNumberGenerator) -> D
         "count": count,
         "price": price,
         "text":
-        (
-            "I have %d crate%s of %s, %d silver each: cheaper than any market. Want them?"
-            % [count, "" if count == 1 else "s", _lower(state, good), price]
+        Grammar.text(
+            (
+                "I have {count} {count|crate|crates} of {good}, {silver} silver each: "
+                + "cheaper than any market. Want {count|it|them}?"
+            ),
+            {"count": count, "good": state.good_name(good), "silver": price}
         )
     }
 
@@ -297,23 +334,24 @@ static func take(state: Node, deal: Dictionary) -> String:
                 state.add_cargo(good)
                 bought += 1
             if bought == 0:
-                return "You have no room or not enough silver."
-            return (
-                "You bought %d crate%s of %s."
-                % [bought, "" if bought == 1 else "s", _lower(state, good)]
+                return Grammar.text("You have no room or not enough silver.")
+            return Grammar.text(
+                "You bought {count} {count|crate|crates} of {good}.",
+                {"count": bought, "good": state.good_name(good)}
             )
         "sell":
             var sold: int = state.remove_cargo(good, int(deal["count"]))
             state.silver += sold * int(deal["price"])
-            return (
-                "You sold %d crate%s for %d silver."
-                % [sold, "" if sold == 1 else "s", sold * int(deal["price"])]
+            return Grammar.text(
+                "You sold {count} {count|crate|crates} for {silver} silver.",
+                {"count": sold, "silver": sold * int(deal["price"])}
             )
         "swap":
             if state.remove_cargo(good, 1) == 1:
                 state.add_cargo(deal["other"])
-                return (
-                    "You swapped %s for %s." % [_lower(state, good), _lower(state, deal["other"])]
+                return Grammar.text(
+                    "You swapped {good} for {other}.",
+                    {"good": state.good_name(good), "other": state.good_name(deal["other"])}
                 )
     return ""
 
@@ -323,10 +361,6 @@ static func _pick_good(state: Node, who: Dictionary, rng: RandomNumberGenerator)
         return who["goods"][rng.randi() % who["goods"].size()]
     var ids: Array = state.economy.good_ids
     return ids[rng.randi() % ids.size()]
-
-
-static func _lower(state: Node, good: String) -> String:
-    return state.good_name(good).to_lower()
 
 
 static func _weighted(weights: Array, rng: RandomNumberGenerator) -> int:

@@ -1,6 +1,8 @@
 extends Control
 
-## The first screen: the players choose with their hands (see ChoicePanel)
+## The first screen: at the very first start, the players choose their
+## language (see LanguageSelect, also from the card "Language" later). Then
+## they choose with their hands (see ChoicePanel)
 ## their journey (see GameState): go on with the last one, open another
 ## recent one, start a new one (then they choose how many row: one, or two
 ## with an oar each, how each rower looks, and see how to play, see HowTo),
@@ -57,10 +59,30 @@ func _ready() -> void:
     _panel.set_anchors_preset(Control.PRESET_FULL_RECT)
     _panel.chosen.connect(_on_chosen)
     add_child(_panel)
-    EscapeGuard.attach(self, _quit, "Press Esc again to quit the game.")
+    EscapeGuard.attach(self, _quit, Grammar.text("Press Esc again to quit the game."))
     Audio.music("start")
     Audio.ambient("")
-    _ask_journey.call_deferred()
+    var languages := get_node_or_null("/root/Languages")
+    if languages != null and not languages.has_chosen:
+        _ask_language.call_deferred()
+    else:
+        _ask_journey.call_deferred()
+
+
+## Which language the game speaks (see LanguageSelect); then the journeys.
+func _ask_language() -> void:
+    _panel.close()
+    var select := LanguageSelect.new(_service)
+    select.set_anchors_preset(Control.PRESET_FULL_RECT)
+    # NOTE: Out of the tree first, so that it lets go of the hands before the
+    # next screen asks for them.
+    select.chosen.connect(
+        func() -> void:
+            remove_child(select)
+            select.queue_free()
+            _ask_journey()
+    )
+    add_child(select)
 
 
 func _notification(what: int) -> void:
@@ -94,31 +116,59 @@ func _ask_journey() -> void:
             cards
             . append(
                 {
-                    "title": ("Go on: " if i == 0 else "") + _journey_title(journey),
+                    "id": "Go on: {journey}" if i == 0 else "journey",
+                    "title":
+                    (
+                        ChoicePanel.title_of(
+                            "Go on: {journey}", {"journey": Grammar.raw(_journey_title(journey))}
+                        )
+                        if i == 0
+                        else _journey_title(journey)
+                    ),
                     "detail": _journey_detail(journey),
                 }
             )
         )
         _actions.append(_open_journey.bind(str(journey["id"])))
-    cards.append({"title": "+ New journey", "detail": "one or two rowers"})
+    cards.append(ChoicePanel.card("+ New journey", ChoicePanel.detail("one or two rowers")))
     _actions.append(_ask_players)
-    cards.append({"title": "Delete", "detail": "a journey"})
+    cards.append(ChoicePanel.card("Delete", ChoicePanel.detail("a journey")))
     _actions.append(_ask_delete)
+    cards.append(_language_card())
+    _actions.append(_ask_language)
     _panel.show_cards(
-        "Your journeys",
-        "Welcome, vikings! Go on with your journey, or start a new one.",
+        Grammar.text("Your journeys"),
+        Grammar.text("Welcome, vikings! Go on with your journey, or start a new one."),
         cards,
         YLVA
     )
 
 
+## The card which opens the language select: "Language" in the language of
+## the game, and the name of the language in itself.
+func _language_card() -> Dictionary:
+    var languages := get_node_or_null("/root/Languages")
+    var name := ""
+    if languages != null:
+        for language in languages.languages:
+            if language["code"] == languages.current():
+                name = language.get("short", language["name"])
+    return ChoicePanel.card("Language", name, {"picture": ["icons", "talk"]})
+
+
 func _journey_detail(journey: Dictionary) -> String:
-    return "day %d, %d silver" % [int(journey["day"]), int(journey["silver"])]
+    return Grammar.text(
+        "day {day}, {silver} silver", {"day": int(journey["day"]), "silver": int(journey["silver"])}
+    )
 
 
 ## The name of the journey, and its two rowers if it has them.
 func _journey_title(journey: Dictionary) -> String:
-    return str(journey["name"]) + (" (2 rowers)" if int(journey["players"]) == 2 else "")
+    if int(journey["players"]) == 2:
+        return ChoicePanel.title_of(
+            "{journey} (2 rowers)", {"journey": Grammar.raw(str(journey["name"]))}
+        )
+    return str(journey["name"])
 
 
 func _open_journey(id: String) -> void:
@@ -135,12 +185,12 @@ func _ask_players() -> void:
     (
         _panel
         . show_cards(
-            "A new journey",
-            "How many of you row? Two rowers pull an oar each.",
+            Grammar.text("A new journey"),
+            Grammar.text("How many of you row? Two rowers pull an oar each."),
             [
-                {"title": "One rower", "detail": "both oars"},
-                {"title": "Two rowers", "detail": "an oar each"},
-                {"title": "Back", "detail": ""},
+                ChoicePanel.card("One rower", ChoicePanel.detail("both oars")),
+                ChoicePanel.card("Two rowers", ChoicePanel.detail("an oar each")),
+                ChoicePanel.card("Back"),
             ],
             YLVA
         )
@@ -192,8 +242,8 @@ func _set_look(player: int, look: Dictionary) -> void:
 func _rower_name(player: int) -> String:
     var count: int = _state.players if _state != null else 1
     if count == 1:
-        return "Your viking"
-    return "The left rower" if player == 0 else "The right rower"
+        return Grammar.text("Your viking")
+    return Grammar.text("The left rower") if player == 0 else Grammar.text("The right rower")
 
 
 ## The rower of the [param player] in the boat as the [param look] makes them look.
@@ -210,18 +260,25 @@ func _ask_look_step() -> void:
     _actions = []
     var text: String
     if step == "figure":
-        text = "Who rows: a viking girl or a viking boy?"
-        for pair in [["girl", "Girl"], ["boy", "Boy"]]:
+        text = Grammar.text("Who rows: a viking girl or a viking boy?")
+        for pair in [["girl", Grammar.text("Girl")], ["boy", Grammar.text("Boy")]]:
             var changed := look.duplicate()
             changed["figure"] = pair[0]
-            cards.append({"title": pair[1], "detail": "", "picture": _preview(player, changed)})
+            cards.append(
+                {
+                    "id": pair[0],
+                    "title": pair[1],
+                    "detail": "",
+                    "picture": _preview(player, changed)
+                }
+            )
             _actions.append(_choose_look.bind(player, "figure", pair[0]))
     else:
         var palette := Looks.palette(step)
         text = {
-            "skin": "Choose the colour of the skin.",
-            "hair": "Choose the colour of the hair.",
-            "clothes": "Choose the colour of the clothes.",
+            "skin": Grammar.text("Choose the colour of the skin."),
+            "hair": Grammar.text("Choose the colour of the hair."),
+            "clothes": Grammar.text("Choose the colour of the clothes."),
         }[step]
         for index in range(palette.size()):
             var changed := look.duplicate()
@@ -231,14 +288,15 @@ func _ask_look_step() -> void:
                 cards
                 . append(
                     {
-                        "title": str(entry["name"]),
-                        "detail": "as now" if int(look[step]) == index else "",
+                        "id": str(entry["name"]),
+                        "title": String(TranslationServer.translate(str(entry["name"]), step)),
+                        "detail": ChoicePanel.detail("as now") if int(look[step]) == index else "",
                         "picture": _preview(player, changed),
                     }
                 )
             )
             _actions.append(_choose_look.bind(player, step, index))
-    cards.append({"title": "Back", "detail": ""})
+    cards.append(ChoicePanel.card("Back"))
     _actions.append(_look_previous)
     _panel.show_cards(_rower_name(player), text, cards, YLVA)
 
@@ -296,17 +354,22 @@ func _ask_delete() -> void:
         var journey: Dictionary = journeys[i]
         cards.append({"title": _journey_title(journey), "detail": _journey_detail(journey)})
         _actions.append(_confirm_delete.bind(journey))
-    cards.append({"title": "Back", "detail": ""})
+    cards.append(ChoicePanel.card("Back"))
     _actions.append(_ask_journey)
-    _panel.show_cards("Delete a journey", "Which journey should be deleted?", cards, GRANDMOTHER)
+    _panel.show_cards(
+        Grammar.text("Delete a journey"),
+        Grammar.text("Which journey should be deleted?"),
+        cards,
+        GRANDMOTHER
+    )
 
 
 func _confirm_delete(journey: Dictionary) -> void:
     _actions = [_delete.bind(str(journey["id"])), _ask_journey]
     _panel.show_cards(
-        "Delete %s?" % journey["name"],
-        "The journey and everything in it will be gone for good.",
-        [{"title": "Delete", "detail": "for good"}, {"title": "Keep", "detail": ""}],
+        Grammar.text("Delete {journey}?", {"journey": Grammar.raw(str(journey["name"]))}),
+        Grammar.text("The journey and everything in it will be gone for good."),
+        [ChoicePanel.card("Delete", ChoicePanel.detail("for good")), ChoicePanel.card("Keep")],
         GRANDMOTHER
     )
 
@@ -325,19 +388,25 @@ func _ask_mode() -> void:
     (
         _panel
         . show_cards(
-            "What do you play?",
-            (
-                "Follow the wedding longship and pick up what falls into the water, "
-                + "flee from the pirates to a town, "
-                + "or trade on the lakes and look after your farm."
+            Grammar.text("What do you play?"),
+            Grammar.text(
+                (
+                    "Follow the wedding longship and pick up what falls into the water, "
+                    + "flee from the pirates to a town, "
+                    + "or trade on the lakes and look after your farm."
+                )
             ),
             [
-                {"title": "Party!", "detail": "the wedding"},
-                {"title": "Chase!", "detail": "flee the pirates"},
-                {"title": "The farm", "detail": "trade and farm"},
-                {"title": "How to play", "detail": "row and steer", "picture": ["icons", "help"]},
-                {"title": "Your vikings", "detail": "how you look"},
-                {"title": "Back", "detail": name},
+                ChoicePanel.card("Party!", ChoicePanel.detail("the wedding")),
+                ChoicePanel.card("Chase!", ChoicePanel.detail("flee the pirates")),
+                ChoicePanel.card("The farm", ChoicePanel.detail("trade and farm")),
+                ChoicePanel.card(
+                    "How to play",
+                    ChoicePanel.detail("row and steer"),
+                    {"picture": ["icons", "help"]}
+                ),
+                ChoicePanel.card("Your vikings", ChoicePanel.detail("how you look")),
+                ChoicePanel.card("Back", name),
             ],
             YLVA
         )

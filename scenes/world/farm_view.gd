@@ -200,7 +200,7 @@ func _draw_fields() -> void:
     for i in range(count):
         var rect := _field_rect(i)
         var crop: String = farm.fields[i]["crop"]
-        var label := "empty"
+        var label := Grammar.text("empty")
         if crop == "":
             _draw_field(rect, ["soil"], _SOIL)
         else:
@@ -210,15 +210,15 @@ func _draw_fields() -> void:
             if to_ripe > 0:
                 var stage := "sown" if grown < 0.2 else ("sprouts" if grown < 0.45 else "young")
                 _draw_field(rect, STAGES[stage].get(crop, []), _GREEN)
-                label = "%d day%s" % [to_ripe, "" if to_ripe == 1 else "s"]
+                label = Grammar.text("{days} {days|day|days}", {"days": to_ripe})
             else:
                 var left := farm.days_to_harvest(i, day)
                 if left < 0:
                     _draw_late(rect, crop)
-                    label = "birds!"
+                    label = Grammar.text("birds!")
                 else:
                     _draw_field(rect, STAGES["ripe"].get(crop, []), Color("d8b84a"))
-                    label = "ripe! %d day%s" % [left + 1, "" if left == 0 else "s"]
+                    label = Grammar.text("ripe! {days} {days|day|days}", {"days": left + 1})
         _outlined(font, Vector2(rect.position.x, rect.end.y + 30.0), label, rect.size.x, 22)
 
     # NOTE (mristin):
@@ -233,7 +233,9 @@ func _draw_fields() -> void:
         else:
             draw_rect(Rect2(center - Vector2(36, 26), Vector2(72, 40)), Color("b08a5a"))
             draw_line(center + Vector2(0, 14), center + Vector2(0, 50), Color("6a4320"), 6.0)
-        _outlined(font, Vector2(at.x, at.y + FIELD + 30.0), "land for sale", FIELD, 22)
+        _outlined(
+            font, Vector2(at.x, at.y + FIELD + 30.0), Grammar.text("land for sale"), FIELD, 22
+        )
 
 
 ## A field with the first picture of [param names] which is there, or of

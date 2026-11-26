@@ -20,8 +20,7 @@
       "name": "Ale",
       "color": "a8743c",
       "picture": ["goods", "ale"],
-      "one": "a barrel of wedding ale",
-      "many": "barrels of wedding ale"
+      "counted": "{count|a barrel of wedding ale|{count} barrels of wedding ale}"
     }
   },
   "steps": [

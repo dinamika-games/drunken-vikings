@@ -18,8 +18,7 @@
       "name": "Fleece",
       "color": "e8e0d0",
       "picture": ["items", "fleece"],
-      "one": "a sack of fleece",
-      "many": "sacks of fleece"
+      "counted": "{count|a sack of fleece|{count} sacks of fleece}"
     }
   },
   "steps": [

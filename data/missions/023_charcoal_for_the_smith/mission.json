@@ -16,8 +16,7 @@
     "charcoal": {
       "name": "Charcoal",
       "color": "2a2a2a",
-      "one": "a sack of charcoal",
-      "many": "sacks of charcoal",
+      "counted": "{count|a sack of charcoal|{count} sacks of charcoal}",
       "picture": ["items", "charcoal"]
     }
   },

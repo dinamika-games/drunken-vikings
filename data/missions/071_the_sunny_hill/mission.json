@@ -17,14 +17,13 @@
     "chest": {
       "name": "Chest",
       "color": "6a4320",
-      "one": "a chest",
-      "many": "chests",
+      "counted": "{count|a chest|{count} chests}",
       "picture": ["items", "chest"]
     },
     "gerd": {
       "name": "Gerd",
       "color": "d8d8d0",
-      "one": "Aunt Gerd",
+      "counted": "Aunt Gerd",
       "picture": ["faces", "gerd"]
     }
   },

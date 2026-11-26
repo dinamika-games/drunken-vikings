@@ -135,9 +135,9 @@ func _draw() -> void:
             Pictures.draw(self, building, at, 30.0)
         else:
             draw_rect(Rect2(at - Vector2(6, 6), Vector2(12, 12)), _GOLD)
-        var name: String = place["name"]
+        var name := Grammar.text(place["name"])
         if place["kind"] == "home":
-            name += " (home)"
+            name = Grammar.text("{place} (home)", {"place": place["name"]})
         _label(at, place["at"] - place["jetty"], name)
 
     _draw_boats()
@@ -150,16 +150,17 @@ func _draw() -> void:
     var scroll := Rect2(Vector2(x - 80.0, 40.0), Vector2(_SIDE - 10.0, 900.0))
     var on_scroll := Pictures.draw_frame(self, "scroll", scroll, 90.0, Color.WHITE, "chart")
     var ink := _BROWN if on_scroll else _PAPER
+    var heading := Grammar.text("Your tasks")
     if on_scroll:
-        draw_string(font, Vector2(x, y), "Your tasks", HORIZONTAL_ALIGNMENT_LEFT, -1, 40, _BROWN)
+        draw_string(font, Vector2(x, y), heading, HORIZONTAL_ALIGNMENT_LEFT, -1, 40, _BROWN)
     else:
-        _outlined(Vector2(x, y), "Your tasks", 40, _GOLD)
+        _outlined(Vector2(x, y), heading, 40, _GOLD)
     y += 60.0
     if leads.is_empty():
         draw_multiline_string(
             font,
             Vector2(x, y),
-            "No task leads anywhere now. Ask for tasks in the ports!",
+            Grammar.text("No task leads anywhere now. Ask for tasks in the ports!"),
             HORIZONTAL_ALIGNMENT_LEFT,
             _SIDE - 170,
             28,
@@ -175,7 +176,9 @@ func _draw() -> void:
         draw_multiline_string(
             font,
             Vector2(x + 44, y),
-            "%s: to %s" % [lead.title, state.place_name(lead.place)],
+            Grammar.text(
+                "{task}: to {place}", {"task": lead.title, "place": state.place_name(lead.place)}
+            ),
             HORIZONTAL_ALIGNMENT_LEFT,
             _SIDE - 210,
             28,
@@ -183,7 +186,7 @@ func _draw() -> void:
             ink
         )
         y += 110.0
-    _outlined(Vector2(x, size.y - 60), "C closes the map", 30)
+    _outlined(Vector2(x, size.y - 60), Grammar.text("C closes the map"), 30)
 
 
 ## The skippers on the lakes, and the players' boat, glowing.
@@ -219,7 +222,7 @@ func _draw_title(state: Node) -> void:
     draw_string(
         font,
         Vector2(30, 122),
-        "The Home Lakes",
+        Grammar.text("The Home Lakes"),
         HORIZONTAL_ALIGNMENT_CENTER,
         _SIDE - 60,
         34,
@@ -228,7 +231,10 @@ func _draw_title(state: Node) -> void:
     draw_multiline_string(
         font,
         Vector2(30, 260),
-        "Day %d. You are the glowing boat; the flags show where your tasks lead." % state.day,
+        Grammar.text(
+            "Day {day}. You are the glowing boat; the flags show where your tasks lead.",
+            {"day": state.day}
+        ),
         HORIZONTAL_ALIGNMENT_LEFT,
         _SIDE - 60,
         30,

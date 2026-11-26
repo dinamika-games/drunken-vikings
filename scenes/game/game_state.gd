@@ -251,6 +251,8 @@ func _load_data() -> String:
     problem = farm.load_data(FARM_PATH)
     if problem != "":
         return problem
+    for good in economy.goods.keys():
+        farm.good_names[good] = economy.goods[good]["name"]
     problem = ships.load_data(SHIPS_PATH, places)
     if problem != "":
         return problem
@@ -271,12 +273,13 @@ func new_voyage() -> void:
     _load_data()
 
 
-## The name of a place, e.g., "Laxestad".
+## The name of a place, e.g., "Laxestad" (an English message ID, see Grammar).
 func place_name(id: String) -> String:
     return places[id]["name"] if places.has(id) else id
 
 
-## The name of a good, e.g., "Dried fish".
+## The name of a good, e.g., "dried fish", or of an item of a mission or an
+## animal in the boat, e.g., "Kitten" (English message IDs, see Grammar).
 func good_name(good: String) -> String:
     if good.begins_with("animal:"):
         return farm.animal_kinds[good.trim_prefix("animal:")]["name"]

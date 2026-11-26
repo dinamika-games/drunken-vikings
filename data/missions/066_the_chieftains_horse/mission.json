@@ -18,7 +18,7 @@
       "name": "Tova",
       "color": "6a9a4a",
       "picture": ["faces", "healer"],
-      "one": "Tova"
+      "counted": "Tova"
     }
   },
   "steps": [

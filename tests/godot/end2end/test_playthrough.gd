@@ -4,8 +4,10 @@ extends "res://tests/godot/end2end/lakes_bot.gd"
 ## contracts on every frame (see contracts.gd): a property-based test, whose
 ## random choices come from a seed.
 ##
-## 1. A new journey with one rower: How to play, then the party behind the
-##    wedding longship, to its end, and then to the farm.
+## 1. The players choose their language at the very first start (English, or
+##    the language of -- --lang=<code>), then a new journey with one rower:
+##    How to play, then the party behind the wedding longship, to its end, and
+##    then to the farm.
 ## 2. The Home Lakes: the bot does the first tasks, one after the other (see
 ##    lakes_bot.gd), with its detours; then Escape twice ends the journey.
 ## 3. The journey goes on with How to play again, then the chase: the bot rows
@@ -23,7 +25,11 @@ extends "res://tests/godot/end2end/lakes_bot.gd"
 ## $GODOT --headless --fixed-fps 60 --path . \
 ##     --script tests/godot/end2end/test_playthrough.gd -- --no-camera
 ##
-## Pass -- --seed=<n> to try other choices, --tasks=<n> for more or fewer
+## The bot plays in every language (it finds the cards by their English
+## titles, see driver.gd), and the contracts check that every text fits.
+##
+## Pass -- --lang=<code> to play in another language, e.g., de,
+## --seed=<n> to try other choices, --tasks=<n> for more or fewer
 ## tasks, --time-scale=<x> for another speed of the game, --draw-every=<n> to
 ## draw more or less often, and --wall-seconds=<s> for another limit of the
 ## wall clock. The test keeps its journeys in user://tests/playthrough (a
@@ -50,6 +56,9 @@ const HOW_TO_SECONDS := 20.0
 ## How often the players try the chase before they make it.
 const CHASES := 3
 
+## The language which the players choose.
+var _language := "en"
+
 ## The first journey, and what of it was saved when the players left it.
 var _first := ""
 var _left := {}
@@ -64,6 +73,13 @@ func _play() -> void:
     state.settings_path = directory + "/settings.cfg"
     state.save_path = directory + "/none.json"
     DirAccess.make_dir_recursive_absolute(state.saves_dir)
+    # NOTE: The game starts as at the very first start, in English; the
+    # players choose their language (see _new_journey).
+    var languages: Node = root.get_node("/root/Languages")
+    _language = argument("lang", "en")
+    languages.settings_path = directory + "/settings.cfg"
+    languages.has_chosen = false
+    languages.use("en")
     for phase in [_new_journey, _lakes, _chase_phase, _second_journey, _back]:
         if aborted():
             break
@@ -95,10 +111,16 @@ func _new_journey() -> void:
     if not await wait_for_scene(START):
         return
     await play_for(0.5)
-    check(
-        panel() != null and panel().title == "A new journey",
-        "without a journey, the game starts a new one"
-    )
+    var languages: Node = root.get_node("/root/Languages")
+    var name := ""
+    for language in languages.languages:
+        if language["code"] == _language:
+            name = language["name"]
+    check(loose_button(name) != null, "at the very first start, the players choose the language")
+    await choose(name)
+    check(languages.current() == _language, "the game speaks the language %s" % _language)
+    await play_for(0.5)
+    check(screen_is("A new journey"), "without a journey, the game starts a new one")
     await choose("One rower")
     check(fake.players == 1, "the camera follows one player")
     # NOTE: A detour: Back from the second screen of the looks, and on.
@@ -169,7 +191,9 @@ func _second_journey() -> void:
     check(state.day == 1 and state.missions.done.is_empty(), "a new journey starts afresh")
     await play_lakes(1)
     var second: String = state.journey_id
-    var second_name := "%s (2 rowers)" % state.journey_name
+    var second_name := Grammar.text(
+        "{journey} (2 rowers)", {"journey": Grammar.raw(state.journey_name)}
+    )
     await _leave_lakes()
     await _delete(second, second_name)
 
@@ -220,10 +244,7 @@ func _how_to(players: int) -> void:
     tally("how to play")
     await choose("Ready!")
     await play_for(0.5)
-    check(
-        panel() != null and panel().title == "What do you play?",
-        "after how to play, the players choose what they play"
-    )
+    check(screen_is("What do you play?"), "after how to play, the players choose what they play")
 
 
 ## Remove the [param directory] with everything in it.
@@ -274,7 +295,7 @@ func _leave_lakes() -> Dictionary:
     contracts.check_save(state)
     var left := _snapshot(state)
     await play_for(0.5)
-    check(panel() != null and panel().title == "Your journeys", "the start shows the journeys")
+    check(screen_is("Your journeys"), "the start shows the journeys")
     return left
 
 
@@ -287,7 +308,7 @@ func _go_on(id: String) -> void:
     check(
         not journeys.is_empty() and journeys[0]["id"] == id, "the journey played last comes first"
     )
-    await choose("Go on: ", true)
+    await choose("Go on: {journey}")
     check(state.journey_id == id, "the journey %s goes on" % id)
 
 
@@ -306,7 +327,7 @@ func _delete(id: String, title: String) -> void:
         not FileAccess.file_exists(state.saves_dir.path_join(id + ".json")),
         "a deleted journey is gone from the disk"
     )
-    check(panel() != null and panel().title == "Your journeys", "the journeys show again")
+    check(screen_is("Your journeys"), "the journeys show again")
 
 
 ## Follow the wedding longship and pick up the treats until the party ends.

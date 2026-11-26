@@ -17,8 +17,7 @@
     "torch": {
       "name": "Torch",
       "color": "e8a830",
-      "one": "a torch",
-      "many": "torches",
+      "counted": "{count|a torch|{count} torches}",
       "picture": ["items", "torch"]
     }
   },

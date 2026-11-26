@@ -16,7 +16,7 @@
     "kitten": {
       "name": "Kitten",
       "color": "b0a898",
-      "one": "the kitten",
+      "counted": "the kitten",
       "picture": ["items", "kitten"]
     }
   },

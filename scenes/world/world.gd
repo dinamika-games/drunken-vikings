@@ -46,7 +46,7 @@ const NPC_COUNT := 9
 const GULLS_EVERY := Vector2(25.0, 70.0)
 
 ## The painted pictures of the cards which show no good, animal or crop (see
-## dev/pictures/: the sheet "icons"), by their titles, so that the children
+## dev/pictures/: the sheet "icons"), by their ids (see ChoicePanel.card), so that the children
 ## who can not read yet see what a card does.
 const CARD_ICONS := {
     "Sell": "sell",
@@ -218,7 +218,12 @@ func _ready() -> void:
     _camera.rotation = _boat.heading
     _camera.position = _boat.position + Vector2.UP.rotated(_boat.heading) * LOOK_AHEAD
     Audio.ambient("water")
-    _say("Day %d. Row to the settlements to trade; glide slowly to a jetty to dock." % _state.day)
+    _say(
+        Grammar.text(
+            "Day {day}. Row to the settlements to trade; glide slowly to a jetty to dock.",
+            {"day": _state.day}
+        )
+    )
 
 
 ## Put the players on their ship (see GameState.ship): it rows as its data
@@ -593,7 +598,7 @@ func quit() -> void:
 func _show(title: String, text: String, cards: Array, actions: Array[Callable], face := {}) -> void:
     _actions = actions
     for card: Dictionary in cards:
-        var icon := str(CARD_ICONS.get(card.get("title", ""), ""))
+        var icon := str(CARD_ICONS.get(card.get("id", ""), ""))
         if icon != "" and not card.has("picture") and not card.has("stars"):
             card["picture"] = ["icons", icon]
     # NOTE (mristin):
@@ -679,15 +684,15 @@ func _hail(npc: NpcBoat) -> void:
             if _state.economy.goods.has(deal["good"])
             else Color.WHITE
         )
-        cards.append({"title": "Yes, deal!", "detail": _deal_detail(deal), "color": color})
+        cards.append(ChoicePanel.card("Yes, deal!", _deal_detail(deal), {"color": color}))
         actions.append(_take_deal.bind(deal))
-        cards.append({"title": "No, thank you", "detail": ""})
+        cards.append(ChoicePanel.card("No, thank you"))
         actions.append(_part.bind(""))
     else:
-        cards.append({"title": "Thank you!", "detail": "fair winds"})
+        cards.append(ChoicePanel.card("Thank you!", ChoicePanel.detail("fair winds")))
         actions.append(_part.bind(""))
     _show(
-        who["name"],
+        Grammar.text(who["name"]),
         text,
         cards,
         actions,
@@ -704,8 +709,10 @@ func _show_hail_events(events: Array, index: int, face: Dictionary) -> void:
     var event: Dictionary = events[index]
     var text: String = event["text"]
     if str(event["who"].get("name", "")) != "":
-        text = '%s: "%s"' % [event["who"]["name"], text]
-    var cards: Array = [{"title": "Hooray!" if event["done"] else "Thank you!", "detail": ""}]
+        text = PortScreens.said(event["who"]["name"], text)
+    var cards: Array = [
+        ChoicePanel.card("Hooray!") if event["done"] else ChoicePanel.card("Thank you!")
+    ]
     if event["done"]:
         cards[0]["stars"] = int(event.get("stars", 0))
         Audio.play("hooray")
@@ -716,10 +723,14 @@ func _show_hail_events(events: Array, index: int, face: Dictionary) -> void:
 func _deal_detail(deal: Dictionary) -> String:
     match deal["kind"]:
         "buy":
-            return "-%d silver" % (int(deal["price"]) * int(deal["count"]))
+            return Grammar.text(
+                "-{silver} silver", {"silver": int(deal["price"]) * int(deal["count"])}
+            )
         "sell":
-            return "+%d silver" % (int(deal["price"]) * int(deal["count"]))
-    return "a swap"
+            return Grammar.text(
+                "+{silver} silver", {"silver": int(deal["price"]) * int(deal["count"])}
+            )
+    return ChoicePanel.detail("a swap")
 
 
 func _take_deal(deal: Dictionary) -> void:
@@ -796,7 +807,7 @@ func _autopilot_choose(delta: float) -> void:
     _autopilot_wait = 0.0
     var titles: Array[String] = []
     for card in _panel.cards:
-        titles.append(str(card.get("title", "")))
+        titles.append(str(card.get("id", "")))
     # NOTE (mristin):
     # Sell what can be sold, buy a little, take the deals, sleep at home, and row on.
     var selling: bool = _autopilot_bought != _state.place
@@ -809,7 +820,7 @@ func _autopilot_choose(delta: float) -> void:
                 return
     for i in range(titles.size()):
         if (
-            titles[i].begins_with("Sell ")
+            titles[i] == "Sell {good} ({count})"
             and selling
             and bool(_panel.cards[i].get("enabled", true))
         ):
@@ -823,7 +834,7 @@ func _autopilot_choose(delta: float) -> void:
             return
     for i in range(titles.size()):
         if (
-            titles[i].begins_with("Buy ")
+            titles[i] == "Buy {good}"
             and bool(_panel.cards[i].get("enabled", true))
             and _state.load_count() < 2
         ):

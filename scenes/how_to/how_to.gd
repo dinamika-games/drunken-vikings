@@ -133,7 +133,9 @@ func _ready() -> void:
     _camera_picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
     add_child(_camera_picture)
     _ready_button = DwellButton.new()
-    _ready_button.card = {"title": "Ready!", "detail": "let's row", "picture": ["icons", "row"]}
+    _ready_button.card = ChoicePanel.card(
+        "Ready!", ChoicePanel.detail("let's row"), {"picture": ["icons", "row"]}
+    )
     _ready_button.position = Vector2(1560, 1076.0 - DwellButton.SIZE.y)
     _ready_button.size = DwellButton.SIZE
     _ready_button.pressed.connect(func() -> void: done.emit())
@@ -413,14 +415,22 @@ func _draw() -> void:
         return
     var data: Dictionary = parts[part]
     var font := ThemeDB.fallback_font
-    _outlined(font, Vector2(0, 100), "How to play: " + str(data["title"]), 56, _GOLD)
-    var lines := ChoicePanel.wrap_text(font, str(data["text"]), 1600.0, 34)
+    _outlined(
+        font,
+        Vector2(0, 100),
+        Grammar.text("How to play: {part}", {"part": data["title"]}),
+        56,
+        _GOLD
+    )
+    var lines := ChoicePanel.wrap_text(font, Grammar.text(data["text"]), 1600.0, 34)
     for i in range(lines.size()):
         _outlined(font, Vector2(0, 165 + i * 44), lines[i], 34, _PAPER)
     _draw_frame()
     if data["panel"] == "card":
         _draw_card()
-    _draw_border(PANEL, "The lakes" if data["panel"] != "card" else "The screens")
+    _draw_border(
+        PANEL, Grammar.text("The lakes") if data["panel"] != "card" else Grammar.text("The screens")
+    )
 
 
 func _outlined(font: Font, at: Vector2, text: String, font_size: int, color: Color) -> void:
@@ -431,7 +441,14 @@ func _outlined(font: Font, at: Vector2, text: String, font_size: int, color: Col
 ## The players in the camera picture, mirrored.
 ## The border of the camera picture (the picture itself is [member _camera]).
 func _draw_frame() -> void:
-    _draw_border(FRAME, "You, in the camera" if players == 1 else "You two, in the camera")
+    _draw_border(
+        FRAME,
+        (
+            Grammar.text("You, in the camera")
+            if players == 1
+            else Grammar.text("You two, in the camera")
+        )
+    )
 
 
 ## The camera picture: the room, and the players in it, mirrored; clipped to
@@ -492,7 +509,7 @@ func _draw_card() -> void:
     draw_string(
         font,
         card.position + Vector2(0, DwellButton.TITLE_BELOW_PICTURE),
-        "Sell",
+        Grammar.text("Sell"),
         HORIZONTAL_ALIGNMENT_CENTER,
         card.size.x,
         DwellButton.TITLE_SIZES[0],

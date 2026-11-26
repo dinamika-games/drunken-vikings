@@ -411,7 +411,9 @@ func _sell_animals(id: String) -> void:
                 kind = animal
     if kind == "" or not kind in dealt:
         return
-    var name := "Sell a %s" % String(state.farm.animal_kinds[kind]["name"]).to_lower()
+    var name := Grammar.text(
+        "Sell {animal}", {"animal": Missions.crates(state, "animal:" + kind, 1)}
+    )
     await _settle()
     await choose("Animals")
     var found: bool = await _find(name)
@@ -442,18 +444,21 @@ func _sell_all(id: String) -> void:
     if not opened:
         return
     for good in goods:
-        var name := "Sell %s (" % state.good_name(good).to_lower()
         while int(state.cargo.get(good, 0)) > 0 and not aborted():
+            var name := Grammar.text(
+                "Sell {good} ({count})",
+                {"good": state.good_name(good), "count": int(state.cargo.get(good, 0))}
+            )
             if _at_main():
                 if not can("Sell"):
                     break
                 await choose("Sell")
-            var found: bool = await _find(name, true)
+            var found: bool = await _find(name)
             if not found:
                 fail("the card '%s' shows while the boat carries it" % name)
                 break
             tally("sold")
-            await choose(name, true)
+            await choose(name)
     if not planner.trade.is_empty() and planner.trade["to"] == id:
         planner.trade = {}
     await _settle()
@@ -503,7 +508,7 @@ func _buy_needs(id: String) -> void:
 
 func _buy(good: String, wanted: int) -> void:
     var state := voyage()
-    var name := "Buy %s" % state.good_name(good).to_lower()
+    var name := Grammar.text("Buy {good}", {"good": state.good_name(good)})
     await _settle()
     await choose("Buy")
     var bought := 0
@@ -518,7 +523,9 @@ func _buy(good: String, wanted: int) -> void:
 
 
 func _buy_animals(kind: String, wanted: int) -> void:
-    var name := "Buy a %s" % String(voyage().farm.animal_kinds[kind]["name"]).to_lower()
+    var name := Grammar.text(
+        "Buy {animal}", {"animal": Missions.crates(voyage(), "animal:" + kind, 1)}
+    )
     await _settle()
     await choose("Animals")
     var bought := 0
@@ -545,7 +552,7 @@ func _shipyard() -> void:
     await _settle()
     await choose("Shipyard")
     var id := next if buying else other
-    await choose(str(ships.kinds[id]["name"]))
+    await choose(Grammar.title(ships.kinds[id]["name"]))
     await choose("Buy her" if buying else "Take her")
     tally("ships bought" if buying else "ships taken")
     check(ships.current == id, "the players row the ship %s they chose" % id)
@@ -633,7 +640,7 @@ func _load_from_store(good: String, wanted: int) -> void:
     if wanted <= 0 or not can("Load from the store"):
         return
     await choose("Load from the store")
-    var name := "Load %s" % state.good_name(good).to_lower()
+    var name := Grammar.text("Load {good}", {"good": state.good_name(good)})
     var loaded := 0
     while loaded < wanted and state.has_room() and state.farm.crates(good) > 0 and not aborted():
         var found: bool = await _find(name)
@@ -676,14 +683,14 @@ func _farm_work() -> void:
         await _buy_land("pasture", seed)
     if crop != "" and can("Plant"):
         await choose("Plant")
-        var name := String(farm.crop_kinds[crop]["name"])
+        var name := Grammar.title(farm.crop_kinds[crop]["name"])
         var found: bool = await _find(name)
         if found:
             tally("planted")
             await choose(name)
         else:
             await choose("Back")
-    if can("Back") and panel().title == "The farm":
+    if can("Back") and screen_is("The farm"):
         await choose("Back")
     await _settle()
     await _unload()

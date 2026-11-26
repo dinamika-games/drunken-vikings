@@ -17,7 +17,7 @@
       "name": "Garlic",
       "color": "f1f0ea",
       "picture": ["items", "garlic"],
-      "one": "the garlic"
+      "counted": "the garlic"
     }
   },
   "steps": [

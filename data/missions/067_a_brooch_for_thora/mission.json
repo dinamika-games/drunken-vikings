@@ -18,13 +18,13 @@
     "beads": {
       "name": "Beads",
       "color": "4a9a6a",
-      "one": "the glass beads",
+      "counted": "the glass beads",
       "picture": ["items", "beads"]
     },
     "brooch": {
       "name": "Brooch",
       "color": "f2c14e",
-      "one": "the brooch",
+      "counted": "the brooch",
       "picture": ["items", "brooch"]
     }
   },

@@ -119,8 +119,8 @@ func _check(data: Dictionary, places: Dictionary, economy: Economy, farm: Farm) 
         problems.append("it is given at the unknown place %s." % data["giver"].get("place", ""))
     var items: Dictionary = data.get("items", {})
     for item in items.keys():
-        if not items[item].has("name"):
-            problems.append("its item %s has no name." % item)
+        if not items[item].has("name") or not items[item].has("counted"):
+            problems.append("its item %s has no name or no counted." % item)
     if data["steps"].is_empty():
         problems.append("it has no steps.")
     for step in data["steps"]:
@@ -151,8 +151,8 @@ func _check_step(
                 problems.append("a carry step needs a place from and a place to.")
             if not items.has(item):
                 problems.append("a carry step carries the undeclared item %s." % item)
-            elif int(step.get("count", 1)) > 1 and not items[item].has("many"):
-                problems.append("the item %s is carried by the many, but has no many." % item)
+            elif int(step.get("count", 1)) > 1 and not "|" in str(items[item].get("counted", "")):
+                problems.append("the item %s is carried by the many, but has no plural." % item)
             if step.has("who"):
                 problems.append("a carry step has from_who and to_who, not who.")
         "deliver":
@@ -313,32 +313,31 @@ func item_picture(key: String) -> Array:
 # ---------------------------------------------------------------------------
 
 
+## The name of the [param place] (an English message ID, see Grammar).
 func _name(place: String) -> String:
     return str(_place_names.get(place, place))
 
 
-## How the texts call [param count] of the [param item]: an item of the
-## [param mission] (its "one" and "many", e.g., "Tova", "barrels of ale"), a
-## good ("3 crates of ale") or an animal ("a goat", "2 goats").
-func _thing(state: Node, item: String, count: int, mission := "") -> String:
+## How the texts call [param count] of the [param item] (see Grammar.phrase):
+## an item of the [param mission] (its "counted", e.g., "{count|a barrel of
+## ale|{count} barrels of ale}"), a good ("3 crates of ale") or an animal ("a
+## goat", "2 goats").
+func _thing(state: Node, item: String, count: int, mission := "") -> Dictionary:
     if mission != "" and missions[mission].get("items", {}).has(item):
         var data: Dictionary = missions[mission]["items"][item]
-        var one := str(data.get("one", str(data["name"]).to_lower()))
-        if count == 1:
-            return one
-        return "%d %s" % [count, str(data.get("many", one + "s"))]
-    var name: String = state.good_name(item).to_lower()
-    if item.begins_with("animal:"):
-        if count == 1:
-            return "a " + name
-        return "%d %s" % [count, name if name == "sheep" or name.ends_with("s") else name + "s"]
-    if count == 1:
-        return "a crate of " + name
-    return "%d crates of %s" % [count, name]
+        return Grammar.phrase(str(data["counted"]), {"count": count})
+    return crates(state, item, count)
 
 
-static func _upper_first(text: String) -> String:
-    return text.left(1).to_upper() + text.substr(1)
+## How the texts call [param count] crates of the [param good], or so many
+## animals of a kind ("animal:goat").
+static func crates(state: Node, good: String, count: int) -> Dictionary:
+    if good.begins_with("animal:"):
+        var kind: Dictionary = state.farm.animal_kinds[good.trim_prefix("animal:")]
+        return Grammar.phrase(str(kind["counted"]), {"count": count})
+    var args := {"count": count, "good": state.good_name(good)}
+    # TRANSLATORS: so many crates of a good, e.g., "a crate of salt", "3 crates of salt"
+    return Grammar.phrase("{count|a crate of {good}|{count} crates of {good}}", args)
 
 
 ## What the players should do next for the mission, e.g., "Bring 3 crates of
@@ -349,45 +348,69 @@ func hint(state: Node, id: String) -> String:
         return ""
     var step := current_step(id)
     var count := int(step.get("count", 1))
+    var there := int(entry["count"])
     var text := ""
     match step["do"]:
         "visit":
-            text = "Row to %s." % _name(step["at"])
+            text = Grammar.text("Row to {place}.", {"place": _name(step["at"])})
         "carry":
             var key := item_key(id, step["item"])
             var carried := int(state.cargo.get(key, 0))
-            var name := _thing(state, step["item"], count, id)
+            var thing := _thing(state, step["item"], count, id)
             if carried > 0 or int(entry["loaded"]) >= count:
-                text = "Bring %s to %s." % [name, _name(step["to"])]
+                text = Grammar.text(
+                    "Bring {thing} to {place}.", {"thing": thing, "place": _name(step["to"])}
+                )
             else:
-                text = "Fetch %s in %s." % [name, _name(step["from"])]
-            if int(entry["count"]) > 0:
-                text += " (%d of %d there)" % [int(entry["count"]), count]
+                text = Grammar.text(
+                    "Fetch {thing} in {place}.", {"thing": thing, "place": _name(step["from"])}
+                )
+            if there > 0:
+                text += (
+                    " "
+                    + Grammar.text("({there} of {count} there)", {"there": there, "count": count})
+                )
         "deliver":
-            text = "Bring %s to %s." % [_thing(state, step["item"], count), _name(step["at"])]
-            if int(entry["count"]) > 0:
-                text += " (%d of %d there)" % [int(entry["count"]), count]
+            text = Grammar.text(
+                "Bring {thing} to {place}.",
+                {"thing": _thing(state, step["item"], count), "place": _name(step["at"])}
+            )
+            if there > 0:
+                text += (
+                    " "
+                    + Grammar.text("({there} of {count} there)", {"there": there, "count": count})
+                )
         "pay":
-            text = "Pay %d silver in %s." % [int(step["silver"]), _name(step["at"])]
+            text = Grammar.text(
+                "Pay {silver} silver in {place}.",
+                {"silver": int(step["silver"]), "place": _name(step["at"])}
+            )
         "hail":
-            var who := "a boat on the lakes"
             if step.get("skipper", "") != "":
-                who = _skipper_name(step["skipper"])
-            text = "Hail %s: glide slowly beside the boat." % who
+                text = Grammar.text(
+                    "Hail {person}: glide slowly beside the boat.",
+                    {"person": _skipper_name(step["skipper"])}
+                )
+            else:
+                text = Grammar.text("Hail a boat on the lakes: glide slowly beside the boat.")
             if count > 1:
-                text = (
-                    "Hail %d boats on the lakes (%d of %d)." % [count, int(entry["count"]), count]
+                text = Grammar.text(
+                    "Hail {count} boats on the lakes ({there} of {count}).",
+                    {"count": count, "there": there}
                 )
         "have":
-            text = (
-                "Have %d %s on your farm."
-                % [count, state.farm.animal_kinds[step["animal"]]["name"].to_lower()]
+            var kind: Dictionary = state.farm.animal_kinds[step["animal"]]
+            text = Grammar.text(
+                "Have {animals} on your farm.",
+                {"animals": Grammar.phrase(str(kind["counted"]), {"count": count})}
             )
         "plant":
-            text = "Plant %s on your farm." % state.farm.crop_kinds[step["crop"]]["name"].to_lower()
+            text = Grammar.text(
+                "Plant {crop} on your farm.", {"crop": state.farm.crop_kinds[step["crop"]]["name"]}
+            )
     var wait := _wait_left(state, entry, step)
     if wait > 0:
-        text += " Wait %d night%s first." % [wait, "" if wait == 1 else "s"]
+        text += " " + Grammar.text("Wait {nights} {nights|night|nights} first.", {"nights": wait})
     return text
 
 
@@ -433,27 +456,44 @@ func blocked_at(state: Node, place: String) -> Array[String]:
         var title: String = missions[id]["title"]
         if _wait_left(state, entry, step) > 0:
             var wait := _wait_left(state, entry, step)
-            result.append("%s: come back in %d day%s." % [title, wait, "" if wait == 1 else "s"])
+            result.append(
+                Grammar.text(
+                    "{task}: come back in {days} {days|day|days}.", {"task": title, "days": wait}
+                )
+            )
             continue
         match step["do"]:
             "carry":
                 var left := int(step.get("count", 1)) - int(entry["loaded"])
                 if step["from"] == place and left > 0 and not state.has_room():
                     result.append(
-                        (
-                            "%s: %s wait%s here, but your boat is full. Make room!"
-                            % [
-                                title,
-                                _upper_first(_thing(state, step["item"], left, id)),
-                                "s" if left == 1 else ""
-                            ]
+                        Grammar.text(
+                            (
+                                "{task}: {thing} {left|waits|wait} here, but your "
+                                + "boat is full. Make room!"
+                            ),
+                            {
+                                "task": title,
+                                "thing": _thing(state, step["item"], left, id),
+                                "left": left
+                            }
                         )
                     )
             "deliver":
                 var left := int(step.get("count", 1)) - int(entry["count"])
-                result.append("%s: bring %s here." % [title, _thing(state, step["item"], left)])
+                result.append(
+                    Grammar.text(
+                        "{task}: bring {thing} here.",
+                        {"task": title, "thing": _thing(state, step["item"], left)}
+                    )
+                )
             "pay":
-                result.append("%s: you need %d silver." % [title, int(step["silver"])])
+                result.append(
+                    Grammar.text(
+                        "{task}: you need {silver} silver.",
+                        {"task": title, "silver": int(step["silver"])}
+                    )
+                )
             "have":
                 result.append(hint(state, id))
             "plant":
@@ -498,13 +538,17 @@ func hail(state: Node, picture: String) -> Array:
         var who := {"name": _skipper_name(picture), "picture": picture}
         if int(entry["count"]) < count:
             var line: String = (
-                says[int(entry["count"]) - 1]
+                Grammar.text(says[int(entry["count"]) - 1])
                 if int(entry["count"]) - 1 < says.size()
-                else "I know nothing of it, sorry. Ask the others!"
+                else Grammar.text("I know nothing of it, sorry. Ask the others!")
             )
             events.append(_event(entry["id"], line, who, ""))
             continue
-        var text: String = step.get("say", says[-1] if not says.is_empty() else "Good luck!")
+        var text: String = (
+            Grammar.text(step["say"])
+            if step.has("say")
+            else Grammar.text(says[-1]) if not says.is_empty() else Grammar.text("Good luck!")
+        )
         events.append(_event(entry["id"], text, who, ""))
         events.append_array(_advance(state, entry))
     return events
@@ -514,7 +558,7 @@ func _event(
     id: String, text: String, who: Dictionary, place: String, finished := false
 ) -> Dictionary:
     return {
-        "title": missions[id]["title"],
+        "title": Grammar.text(missions[id]["title"]),
         "text": text,
         "who": who,
         "place": place,
@@ -572,13 +616,13 @@ func _try_step(state: Node, entry: Dictionary, place: String) -> Dictionary:
                         events.append(
                             _event(
                                 id,
-                                (
-                                    "Thank you! That is %d of %d. Bring %s more."
-                                    % [
-                                        int(entry["count"]),
-                                        count,
-                                        _thing(state, item, count - int(entry["count"]))
-                                    ]
+                                Grammar.text(
+                                    "Thank you! That is {there} of {count}. Bring {thing} more.",
+                                    {
+                                        "there": int(entry["count"]),
+                                        "count": count,
+                                        "thing": _thing(state, item, count - int(entry["count"]))
+                                    }
                                 ),
                                 _who(id, step, place),
                                 place
@@ -596,14 +640,17 @@ func _try_step(state: Node, entry: Dictionary, place: String) -> Dictionary:
                         events.append(
                             _event(
                                 id,
-                                (
-                                    "Unloaded %s. %s still wait%s in %s."
-                                    % [
-                                        _thing(state, step["item"], given, id),
-                                        _upper_first(_thing(state, step["item"], left, id)),
-                                        "s" if left == 1 else "",
-                                        _name(step["from"])
-                                    ]
+                                Grammar.text(
+                                    (
+                                        "Unloaded {given_thing}. {left_thing} still "
+                                        + "{left|waits|wait} in {place}."
+                                    ),
+                                    {
+                                        "given_thing": _thing(state, step["item"], given, id),
+                                        "left_thing": _thing(state, step["item"], left, id),
+                                        "left": left,
+                                        "place": _name(step["from"])
+                                    }
                                 ),
                                 _who(id, step, place, "to_who"),
                                 place
@@ -617,27 +664,36 @@ func _try_step(state: Node, entry: Dictionary, place: String) -> Dictionary:
                     loaded += 1
                 if loaded > 0:
                     var left := count - int(entry["loaded"])
-                    var text: String = (
-                        step.get("load_say", "")
+                    var text := (
+                        Grammar.text(step["load_say"])
                         if int(entry["loaded"]) == loaded and step.has("load_say")
                         else ""
                     )
                     if text == "":
-                        text = (
-                            "You load %s into your boat." % _thing(state, step["item"], loaded, id)
+                        text = Grammar.text(
+                            "You load {thing} into your boat.",
+                            {"thing": _thing(state, step["item"], loaded, id)}
                         )
                     if left > 0:
                         text += (
-                            " Your boat is full: %s wait%s here for the next trip."
-                            % [_thing(state, step["item"], left, id), "s" if left == 1 else ""]
+                            " "
+                            + (Grammar.text(
+                                (
+                                    "Your boat is full: {thing} {left|waits|wait} "
+                                    + "here for the next trip."
+                                ),
+                                {"thing": _thing(state, step["item"], left, id), "left": left}
+                            ))
                         )
                     else:
-                        text += " Now row to %s." % _name(step["to"])
+                        text += (
+                            " " + Grammar.text("Now row to {place}.", {"place": _name(step["to"])})
+                        )
                     events.append(_event(id, text, _who(id, step, place, "from_who"), place))
     if not complete:
         return {"events": events, "advanced": false}
     var speaker := _who(id, step, place, "to_who" if step["do"] == "carry" else "who")
-    events.append(_event(id, step.get("say", "Thank you!"), speaker, place))
+    events.append(_event(id, Grammar.text(step.get("say", "Thank you!")), speaker, place))
     events.append_array(_advance(state, entry))
     return {"events": events, "advanced": true}
 
@@ -661,41 +717,52 @@ func _advance(state: Node, entry: Dictionary) -> Array:
         count = 3 if took <= par else (2 if took <= par + 2 else 1)
     done[id] = count
     var gifts := _reward(state, mission["reward"])
-    var text := "Mission done! %s" % "★".repeat(count) + "☆".repeat(3 - count)
+    var text := Grammar.text("Mission done!") + " " + "★".repeat(count) + "☆".repeat(3 - count)
     if not gifts.is_empty():
-        text += "  You get %s." % ", ".join(gifts)
+        text += "  " + Grammar.text("You get {gifts}.", {"gifts": gifts})
     if mission.has("fact"):
-        text += "  " + str(mission["fact"])
+        text += "  " + Grammar.text(str(mission["fact"]))
     return [_event(id, text, {}, "", true)]
 
 
-func _reward(state: Node, reward: Dictionary) -> Array[String]:
-    var gifts: Array[String] = []
+## Give the players the [param reward]; return what they got, as values for
+## Grammar.
+func _reward(state: Node, reward: Dictionary) -> Array:
+    var gifts: Array = []
     if int(reward.get("silver", 0)) > 0:
         state.silver += int(reward["silver"])
-        gifts.append("%d silver" % int(reward["silver"]))
+        gifts.append(Grammar.phrase("{silver} silver", {"silver": int(reward["silver"])}))
     if int(reward.get("capacity", 0)) > 0:
         state.ships.hold_bonus += int(reward["capacity"])
         gifts.append(
-            (
-                "a bigger hold (room for %d more crate%s)"
-                % [int(reward["capacity"]), "" if int(reward["capacity"]) == 1 else "s"]
+            Grammar.phrase(
+                "a bigger hold (room for {crates} more {crates|crate|crates})",
+                {"crates": int(reward["capacity"])}
             )
         )
     var goods: Dictionary = reward.get("goods", {})
     for good in goods.keys():
         state.farm.put(good, int(goods[good]))
-        gifts.append("%s for your store" % _thing(state, good, int(goods[good])))
+        gifts.append(
+            Grammar.phrase(
+                "{thing} for your store", {"thing": _thing(state, good, int(goods[good]))}
+            )
+        )
     var animals: Dictionary = reward.get("animals", {})
     for kind in animals.keys():
         for i in range(int(animals[kind])):
             state.farm.add_animal(kind)
-        gifts.append("%s for your farm" % _thing(state, "animal:" + kind, int(animals[kind])))
+        gifts.append(
+            Grammar.phrase(
+                "{animals} for your farm",
+                {"animals": _thing(state, "animal:" + kind, int(animals[kind]))}
+            )
+        )
     if reward.has("plot") and not reward["plot"] in state.farm.plots:
         state.farm.add_plot(reward["plot"])
         for plot in state.farm.plot_kinds:
             if plot["id"] == reward["plot"]:
-                gifts.append(String(plot["name"]).to_lower())
+                gifts.append(str(plot["name"]))
     if reward.has("gift"):
         gifts.append(str(reward["gift"]))
     return gifts

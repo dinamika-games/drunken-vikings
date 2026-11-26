@@ -18,8 +18,7 @@
     "clay": {
       "name": "Clay",
       "color": "8a8070",
-      "one": "a basket of clay",
-      "many": "baskets of clay",
+      "counted": "{count|a basket of clay|{count} baskets of clay}",
       "picture": ["items", "clay"]
     }
   },

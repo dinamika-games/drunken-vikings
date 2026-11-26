@@ -17,7 +17,7 @@
     "ducklings": {
       "name": "Ducklings",
       "color": "f2e48a",
-      "one": "the basket of ducklings",
+      "counted": "the basket of ducklings",
       "picture": ["items", "ducklings"]
     }
   },

@@ -16,7 +16,7 @@
     "kittens": {
       "name": "Kittens",
       "color": "b0a898",
-      "one": "the basket of kittens",
+      "counted": "the basket of kittens",
       "picture": ["items", "kittens"]
     }
   },
