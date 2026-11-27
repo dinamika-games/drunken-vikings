@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Package the game for Linux, Windows and macOS into build/.
+Package the game for Linux, Windows and macOS into build/, and zip them into dist/.
 
 We export with the presets of export_presets.cfg, and add what Godot does not
 export itself: our license, the third-party notices and the licenses of the
@@ -13,6 +13,9 @@ no camera on Windows, and the game finds no camera there without it.
 Godot exits with zero even if it fails to build the C# part, and then writes a
 package without it; so we check its output for errors, and that every package
 has ONNX Runtime (for both the Apple Silicon and the Intel Macs).
+
+With --upload <tag>, the zips are uploaded to the GitHub release of the tag
+(with the gh CLI); the tag must be v<the version of project.godot>.
 
 You need the export templates of Godot 4.6.2 (.NET); see CONTRIBUTING.md,
 "Packaging".
@@ -31,6 +34,10 @@ from typing import Dict, List, Optional
 REPO_ROOT = pathlib.Path(os.path.realpath(__file__)).parent.parent
 
 BUILD_DIR = REPO_ROOT / "build"
+
+DIST_DIR = REPO_ROOT / "dist"
+
+SLUG = "drunken-vikings"
 
 EXTENSION_DIR = REPO_ROOT / "addons" / "CameraServerExtension"
 
@@ -190,6 +197,35 @@ def add_licenses_to_archive(archive: pathlib.Path) -> None:
                 zip_file.write(source, name)
 
 
+def read_version() -> str:
+    """Read the version of the game from project.godot."""
+    project = (REPO_ROOT / "project.godot").read_text(encoding="utf-8")
+    match = re.search(r'^config/version="([^"]+)"', project, flags=re.MULTILINE)
+    if match is None:
+        raise RuntimeError("project.godot sets no config/version.")
+    return match.group(1)
+
+
+def zip_package(platform: str, output: pathlib.Path, version: str) -> pathlib.Path:
+    """Zip the package into dist/; macOS is already exported as an archive."""
+    DIST_DIR.mkdir(exist_ok=True)
+    archive = DIST_DIR / f"{SLUG}-{version}-{platform}.zip"
+    if platform == "macos":
+        shutil.copy2(output, archive)
+        return archive
+
+    archive.unlink(missing_ok=True)
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+        for path in sorted(output.parent.rglob("*")):
+            if path.is_file():
+                # NOTE (mristin):
+                # The zip keeps the executable bit of the Linux executable.
+                zip_file.write(
+                    path, f"{SLUG}/{path.relative_to(output.parent).as_posix()}"
+                )
+    return archive
+
+
 def main() -> int:
     """Execute the main routine."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -203,7 +239,26 @@ def main() -> int:
     parser.add_argument(
         "--godot", help="The Godot executable (default: $GODOT or the path)"
     )
+    parser.add_argument(
+        "--upload",
+        metavar="TAG",
+        help="Upload the zips to the GitHub release of this tag (v<version>)",
+    )
     args = parser.parse_args()
+
+    try:
+        version = read_version()
+    except RuntimeError as exception:
+        print(str(exception), file=sys.stderr)
+        return 1
+
+    if args.upload is not None and args.upload != f"v{version}":
+        print(
+            f"The tag {args.upload} does not match the version {version} "
+            f"of project.godot; expected v{version}.",
+            file=sys.stderr,
+        )
+        return 1
 
     godot = find_godot(args.godot)
     if godot is None:
@@ -220,9 +275,14 @@ def main() -> int:
     try:
         run(["dotnet", "build", "DrunkenVikings.sln", "-c", "Release"])
 
+        archives: List[pathlib.Path] = []
         for platform in args.platforms:
             preset, relative = PLATFORMS[platform]
             output = BUILD_DIR / relative
+            # NOTE (mristin):
+            # We start from an empty folder so that no stale file of an earlier
+            # export ends up in the zip.
+            shutil.rmtree(output.parent, ignore_errors=True)
             output.parent.mkdir(parents=True, exist_ok=True)
             export(godot, preset, output)
             check_onnx_runtime(platform, output)
@@ -235,8 +295,17 @@ def main() -> int:
             if platform == "windows":
                 add_camera_extension(output.parent)
 
+            archive = zip_package(platform, output, version)
+            archives.append(archive)
             print(
-                f"Packaged {preset} into {output.relative_to(REPO_ROOT)}.", flush=True
+                f"Packaged {preset} into {archive.relative_to(REPO_ROOT)}.", flush=True
+            )
+
+        if args.upload is not None:
+            run(
+                ["gh", "release", "upload", args.upload]
+                + [str(archive) for archive in archives]
+                + ["--clobber"]
             )
     except subprocess.CalledProcessError as exception:
         print(f"Failed with exit code {exception.returncode}.", file=sys.stderr)

@@ -173,6 +173,17 @@ Pass `--platforms` to package only some, e.g., `--platforms windows`.
 The script exports the presets, adds `LICENSE`, `THIRD_PARTY_NOTICES.md` and the licenses of Godot (`licenses/godot/`), of the models and of ONNX Runtime to every package, and copies the camera extension next to the Windows executable: Godot 4.6 has no camera on Windows, and the game loads the extension from there itself (see `addons/CameraServerExtension/CameraServerExtension.gdextension` and `VisionService.StartCameraExtension`).
 Export with the script rather than from the editor, or the Windows package has no camera.
 It fails if Godot reports an error (Godot exits with zero even if it fails to build the C# part) or a package misses ONNX Runtime.
+It zips every package into `dist/drunken-vikings-<version>-<platform>.zip`, with the version from `config/version` of `project.godot`.
+
+## Releasing
+
+1. Bump `config/version` in `project.godot` and `application/short_version` and `application/version` of the macOS preset in `export_presets.cfg`.
+2. Publish a GitHub release with the tag `v<version>` (e.g., `v1.0.0`).
+   The workflow `.github/workflows/publish.yaml` packages the game and attaches the zips to the release (`dev/package.py --upload <tag>`, which fails if the tag does not match the version).
+
+Run the workflow by hand (Actions, Publish, Run workflow) without a tag for a dry run: it only uploads the zips as an artifact of the run.
+
+The workflow `.github/workflows/ci.yaml` runs `precommit.py` on every pull request and every push to `main`; the logs of the failed end-to-end tests are uploaded as an artifact of the run.
 
 ## Translations
 
