@@ -52,8 +52,7 @@ func play_mode() -> void:
     )
     var back := snapshot(voyage())
     check(
-        JSON.stringify(left) == JSON.stringify(back),
-        "the journey comes back as the chase left it"
+        JSON.stringify(left) == JSON.stringify(back), "the journey comes back as the chase left it"
     )
 
 

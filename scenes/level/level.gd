@@ -240,8 +240,11 @@ func _leave() -> void:
     get_tree().change_scene_to_file("res://scenes/start/start.tscn")
 
 
+## Closing the window saves, too (the treats picked up so far stay in the purse).
 func _notification(what: int) -> void:
     if what == NOTIFICATION_WM_CLOSE_REQUEST:
+        if _state != null:
+            _state.save()
         _quit()
 
 

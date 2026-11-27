@@ -53,9 +53,7 @@ func play_mode() -> void:
 func _play() -> void:
     var state := voyage()
     # NOTE: A directory for each seed, so that several seeds may run at once.
-    var directory := (
-        "%s/%s/seed_%s" % [DIRECTORY, mode(), argument("seed", str(DEFAULT_SEED))]
-    )
+    var directory := "%s/%s/seed_%s" % [DIRECTORY, mode(), argument("seed", str(DEFAULT_SEED))]
     _clean(directory)
     state.saves_dir = directory + "/saves"
     state.settings_path = directory + "/settings.cfg"
