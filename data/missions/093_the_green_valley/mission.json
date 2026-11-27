@@ -1,0 +1,41 @@
+{
+  "number": 93,
+  "id": "the_green_valley",
+  "title": "The Green Valley",
+  "kind": "deliver",
+  "requires": [
+    "the_longhouse_grows"
+  ],
+  "giver": {
+    "name": "Chieftain Eirik",
+    "picture": "chieftain",
+    "place": "chieftain"
+  },
+  "offer": "You helped my valley all year. The green valley behind your farm has no owner: bring me two crates of cloth and two of honey for the gods' feast, and it is yours.",
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "chieftain",
+      "item": "cloth",
+      "count": 2,
+      "say": "Cloth for the hall. Now the honey."
+    },
+    {
+      "do": "deliver",
+      "at": "chieftain",
+      "item": "honey",
+      "count": 2,
+      "who": {
+        "name": "Thora, the chieftain's daughter",
+        "hair": "e8c25a",
+        "braids": true,
+        "picture": "thora"
+      },
+      "say": "Father says it at the Thing, in front of everybody: the green valley belongs to Ylva and Sigrid!"
+    }
+  ],
+  "reward": {
+    "plot": "valley"
+  },
+  "fact": "At the Thing, the meeting of the free people, land and laws were decided."
+}

@@ -1,0 +1,52 @@
+{
+  "number": 78,
+  "id": "the_sleepy_hens",
+  "title": "The Sleepy Hens",
+  "kind": "heal",
+  "requires": [
+    "ale_for_two_inns"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "Our hens sit sleepy in the corner and lay no eggs. You are healers now: what do they need? Ask Tova, and bring it.",
+  "items": {
+    "garlic": {
+      "name": "Garlic",
+      "color": "f1f0ea",
+      "picture": ["items", "garlic"],
+      "counted": "the garlic"
+    }
+  },
+  "steps": [
+    {
+      "do": "visit",
+      "at": "healer",
+      "who": {
+        "name": "Tova the healer",
+        "picture": "healer"
+      },
+      "say": "Sleepy hens? Lice, I bet. Dust baths with wood ash and a bit of garlic in the water. Here, take garlic."
+    },
+    {
+      "do": "carry",
+      "item": "garlic",
+      "count": 1,
+      "from": "healer",
+      "to": "home"
+    },
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "grain",
+      "count": 2,
+      "say": "Garlic water, ash baths, fresh grain... Cluck! An egg! You are real healers."
+    }
+  ],
+  "reward": {
+    "silver": 16
+  },
+  "fact": "Hens bathe in dust and ash to get rid of the little bugs in their feathers."
+}

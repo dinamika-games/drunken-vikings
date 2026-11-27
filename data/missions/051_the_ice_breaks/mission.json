@@ -1,0 +1,38 @@
+{
+  "number": 51,
+  "id": "the_ice_breaks",
+  "title": "The Ice Breaks",
+  "kind": "find",
+  "requires": [
+    "the_first_snow"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "Hear that crack? The ice breaks: spring is here again! Row out and hail two boats: ask how everybody got through the winter.",
+  "steps": [
+    {
+      "do": "hail",
+      "count": 2,
+      "says": [
+        "A long winter! But the herring kept, thanks to your salt."
+      ],
+      "say": "Everybody is well! But Tova has asked for you all winter. Row to Laxön!"
+    },
+    {
+      "do": "visit",
+      "at": "healer",
+      "who": {
+        "name": "Tova the healer",
+        "picture": "healer"
+      },
+      "say": "There you are! Spring is when the animals need us most. Will you be my apprentices, and learn to heal?"
+    }
+  ],
+  "reward": {
+    "silver": 10
+  },
+  "fact": "When the ice broke in spring, the boats came out, and with them the news."
+}

@@ -1,0 +1,50 @@
+{
+  "number": 39,
+  "id": "the_messengers_cold",
+  "title": "The Messenger's Cold",
+  "kind": "deliver",
+  "requires": [
+    "a_proper_hold"
+  ],
+  "giver": {
+    "name": "Inga the messenger",
+    "picture": "inga",
+    "place": "inn"
+  },
+  "offer": "Atchoo! I have a cold, and I must tell the smith, the horse farm and the herders about the autumn feast at Hallvik. Can you do it today? Atchoo!",
+  "days": 1,
+  "steps": [
+    {
+      "do": "visit",
+      "at": "smith",
+      "who": {
+        "name": "Hrafn the smith",
+        "picture": "smith"
+      },
+      "say": "The autumn feast? I will bring my best knives to show."
+    },
+    {
+      "do": "visit",
+      "at": "horse_farm",
+      "who": {
+        "name": "Ragnfrid of the horse farm",
+        "picture": "horse_farm"
+      },
+      "say": "We will come with all the horses! Tell Inga to drink hot honey water."
+    },
+    {
+      "do": "visit",
+      "at": "herders",
+      "who": {
+        "name": "Sten the shepherd",
+        "hair": "8a5a2b",
+        "picture": "sten"
+      },
+      "say": "A feast! I will bring my flute. Thank you!"
+    }
+  ],
+  "reward": {
+    "silver": 24
+  },
+  "fact": "Messengers rowed, rode and ran: news could cross a land in a few days."
+}

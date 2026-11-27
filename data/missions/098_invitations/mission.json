@@ -1,0 +1,48 @@
+{
+  "number": 98,
+  "id": "invitations",
+  "title": "Invitations",
+  "kind": "find",
+  "requires": [
+    "fish_for_every_farm"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "We hold a feast here on the farm, for all our friends! Invite them: hail three boats on the lakes, and visit Tova and Ragnfrid.",
+  "steps": [
+    {
+      "do": "hail",
+      "count": 3,
+      "says": [
+        "A feast at your farm? We come, and bring our fiddle!",
+        "Count on me! I bring my best fish."
+      ],
+      "say": "A feast? Of course! I will tell everybody on the lakes."
+    },
+    {
+      "do": "visit",
+      "at": "healer",
+      "who": {
+        "name": "Tova the healer",
+        "picture": "healer"
+      },
+      "say": "I would not miss it! I come with my herb wine."
+    },
+    {
+      "do": "visit",
+      "at": "horse_farm",
+      "who": {
+        "name": "Ragnfrid of the horse farm",
+        "picture": "horse_farm"
+      },
+      "say": "We come with all the horses! Silke wants to see her daughter."
+    }
+  ],
+  "reward": {
+    "silver": 10
+  },
+  "fact": "A great feast could last a week, with guests from every farm around."
+}

@@ -1,0 +1,46 @@
+{
+  "number": 21,
+  "id": "the_foal_comes_home",
+  "title": "The Foal Comes Home",
+  "kind": "ferry",
+  "requires": [
+    "fog_on_the_lakes"
+  ],
+  "giver": {
+    "name": "Ragnfrid of the horse farm",
+    "picture": "horse_farm",
+    "place": "horse_farm"
+  },
+  "offer": "Silke's filly is big enough now, and the stable is ready. Take her home! She is nervous on the water: make room in the boat, and row gently.",
+  "items": {
+    "foal": {
+      "name": "Foal",
+      "color": "8a5a2b",
+      "picture": ["farm", "foal"],
+      "counted": "the foal"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "foal",
+      "count": 1,
+      "from": "horse_farm",
+      "to": "home",
+      "load_say": "There, little one, stand still. Row gently, girls!"
+    },
+    {
+      "do": "visit",
+      "at": "home",
+      "who": {
+        "name": "Grandmother Åsa",
+        "picture": "grandmother"
+      },
+      "say": "She trots into the new stable and sniffs the hay. Your first horse! What will you call her?"
+    }
+  ],
+  "reward": {
+    "gift": "a filly in your stable"
+  },
+  "fact": "A horse was the most precious animal on a viking farm, worth more than a boat."
+}

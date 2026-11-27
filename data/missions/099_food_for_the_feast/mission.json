@@ -1,0 +1,43 @@
+{
+  "number": 99,
+  "id": "food_for_the_feast",
+  "title": "Food for the Feast",
+  "kind": "fetch",
+  "requires": [
+    "invitations"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "So many guests! Bring four crates of mead, four of ale and four of cheese. Twelve crates: your big boat can do it, but you must buy well.",
+  "days": 3,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "mead",
+      "count": 4,
+      "say": "Mead! Now the ale."
+    },
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "ale",
+      "count": 4,
+      "say": "Ale! Now the cheese."
+    },
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "cheese",
+      "count": 4,
+      "say": "Everything is ready: the tables, the torches, the food. Now only the guests!"
+    }
+  ],
+  "reward": {
+    "silver": 20
+  },
+  "fact": "At a feast, the host gave the best food and drink: being generous brought honour."
+}

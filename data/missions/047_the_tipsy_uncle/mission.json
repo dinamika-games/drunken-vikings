@@ -1,0 +1,44 @@
+{
+  "number": 47,
+  "id": "the_tipsy_uncle",
+  "title": "The Tipsy Uncle",
+  "kind": "ferry",
+  "requires": [
+    "the_autumn_feast"
+  ],
+  "giver": {
+    "name": "Orm the innkeeper",
+    "hair": "3a2a1a",
+    "place": "inn_2",
+    "picture": "orm"
+  },
+  "offer": "Uncle Sven of Frosttorp sang and danced all night, and now he can't find his way home! He is very merry and a little wobbly. Row him home to Arne, please.",
+  "items": {
+    "sven": {
+      "name": "Sven",
+      "color": "a04a20",
+      "counted": "Uncle Sven",
+      "picture": ["faces", "sven"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "sven",
+      "count": 1,
+      "from": "inn_2",
+      "to": "farm",
+      "to_who": {
+        "name": "Arne of Frosttorp",
+        "hair": "a04a20",
+        "picture": "arne"
+      },
+      "load_say": "Uncle Sven: Ho ho! Two little vikings with a boat! Let us sing on the way!",
+      "say": "Uncle Sven! Singing all the way, I hear? Come in, sleep it off. Thank you, girls!"
+    }
+  ],
+  "reward": {
+    "silver": 16
+  },
+  "fact": "The vikings loved songs and riddles; at a feast, everybody had to sing."
+}

@@ -1,0 +1,58 @@
+{
+  "number": 73,
+  "id": "the_bear_comes_back",
+  "title": "The Bear Comes Back",
+  "kind": "find",
+  "requires": [
+    "the_sunny_hill"
+  ],
+  "giver": {
+    "name": "Alfhild the beekeeper",
+    "hair": "e8c25a",
+    "braids": true,
+    "place": "beekeeper",
+    "picture": "alfhild"
+  },
+  "offer": "Honey is missing again! But this time, the paw prints are BIG. Ask Inga the messenger, she rows past the woods every day.",
+  "items": {
+    "honey": {
+      "name": "Honey",
+      "color": "e8a830",
+      "picture": ["goods", "honey"],
+      "counted": "{count|a pot of honey|{count} pots of honey}"
+    }
+  },
+  "steps": [
+    {
+      "do": "hail",
+      "skipper": "inga",
+      "say": "A young bear by the woods of Hjortingsala, with a white spot on his chest. The cub you carried, all grown up!"
+    },
+    {
+      "do": "carry",
+      "item": "honey",
+      "count": 2,
+      "from": "beekeeper",
+      "to": "chieftain",
+      "from_who": {
+        "name": "Alfhild the beekeeper",
+        "hair": "e8c25a",
+        "braids": true,
+        "picture": "alfhild"
+      },
+      "to_who": {
+        "name": "Thora, the chieftain's daughter",
+        "hair": "e8c25a",
+        "braids": true,
+        "picture": "thora"
+      },
+      "load_say": "Then he gets honey of his own, far from my hives. Take him two pots.",
+      "say": "I put the pots by the old oak. Look! He comes out of the bushes and sniffs. He remembers you!"
+    }
+  ],
+  "reward": {
+    "silver": 24,
+    "gift": "a bear friend in the woods"
+  },
+  "fact": "Brown bears live alone in the woods, eat berries, roots, fish and, yes, honey."
+}

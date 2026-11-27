@@ -1,0 +1,49 @@
+{
+  "number": 13,
+  "id": "the_foal_is_coming",
+  "title": "The Foal Is Coming",
+  "kind": "ferry",
+  "requires": [
+    "the_lambs_in_the_cold_night",
+    "who_takes_the_honey"
+  ],
+  "giver": {
+    "name": "Ragnfrid of the horse farm",
+    "picture": "horse_farm",
+    "place": "horse_farm"
+  },
+  "offer": "My mare Silke is about to foal, and she is restless. Please fetch Tova from Laxön, quickly! Tova takes the room of a crate in your boat.",
+  "days": 1,
+  "items": {
+    "tova": {
+      "name": "Tova",
+      "color": "6a9a4a",
+      "picture": ["faces", "healer"],
+      "counted": "Tova"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "tova",
+      "count": 1,
+      "from": "healer",
+      "to": "horse_farm",
+      "from_who": {
+        "name": "Tova the healer",
+        "picture": "healer"
+      },
+      "load_say": "A foal? I come at once. Let me sit in the bow."
+    },
+    {
+      "do": "visit",
+      "at": "horse_farm",
+      "say": "A little filly, with white socks! She stands already. When she is grown, she is yours: I promise."
+    }
+  ],
+  "reward": {
+    "silver": 20,
+    "gift": "the promise of a foal"
+  },
+  "fact": "A foal can stand and walk within an hour of being born."
+}

@@ -1,0 +1,44 @@
+{
+  "number": 56,
+  "id": "bjorns_salt_run",
+  "title": "Bjørn's Salt Run",
+  "kind": "deliver",
+  "requires": [
+    "the_great_hold"
+  ],
+  "giver": {
+    "name": "Bjørn the salt trader",
+    "picture": "bjorn",
+    "place": "market"
+  },
+  "offer": "My boat leaks, and the fishers of Ekvik wait for salt! Take eight sacks for me from here to Ekvik. Your new hold is just right.",
+  "items": {
+    "salt": {
+      "name": "Salt",
+      "color": "ffffff",
+      "picture": ["goods", "salt"],
+      "counted": "{count|a sack of salt|{count} sacks of salt}"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "salt",
+      "count": 8,
+      "from": "market",
+      "to": "fishers_2",
+      "to_who": {
+        "name": "Helga the fisher",
+        "hair": "c9602a",
+        "braids": true,
+        "picture": "helga"
+      },
+      "load_say": "Eight sacks of the best salt from the sea. Keep them dry!",
+      "say": "Bjørn's salt, brought by you? Then I pay you, not him. Ha!"
+    }
+  ],
+  "reward": {
+    "silver": 44
+  },
+  "fact": "Salt was boiled out of sea water in big pans, and traded far inland."
+}

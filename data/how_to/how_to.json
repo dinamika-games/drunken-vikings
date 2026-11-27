@@ -1,0 +1,126 @@
+{
+  "comment": "How to play (see HowTo, scenes/how_to/how_to.gd, and dev/how_to/make_svgs.py): the parts, one after the other, for one rower, two rowers, or both ('players'). Each part lasts 'seconds' and shows: on the left, the players in the camera picture (mirrored, as the players see themselves), and on the right, what it does ('panel': 'boat', the boat from above; 'jetty', the boat and a jetty; 'card', a card of the screens). The 'moves' say what the players do, from 'from' to 'to' seconds into the part: 'row' (strokes, one every 'period' seconds; 'who': 0 the left rower, 1 the right one, -1 all), 'lean' (to the 'side': -1 left, 1 right), 'brake' (both hands above the head), 'point' (one hand raised to the card) or 'rest'. A part starts with the boat at rest, unless it has 'keep_boat'. The 'stills' are the moments drawn into the SVGs.",
+  "parts": [
+    {
+      "id": "sit",
+      "players": [1, 2],
+      "title": "Sit facing the camera",
+      "text": "Sit on a chair, two steps from the camera, so that it sees you from your head to your belly.",
+      "seconds": 4.0,
+      "panel": "boat",
+      "moves": [{"do": "rest", "from": 0.0, "to": 4.0}],
+      "stills": [2.0]
+    },
+    {
+      "id": "row",
+      "players": [1, 2],
+      "title": "Row",
+      "text": "Lean back and pull your hands to your belly, then lean forward and reach out. Every stroke pushes the boat.",
+      "seconds": 9.0,
+      "panel": "boat",
+      "moves": [{"do": "row", "from": 0.0, "to": 9.0, "period": 1.8}],
+      "stills": [0.0, 0.9]
+    },
+    {
+      "id": "glide",
+      "players": [1, 2],
+      "keep_boat": true,
+      "title": "Glide",
+      "text": "Stop rowing, and the boat glides on, slower and slower. Row a few strokes, then glide.",
+      "seconds": 5.0,
+      "panel": "boat",
+      "moves": [{"do": "rest", "from": 0.0, "to": 5.0}],
+      "stills": [2.5]
+    },
+    {
+      "id": "left",
+      "players": [1],
+      "title": "Steer to the left",
+      "text": "Lean to the left with your whole body, and the boat turns left. Lean more to turn harder.",
+      "seconds": 7.0,
+      "panel": "boat",
+      "moves": [
+        {"do": "row", "from": 0.0, "to": 3.6, "period": 1.8},
+        {"do": "lean", "from": 3.6, "to": 5.6, "side": -1},
+        {"do": "rest", "from": 5.6, "to": 7.0}
+      ],
+      "stills": [4.6]
+    },
+    {
+      "id": "right",
+      "players": [1],
+      "title": "Steer to the right",
+      "text": "Lean to the right, and the boat turns right. Sit up straight again to go straight on.",
+      "seconds": 7.0,
+      "panel": "boat",
+      "moves": [
+        {"do": "row", "from": 0.0, "to": 3.6, "period": 1.8},
+        {"do": "lean", "from": 3.6, "to": 5.6, "side": 1},
+        {"do": "rest", "from": 5.6, "to": 7.0}
+      ],
+      "stills": [4.6]
+    },
+    {
+      "id": "pair",
+      "players": [2],
+      "title": "Row together",
+      "text": "Each of you pulls the oar on your side. Row in time, and the oars shine gold: the boat goes fastest.",
+      "seconds": 7.2,
+      "panel": "boat",
+      "moves": [{"do": "row", "from": 0.0, "to": 7.2, "period": 1.8, "who": -1}],
+      "stills": [0.9]
+    },
+    {
+      "id": "turn",
+      "players": [2],
+      "title": "Turn",
+      "text": "The boat turns away from the stronger rower: the left rower rows alone, and the boat turns right.",
+      "seconds": 7.2,
+      "panel": "boat",
+      "moves": [
+        {"do": "row", "from": 0.0, "to": 7.2, "period": 1.8, "who": 0},
+        {"do": "rest", "from": 0.0, "to": 7.2, "who": 1}
+      ],
+      "stills": [0.9]
+    },
+    {
+      "id": "brake",
+      "players": [1, 2],
+      "title": "Brake",
+      "text": "Raise both hands above your head, and the boat stops.",
+      "seconds": 7.0,
+      "panel": "boat",
+      "moves": [
+        {"do": "row", "from": 0.0, "to": 3.6, "period": 1.8},
+        {"do": "brake", "from": 3.6, "to": 7.0}
+      ],
+      "stills": [5.0]
+    },
+    {
+      "id": "dock",
+      "players": [1, 2],
+      "title": "Dock at a jetty",
+      "text": "Glide slowly to a jetty, and you dock there: trade, take tasks, or sleep at home.",
+      "seconds": 9.0,
+      "panel": "jetty",
+      "moves": [
+        {"do": "row", "from": 0.0, "to": 3.6, "period": 1.8},
+        {"do": "rest", "from": 3.6, "to": 9.0}
+      ],
+      "stills": [7.5]
+    },
+    {
+      "id": "choose",
+      "players": [1, 2],
+      "title": "Choose",
+      "text": "Raise a hand to a card and hold it still until the rope ring is full.",
+      "seconds": 6.0,
+      "panel": "card",
+      "moves": [
+        {"do": "rest", "from": 0.0, "to": 1.0},
+        {"do": "point", "from": 1.0, "to": 6.0}
+      ],
+      "stills": [3.0]
+    }
+  ]
+}

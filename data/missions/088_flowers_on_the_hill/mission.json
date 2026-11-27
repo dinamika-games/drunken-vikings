@@ -1,0 +1,37 @@
+{
+  "number": 88,
+  "id": "flowers_on_the_hill",
+  "title": "Flowers on the Hill",
+  "kind": "make",
+  "requires": [
+    "a_cow_for_grim"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "Plant flowers on the sunny hill! When they bloom, bring three crates to Gudrun's inn: she wants the inn to smell like summer.",
+  "steps": [
+    {
+      "do": "plant",
+      "crop": "flowers",
+      "say": "Flower seeds in the earth. In two days, they bloom."
+    },
+    {
+      "do": "deliver",
+      "at": "inn",
+      "item": "flowers",
+      "count": 3,
+      "who": {
+        "name": "Gudrun the innkeeper",
+        "picture": "inn"
+      },
+      "say": "Flowers on every table! The guests smile. Here is your silver, and a cup of milk for each of you."
+    }
+  ],
+  "reward": {
+    "silver": 30
+  },
+  "fact": "Vikings wove flowers into wreaths and crowns for feasts and weddings."
+}

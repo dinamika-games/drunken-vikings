@@ -1,0 +1,20 @@
+{
+  "comment": "What each kind of settlement of the Home Lakes makes (cheap there, and for sale) and wants (dear there). The market sells and buys everything. See scenes/game/economy.gd.",
+  "settlements": {
+    "home": {"makes": [], "wants": []},
+    "market": {"makes": ["salt", "grain", "hay"], "wants": ["cheese", "fish", "wool", "pots"], "sells_all": true},
+    "healer": {"makes": ["herbs"], "wants": ["honey", "eggs"]},
+    "inn": {"makes": [], "wants": ["ale", "mead", "fish", "eggs", "milk", "cheese", "flowers"]},
+    "fishers": {"makes": ["fish"], "wants": ["salt", "grain", "ale"]},
+    "brewer": {"makes": ["ale"], "wants": ["grain", "honey"]},
+    "beekeeper": {"makes": ["honey", "mead"], "wants": ["grain", "wool"]},
+    "horse_farm": {"makes": ["hay", "milk", "cheese"], "wants": ["grain", "salt", "herbs"]},
+    "weaver": {"makes": ["cloth"], "wants": ["wool", "flax"]},
+    "chieftain": {"makes": [], "wants": ["mead", "cloth", "honey", "cheese", "tools"]},
+    "farm": {"makes": ["grain", "eggs"], "wants": ["salt", "fish", "tools", "pots"]},
+    "mill": {"makes": ["grain"], "wants": ["ale", "tools"]},
+    "smith": {"makes": ["tools"], "wants": ["grain", "ale", "cheese"]},
+    "potter": {"makes": ["pots"], "wants": ["fish", "grain", "flowers"]},
+    "herders": {"makes": ["wool", "milk", "cheese"], "wants": ["salt", "grain", "herbs"]}
+  }
+}

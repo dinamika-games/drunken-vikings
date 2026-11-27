@@ -1,0 +1,38 @@
+{
+  "number": 36,
+  "id": "flax_in_the_field",
+  "title": "Flax in the Field",
+  "kind": "make",
+  "requires": [
+    "wool_for_the_winter_cloth"
+  ],
+  "giver": {
+    "name": "Sæunn the weaver",
+    "picture": "weaver",
+    "place": "weaver"
+  },
+  "offer": "Linen is softer than wool on the skin. Plant flax on your farm! When it blooms blue and is ripe, bring me two crates.",
+  "steps": [
+    {
+      "do": "plant",
+      "crop": "flax",
+      "who": {
+        "name": "Grandmother Åsa",
+        "picture": "grandmother"
+      },
+      "say": "Flax seed in the field. In a few days, it blooms blue."
+    },
+    {
+      "do": "deliver",
+      "at": "weaver",
+      "item": "flax",
+      "count": 2,
+      "say": "Your own flax! I will make you linen shirts, soft as a cloud."
+    }
+  ],
+  "reward": {
+    "silver": 30,
+    "gift": "linen shirts"
+  },
+  "fact": "Flax was soaked, beaten and combed for weeks before it could be spun into linen."
+}

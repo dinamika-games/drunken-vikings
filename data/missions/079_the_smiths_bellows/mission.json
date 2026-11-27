@@ -1,0 +1,67 @@
+{
+  "number": 79,
+  "id": "the_smiths_bellows",
+  "title": "The Smith's Bellows",
+  "kind": "build",
+  "requires": [
+    "the_sleepy_hens"
+  ],
+  "giver": {
+    "name": "Hrafn the smith",
+    "picture": "smith",
+    "place": "smith"
+  },
+  "offer": "My bellows burst! I need two goat hides from Sigvor in Ålberga and a pot of tar from Ekvik to make new ones. My fire is cold till then!",
+  "items": {
+    "hide": {
+      "name": "Hide",
+      "color": "8a5a2b",
+      "counted": "{count|a goat hide|{count} goat hides}",
+      "picture": ["items", "hide"]
+    },
+    "tar": {
+      "name": "Tar",
+      "color": "3a2a1a",
+      "counted": "the pot of tar",
+      "picture": ["items", "tar"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "hide",
+      "count": 2,
+      "from": "herders",
+      "to": "smith",
+      "from_who": {
+        "name": "Sigvor the goat woman",
+        "picture": "sigvor"
+      },
+      "load_say": "Thick hides from my old goats. They lived long and well."
+    },
+    {
+      "do": "carry",
+      "item": "tar",
+      "count": 1,
+      "from": "fishers_2",
+      "to": "smith",
+      "from_who": {
+        "name": "Helga the fisher",
+        "hair": "c9602a",
+        "braids": true,
+        "picture": "helga"
+      }
+    },
+    {
+      "do": "visit",
+      "at": "smith",
+      "say": "Whoosh! Whoosh! The fire roars again. Take two crates of my tools."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "tools": 2
+    }
+  },
+  "fact": "Bellows of leather blew air into the forge, to make the fire hot enough for iron."
+}

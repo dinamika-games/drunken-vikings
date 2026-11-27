@@ -1,0 +1,38 @@
+{
+  "number": 54,
+  "id": "barley_in_spring",
+  "title": "Barley in Spring",
+  "kind": "make",
+  "requires": [
+    "the_ice_breaks"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "The fields are dry: time to sow! Plant barley, and while it grows, sell two crates of eggs to Orm in Hallvik to buy more seed.",
+  "steps": [
+    {
+      "do": "plant",
+      "crop": "barley",
+      "say": "The barley is sown. Now the sun and the rain do the work."
+    },
+    {
+      "do": "deliver",
+      "at": "inn_2",
+      "item": "eggs",
+      "count": 2,
+      "who": {
+        "name": "Orm the innkeeper",
+        "hair": "3a2a1a",
+        "picture": "orm"
+      },
+      "say": "Eggs! I make my famous egg cake. Here, good silver for good eggs."
+    }
+  ],
+  "reward": {
+    "silver": 20
+  },
+  "fact": "Barley was the most important grain of the north: for bread, porridge and ale."
+}

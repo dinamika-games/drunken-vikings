@@ -1,0 +1,68 @@
+{
+  "number": 61,
+  "id": "the_swarm",
+  "title": "The Swarm",
+  "kind": "rescue",
+  "requires": [
+    "hilds_wedding"
+  ],
+  "giver": {
+    "name": "Alfhild the beekeeper",
+    "hair": "e8c25a",
+    "braids": true,
+    "place": "beekeeper",
+    "picture": "alfhild"
+  },
+  "offer": "My bees swarmed! A whole cloud of them flew off with a young queen, and Solveig says they hang in her apple tree. Bring them this empty hive, and bring them back to me.",
+  "items": {
+    "hive": {
+      "name": "Hive",
+      "color": "c8a050",
+      "picture": ["items", "skep"],
+      "counted": "the empty hive"
+    },
+    "swarm": {
+      "name": "Swarm",
+      "color": "e8a830",
+      "picture": ["items", "swarm"],
+      "counted": "the hive with the swarm"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "hive",
+      "count": 1,
+      "from": "beekeeper",
+      "to": "farm_2",
+      "to_who": {
+        "name": "Solveig of Solby",
+        "hair": "e8c25a",
+        "braids": true,
+        "picture": "solveig"
+      },
+      "say": "They hang there like a big brown pear! Hold the hive under them... shake... they are in!"
+    },
+    {
+      "do": "carry",
+      "item": "swarm",
+      "count": 1,
+      "from": "farm_2",
+      "to": "beekeeper",
+      "from_who": {
+        "name": "Solveig of Solby",
+        "hair": "e8c25a",
+        "braids": true,
+        "picture": "solveig"
+      },
+      "load_say": "Row smoothly: a swarm is calm, as long as nobody bumps the hive.",
+      "say": "My bees! Not one sting for you? Then they like you. Take two crates of honey."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "honey": 2
+    }
+  },
+  "fact": "When a hive gets too full, half the bees fly off with a new queen: a swarm."
+}

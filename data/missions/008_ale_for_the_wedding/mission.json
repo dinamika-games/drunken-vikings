@@ -1,0 +1,50 @@
+{
+  "number": 8,
+  "id": "ale_for_the_wedding",
+  "title": "Ale for the Wedding",
+  "kind": "deliver",
+  "requires": [
+    "two_goats_for_the_farm"
+  ],
+  "giver": {
+    "name": "Astrid of the mill",
+    "hair": "8a5a2b",
+    "braids": true,
+    "place": "mill",
+    "picture": "astrid"
+  },
+  "offer": "I am marrying Bjarne the boatwright in two days! But the wedding ale is still at Knut the brewer's in Lindtorp. Three barrels: will they fit in your boat?",
+  "days": 2,
+  "items": {
+    "ale": {
+      "name": "Ale",
+      "color": "a8743c",
+      "picture": ["goods", "ale"],
+      "counted": "{count|a barrel of wedding ale|{count} barrels of wedding ale}"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "ale",
+      "count": 3,
+      "from": "brewer",
+      "to": "mill",
+      "from_who": {
+        "name": "Knut the brewer",
+        "hair": "c9602a",
+        "picture": "knut"
+      },
+      "load_say": "The wedding ale for Astrid! Row smoothly, girls, and do not taste it on the way."
+    },
+    {
+      "do": "visit",
+      "at": "mill",
+      "say": "All three barrels! Now the wedding can be merry. You are invited, of course!"
+    }
+  ],
+  "reward": {
+    "silver": 24
+  },
+  "fact": "A viking wedding lasted for days, and the guests drank a special bridal ale."
+}

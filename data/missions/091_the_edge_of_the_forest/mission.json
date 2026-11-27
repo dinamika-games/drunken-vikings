@@ -1,0 +1,29 @@
+{
+  "number": 91,
+  "id": "the_edge_of_the_forest",
+  "title": "The Edge of the Forest",
+  "kind": "deliver",
+  "requires": [
+    "gudruns_ring"
+  ],
+  "giver": {
+    "name": "Arne of Frosttorp",
+    "hair": "a04a20",
+    "place": "farm",
+    "picture": "arne"
+  },
+  "offer": "Kol and Ingrid want sheep for their new home. Bring them two sheep, and I give you the strip of land by the forest, next to your farm. A fair trade!",
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "farm",
+      "item": "animal:sheep",
+      "count": 2,
+      "say": "Two sheep for the young ones! Ingrid already knits. The forest edge is yours: good wood and two fields."
+    }
+  ],
+  "reward": {
+    "plot": "forest_edge"
+  },
+  "fact": "Land was traded for animals, silver or work: there were no banks."
+}

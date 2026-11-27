@@ -1,0 +1,70 @@
+{
+  "number": 97,
+  "id": "fish_for_every_farm",
+  "title": "Fish for Every Farm",
+  "kind": "deliver",
+  "requires": [
+    "the_winter_stores"
+  ],
+  "giver": {
+    "name": "Tor the fisher",
+    "hair": "8a5a2b",
+    "place": "fishers",
+    "picture": "tor"
+  },
+  "offer": "Our best catch ever! Bring three bundles of dried fish to each farm: Frosttorp, Solby and Svanetorp. A gift from Stormvik, for the winter.",
+  "items": {
+    "fish": {
+      "name": "Fish",
+      "color": "9aa6b0",
+      "picture": ["goods", "fish"],
+      "counted": "{count|a bundle of fish|{count} bundles of fish}"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "fish",
+      "count": 3,
+      "from": "fishers",
+      "to": "farm",
+      "to_who": {
+        "name": "Arne of Frosttorp",
+        "hair": "a04a20",
+        "picture": "arne"
+      },
+      "say": "From Tor? What a neighbour!"
+    },
+    {
+      "do": "carry",
+      "item": "fish",
+      "count": 3,
+      "from": "fishers",
+      "to": "farm_2",
+      "to_who": {
+        "name": "Solveig of Solby",
+        "hair": "e8c25a",
+        "braids": true,
+        "picture": "solveig"
+      },
+      "say": "Fish for the winter! Tell Tor: apples for him in spring."
+    },
+    {
+      "do": "carry",
+      "item": "fish",
+      "count": 3,
+      "from": "fishers",
+      "to": "farm_3",
+      "to_who": {
+        "name": "Old Grim of Svanetorp",
+        "hair": "d8d8d0",
+        "picture": "grim"
+      },
+      "say": "Fish? For an old man? Tor is a good boy. Thank you!"
+    }
+  ],
+  "reward": {
+    "silver": 30
+  },
+  "fact": "Neighbours gave each other food before winter; the gift came back another year."
+}

@@ -1,0 +1,31 @@
+{
+  "number": 6,
+  "id": "two_goats_for_the_farm",
+  "title": "Two Goats for the Farm",
+  "kind": "fetch",
+  "requires": [
+    "the_sneezing_sheep"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "I would love goat's milk and cheese again. Buy two goats at the horse farm in Torsgården and row them home. Each goat takes the room of a crate!",
+  "days": 3,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "animal:goat",
+      "count": 2,
+      "say": "Two goats! Listen to them bleat. They will give us milk and cheese, and eat the hay of the meadow."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "hay": 3
+    }
+  },
+  "fact": "Goats were kept for milk and cheese; their skin was made into leather."
+}

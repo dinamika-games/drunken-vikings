@@ -1,0 +1,46 @@
+{
+  "number": 64,
+  "id": "the_ferrymans_last_trip",
+  "title": "The Ferryman's Last Trip",
+  "kind": "ferry",
+  "requires": [
+    "hay_for_alberga"
+  ],
+  "giver": {
+    "name": "Orm the innkeeper",
+    "hair": "3a2a1a",
+    "place": "inn_2",
+    "picture": "orm"
+  },
+  "offer": "Old Halvard says his bones are too old for the oars. He wants to live with his daughter in Solby. Will you row him there? He has stories for the whole way.",
+  "items": {
+    "halvard": {
+      "name": "Halvard",
+      "color": "d8d8d0",
+      "picture": ["faces", "halvard"],
+      "counted": "Old Halvard"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "halvard",
+      "count": 1,
+      "from": "inn_2",
+      "to": "farm_2",
+      "to_who": {
+        "name": "Solveig of Solby",
+        "hair": "e8c25a",
+        "braids": true,
+        "picture": "solveig"
+      },
+      "load_say": "Old Halvard: Two young skippers for an old ferryman! Did I ever tell you about the sea serpent?",
+      "say": "Father! Come in, your chair by the fire is ready. Thank you for bringing him."
+    }
+  ],
+  "reward": {
+    "silver": 20,
+    "gift": "all of Halvard's stories"
+  },
+  "fact": "Old people lived with their children on the farm, and told the stories of the family."
+}

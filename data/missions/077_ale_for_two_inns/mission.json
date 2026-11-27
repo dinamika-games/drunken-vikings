@@ -1,0 +1,55 @@
+{
+  "number": 77,
+  "id": "ale_for_two_inns",
+  "title": "Ale for Two Inns",
+  "kind": "deliver",
+  "requires": [
+    "a_wedding_at_frosttorp"
+  ],
+  "giver": {
+    "name": "Knut the brewer",
+    "hair": "c9602a",
+    "place": "brewer",
+    "picture": "knut"
+  },
+  "offer": "Both inns ran dry at the same time! Six barrels for Gudrun in Vargvik and six for Orm in Hallvik. With twelve crates of room, you can do it in one trip!",
+  "items": {
+    "ale": {
+      "name": "Ale",
+      "color": "a8743c",
+      "picture": ["goods", "ale"],
+      "counted": "{count|a barrel of ale|{count} barrels of ale}"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "ale",
+      "count": 6,
+      "from": "brewer",
+      "to": "inn",
+      "to_who": {
+        "name": "Gudrun the innkeeper",
+        "picture": "inn"
+      },
+      "say": "Ale! The guests cheer. Thank you!"
+    },
+    {
+      "do": "carry",
+      "item": "ale",
+      "count": 6,
+      "from": "brewer",
+      "to": "inn_2",
+      "to_who": {
+        "name": "Orm the innkeeper",
+        "hair": "3a2a1a",
+        "picture": "orm"
+      },
+      "say": "At last! I thought I must serve water. Here, silver for you and for Knut."
+    }
+  ],
+  "reward": {
+    "silver": 56
+  },
+  "fact": "Everybody drank weak ale every day: it was safer than water from the lake."
+}

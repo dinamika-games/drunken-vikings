@@ -1,0 +1,51 @@
+{
+  "number": 86,
+  "id": "news_for_everybody",
+  "title": "News for Everybody",
+  "kind": "deliver",
+  "requires": [
+    "the_goats_on_the_island"
+  ],
+  "giver": {
+    "name": "Inga the messenger",
+    "picture": "inga",
+    "place": "inn"
+  },
+  "offer": "Big news: a ship from the Long Lake will come, and the way between the lakes opens! Tell the smith, the fishers of Stormvik and Orm in Hallvik. I tell the rest.",
+  "days": 1,
+  "steps": [
+    {
+      "do": "visit",
+      "at": "smith",
+      "who": {
+        "name": "Hrafn the smith",
+        "picture": "smith"
+      },
+      "say": "A ship from the Long Lake? They will want my iron!"
+    },
+    {
+      "do": "visit",
+      "at": "fishers",
+      "who": {
+        "name": "Tor the fisher",
+        "hair": "8a5a2b",
+        "picture": "tor"
+      },
+      "say": "New lakes, new fish! Thank you for telling us."
+    },
+    {
+      "do": "visit",
+      "at": "inn_2",
+      "who": {
+        "name": "Orm the innkeeper",
+        "hair": "3a2a1a",
+        "picture": "orm"
+      },
+      "say": "Guests from far away! I must brew more. Thank you, girls!"
+    }
+  ],
+  "reward": {
+    "silver": 28
+  },
+  "fact": "The lakes of the north were joined by rivers and portages, where boats were dragged over land."
+}

@@ -1,0 +1,46 @@
+{
+  "number": 65,
+  "id": "shearing_time",
+  "title": "Shearing Time",
+  "kind": "deliver",
+  "requires": [
+    "the_ferrymans_last_trip"
+  ],
+  "giver": {
+    "name": "Sten the shepherd",
+    "hair": "8a5a2b",
+    "place": "herders",
+    "picture": "sten"
+  },
+  "offer": "The sheep are shorn! Nine sacks of fleece for Sæunn the weaver. Nine are more than your boat takes: two trips, or a clever packing.",
+  "items": {
+    "fleece": {
+      "name": "Fleece",
+      "color": "e8e0d0",
+      "picture": ["items", "fleece"],
+      "counted": "{count|a sack of fleece|{count} sacks of fleece}"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "fleece",
+      "count": 9,
+      "from": "herders",
+      "to": "weaver",
+      "to_who": {
+        "name": "Sæunn the weaver",
+        "picture": "weaver"
+      },
+      "load_say": "Soft and greasy. Your hands will be soft too!",
+      "say": "Nine sacks! My looms will clatter all summer. Here is a bolt of cloth for you."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "cloth": 1
+    },
+    "silver": 10
+  },
+  "fact": "Sheep were shorn with iron shears, or their wool was plucked when it came loose."
+}

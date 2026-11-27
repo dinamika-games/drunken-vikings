@@ -1,0 +1,58 @@
+{
+  "number": 81,
+  "id": "the_healers_round",
+  "title": "The Healers' Round",
+  "kind": "heal",
+  "requires": [
+    "grandmothers_birthday"
+  ],
+  "giver": {
+    "name": "Tova the healer",
+    "picture": "healer",
+    "place": "healer"
+  },
+  "offer": "You are ready. Do my round alone today: look at the lambs in Ålberga, the horses in Torsgården and the swans in Svanetorp. Then come and tell me.",
+  "steps": [
+    {
+      "do": "visit",
+      "at": "herders",
+      "who": {
+        "name": "Sten the shepherd",
+        "hair": "8a5a2b",
+        "picture": "sten"
+      },
+      "say": "You look in their eyes, their ears, their hooves... All well? Good! They like you."
+    },
+    {
+      "do": "visit",
+      "at": "horse_farm",
+      "who": {
+        "name": "Ragnfrid of the horse farm",
+        "picture": "horse_farm"
+      },
+      "say": "Bror is old, but well. Silke's new foal is strong. Tell Tova all is fine."
+    },
+    {
+      "do": "visit",
+      "at": "farm_3",
+      "who": {
+        "name": "Old Grim of Svanetorp",
+        "hair": "d8d8d0",
+        "picture": "grim"
+      },
+      "say": "The swans? Fat and happy. One has a sore wing: you wrapped it well."
+    },
+    {
+      "do": "visit",
+      "at": "healer",
+      "say": "All well, and the swan's wing wrapped? Then take this: your own healer's bag. You are healers now."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "herbs": 2
+    },
+    "gift": "your own healer's bag"
+  },
+  "fact": "Healers looked, listened and touched: they had no tools but their hands and their herbs."
+}

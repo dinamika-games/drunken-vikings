@@ -1,0 +1,43 @@
+{
+  "number": 33,
+  "id": "the_chieftains_feast",
+  "title": "The Chieftain's Feast",
+  "kind": "deliver",
+  "requires": [
+    "a_henhouse_full",
+    "honey_cakes"
+  ],
+  "giver": {
+    "name": "Chieftain Eirik",
+    "picture": "chieftain",
+    "place": "chieftain"
+  },
+  "offer": "My daughter Thora turns twelve! A feast with the whole valley: bring me three crates of mead and two of cheese, within three days.",
+  "days": 3,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "chieftain",
+      "item": "mead",
+      "count": 3,
+      "say": "The mead! The skalds will sing."
+    },
+    {
+      "do": "deliver",
+      "at": "chieftain",
+      "item": "cheese",
+      "count": 2,
+      "who": {
+        "name": "Thora, the chieftain's daughter",
+        "hair": "e8c25a",
+        "braids": true,
+        "picture": "thora"
+      },
+      "say": "Cheese, mead, songs and a fire! Come in, sit by me: it is the best birthday ever."
+    }
+  ],
+  "reward": {
+    "silver": 60
+  },
+  "fact": "A chieftain's hall had a long fire in the middle, and benches along the walls."
+}

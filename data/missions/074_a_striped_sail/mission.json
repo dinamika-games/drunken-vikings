@@ -1,0 +1,35 @@
+{
+  "number": 74,
+  "id": "a_striped_sail",
+  "title": "A Striped Sail",
+  "kind": "make",
+  "requires": [
+    "a_flock_of_our_own",
+    "the_bear_comes_back"
+  ],
+  "giver": {
+    "name": "Sæunn the weaver",
+    "picture": "weaver",
+    "place": "weaver"
+  },
+  "offer": "Your boat has a dragon head, but no sail. I will weave you a little one, with red and white stripes. Bring me six crates of wool, and give me two nights.",
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "weaver",
+      "item": "wool",
+      "count": 6,
+      "say": "Now the looms clatter. Come back in two days!"
+    },
+    {
+      "do": "visit",
+      "at": "weaver",
+      "wait": 2,
+      "say": "Red and white stripes, like the great ships! It is small, but on a windy day it helps your arms."
+    }
+  ],
+  "reward": {
+    "gift": "a striped sail"
+  },
+  "fact": "A big viking sail took a weaver years; it was worth as much as the ship."
+}

@@ -1,0 +1,32 @@
+{
+  "number": 43,
+  "id": "pots_for_ekvik",
+  "title": "Pots for Ekvik",
+  "kind": "deliver",
+  "requires": [
+    "sigvors_cheese"
+  ],
+  "giver": {
+    "name": "Helga the fisher",
+    "hair": "c9602a",
+    "braids": true,
+    "place": "fishers_2",
+    "picture": "helga"
+  },
+  "offer": "The fish soup! We cook it for the whole village, but our big pot cracked. Bring us three crates of pots from the potter, please.",
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "fishers_2",
+      "item": "pots",
+      "count": 3,
+      "say": "New pots! Tonight there is fish soup for everybody, and for you two the first bowl."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "fish": 3
+    }
+  },
+  "fact": "The cooking pot hung over the fire on a chain, and the soup simmered all day."
+}

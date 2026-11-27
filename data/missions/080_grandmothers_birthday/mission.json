@@ -1,0 +1,79 @@
+{
+  "number": 80,
+  "id": "grandmothers_birthday",
+  "title": "Grandma's Birthday",
+  "kind": "fetch",
+  "requires": [
+    "the_smiths_bellows"
+  ],
+  "giver": {
+    "name": "Tova the healer",
+    "picture": "healer",
+    "place": "healer"
+  },
+  "offer": "Psst! Your grandmother turns seventy in two days. A surprise: a new shawl from Sæunn, a cake from Gudrun, and me as a guest. Do not tell her!",
+  "days": 2,
+  "items": {
+    "shawl": {
+      "name": "Shawl",
+      "color": "2f5f8a",
+      "picture": ["items", "shawl"],
+      "counted": "the shawl"
+    },
+    "cake": {
+      "name": "Cake",
+      "color": "d8a050",
+      "counted": "the cake",
+      "picture": ["items", "cake"]
+    },
+    "tova": {
+      "name": "Tova",
+      "color": "6a9a4a",
+      "picture": ["faces", "healer"],
+      "counted": "Tova"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "shawl",
+      "count": 1,
+      "from": "weaver",
+      "to": "home",
+      "from_who": {
+        "name": "Sæunn the weaver",
+        "picture": "weaver"
+      },
+      "load_say": "Blue, like her eyes. Hide it under the hay!"
+    },
+    {
+      "do": "carry",
+      "item": "cake",
+      "count": 1,
+      "from": "inn",
+      "to": "home",
+      "from_who": {
+        "name": "Gudrun the innkeeper",
+        "picture": "inn"
+      },
+      "load_say": "Honey cake with seventy almonds. I counted!"
+    },
+    {
+      "do": "carry",
+      "item": "tova",
+      "count": 1,
+      "from": "healer",
+      "to": "home",
+      "to_who": {
+        "name": "Grandmother Åsa",
+        "picture": "grandmother"
+      },
+      "say": "A shawl? A cake? Tova? Oh, my girls... Seventy years, and this is my happiest birthday."
+    }
+  ],
+  "reward": {
+    "silver": 20,
+    "gift": "Grandmother's happiest birthday"
+  },
+  "fact": "Few vikings lived to seventy; the old were honoured for what they knew."
+}

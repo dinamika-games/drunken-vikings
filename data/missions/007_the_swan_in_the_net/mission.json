@@ -1,0 +1,67 @@
+{
+  "number": 7,
+  "id": "the_swan_in_the_net",
+  "title": "The Swan in the Net",
+  "kind": "rescue",
+  "requires": [
+    "the_sneezing_sheep"
+  ],
+  "giver": {
+    "name": "Old Grim of Svanetorp",
+    "hair": "d8d8d0",
+    "place": "farm_3",
+    "picture": "grim"
+  },
+  "offer": "A swan is caught in an old net in the reeds by my farm. She can not fly! My shears are blunt. Fetch sharp shears from Hrafn the smith in Gäddarby, quick.",
+  "items": {
+    "shears": {
+      "name": "Shears",
+      "color": "6a7078",
+      "picture": ["items", "shears"],
+      "counted": "the shears"
+    },
+    "net": {
+      "name": "Old net",
+      "color": "9aa6b0",
+      "counted": "the old net",
+      "picture": ["items", "net"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "shears",
+      "count": 1,
+      "from": "smith",
+      "to": "farm_3",
+      "from_who": {
+        "name": "Hrafn the smith",
+        "picture": "smith"
+      },
+      "load_say": "For a swan? Take my best shears, and bring them back some day."
+    },
+    {
+      "do": "visit",
+      "at": "farm_3",
+      "say": "Snip, snip, gently... She is free! Look how she spreads her wings. Now take the old net to Helga in Ekvik, she can mend it for fishing."
+    },
+    {
+      "do": "carry",
+      "item": "net",
+      "count": 1,
+      "from": "farm_3",
+      "to": "fishers_2",
+      "to_who": {
+        "name": "Helga the fisher",
+        "hair": "c9602a",
+        "braids": true,
+        "picture": "helga"
+      }
+    }
+  ],
+  "reward": {
+    "silver": 16,
+    "gift": "the swan's thanks (she follows your boat for a while)"
+  },
+  "fact": "The vikings fished with nets of linen or nettle fibre, and floats of wood or bark."
+}

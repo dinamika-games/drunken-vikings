@@ -1,0 +1,57 @@
+{
+  "number": 38,
+  "id": "a_proper_hold",
+  "title": "A Proper Hold",
+  "kind": "build",
+  "requires": [
+    "barley_for_the_brewer",
+    "flax_in_the_field"
+  ],
+  "giver": {
+    "name": "Bjarne the boatwright",
+    "hair": "3a2a1a",
+    "place": "market",
+    "picture": "bjarne"
+  },
+  "offer": "You are real traders now: you need a real hold! Bring me eight planks from Frosttorp and two crates of iron tools, and pay 20 silver. Then your hold takes two more crates.",
+  "items": {
+    "plank": {
+      "name": "Plank",
+      "color": "c8a878",
+      "counted": "{count|a plank|{count} planks}",
+      "picture": ["items", "plank"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "plank",
+      "count": 8,
+      "from": "farm",
+      "to": "market",
+      "from_who": {
+        "name": "Arne of Frosttorp",
+        "hair": "a04a20",
+        "picture": "arne"
+      },
+      "load_say": "Planks of pine, split with wedges. Stack them well!"
+    },
+    {
+      "do": "deliver",
+      "at": "market",
+      "item": "tools",
+      "count": 2,
+      "say": "Good iron! Now my wages."
+    },
+    {
+      "do": "pay",
+      "at": "market",
+      "silver": 20,
+      "say": "Saw, plane, rivets... Look at her! Longer, wider, and room for two more crates."
+    }
+  ],
+  "reward": {
+    "capacity": 2
+  },
+  "fact": "Viking boats were built of overlapping planks, held with iron rivets."
+}

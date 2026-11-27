@@ -1,0 +1,73 @@
+{
+  "number": 19,
+  "id": "the_stable",
+  "title": "The Stable",
+  "kind": "build",
+  "requires": [
+    "the_kitten_in_the_boathouse"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "Ragnfrid's foal needs a stable before she comes. Bring six logs from Arne's forest in Frosttorp, a crate of iron tools from the smith, and tar from Ekvik. Six logs are more than your boat holds!",
+  "items": {
+    "log": {
+      "name": "Log",
+      "color": "8a5a2b",
+      "counted": "{count|a log|{count} logs}",
+      "picture": ["items", "log"]
+    },
+    "tar": {
+      "name": "Tar",
+      "color": "3a2a1a",
+      "counted": "the pot of tar",
+      "picture": ["items", "tar"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "log",
+      "count": 6,
+      "from": "farm",
+      "to": "home",
+      "from_who": {
+        "name": "Arne of Frosttorp",
+        "hair": "a04a20",
+        "picture": "arne"
+      },
+      "load_say": "Good straight pine. Load what fits, and come back for the rest."
+    },
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "tools",
+      "count": 1,
+      "say": "Nails and an axe: now we can build."
+    },
+    {
+      "do": "carry",
+      "item": "tar",
+      "count": 1,
+      "from": "fishers_2",
+      "to": "home",
+      "from_who": {
+        "name": "Helga the fisher",
+        "hair": "c9602a",
+        "braids": true,
+        "picture": "helga"
+      }
+    },
+    {
+      "do": "visit",
+      "at": "home",
+      "say": "Hammer, saw, tar on the roof... The stable stands! And we bought the east meadow for the foal to run in."
+    }
+  ],
+  "reward": {
+    "plot": "meadow_east"
+  },
+  "fact": "Viking houses were built of wood, with roofs of turf, thatch or shingles."
+}

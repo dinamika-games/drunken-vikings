@@ -1,0 +1,44 @@
+{
+  "number": 89,
+  "id": "the_pottery_market",
+  "title": "The Pottery Market",
+  "kind": "deliver",
+  "requires": [
+    "flowers_on_the_hill"
+  ],
+  "giver": {
+    "name": "Dagny the potter",
+    "hair": "3a2a1a",
+    "braids": true,
+    "place": "potter",
+    "picture": "dagny"
+  },
+  "offer": "The new kiln makes so many pots! Bring ten crates to the market in Kråkhamn. Ten crates: only your big boat can do it.",
+  "items": {
+    "pots": {
+      "name": "Pots",
+      "color": "b8693a",
+      "picture": ["goods", "pots"],
+      "counted": "{count|a crate of pots|{count} crates of pots}"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "pots",
+      "count": 10,
+      "from": "potter",
+      "to": "market",
+      "to_who": {
+        "name": "Ulf the market warden",
+        "picture": "market"
+      },
+      "load_say": "Pack them in straw: pots do not like to bump!",
+      "say": "Ten crates of Dagny's pots, and not one broken! The best rowing of the lakes."
+    }
+  ],
+  "reward": {
+    "silver": 60
+  },
+  "fact": "Clay pots were carried packed in straw, so that they did not break."
+}

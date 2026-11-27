@@ -1,0 +1,72 @@
+{
+  "number": 76,
+  "id": "a_wedding_at_frosttorp",
+  "title": "A Wedding at Frosttorp",
+  "kind": "ferry",
+  "requires": [
+    "the_widest_hold"
+  ],
+  "giver": {
+    "name": "Solveig of Solby",
+    "hair": "e8c25a",
+    "braids": true,
+    "place": "farm_2",
+    "picture": "solveig"
+  },
+  "offer": "My daughter Ingrid marries Arne's son Kol in Frosttorp! Row her there in your painted boat, with her three chests of dowry. Within two days!",
+  "days": 2,
+  "items": {
+    "dowry": {
+      "name": "Dowry",
+      "color": "6a4320",
+      "counted": "{count|a chest of dowry|{count} chests of dowry}",
+      "picture": ["items", "dowry"]
+    },
+    "ingrid": {
+      "name": "Ingrid",
+      "color": "e8c25a",
+      "counted": "Ingrid the bride",
+      "picture": ["faces", "ingrid"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "dowry",
+      "count": 3,
+      "from": "farm_2",
+      "to": "farm",
+      "to_who": {
+        "name": "Arne of Frosttorp",
+        "hair": "a04a20",
+        "picture": "arne"
+      },
+      "load_say": "Linen, a loom and silver spoons: everything for a new home.",
+      "say": "The dowry! Now the bride."
+    },
+    {
+      "do": "carry",
+      "item": "ingrid",
+      "count": 1,
+      "from": "farm_2",
+      "to": "farm",
+      "from_who": {
+        "name": "Ingrid the bride",
+        "hair": "e8c25a",
+        "braids": true,
+        "picture": "ingrid"
+      },
+      "to_who": {
+        "name": "Arne of Frosttorp",
+        "hair": "a04a20",
+        "picture": "arne"
+      },
+      "load_say": "In the boat with the dragon head! Everybody will look at me.",
+      "say": "Here comes the bride! Kol is red as a beet. Come, the feast begins!"
+    }
+  ],
+  "reward": {
+    "silver": 48
+  },
+  "fact": "A bride brought a dowry to her new home, and it stayed hers."
+}

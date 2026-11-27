@@ -1,0 +1,57 @@
+{
+  "number": 66,
+  "id": "the_chieftains_horse",
+  "title": "The Chieftain's Horse",
+  "kind": "ferry",
+  "requires": [
+    "shearing_time"
+  ],
+  "giver": {
+    "name": "Chieftain Eirik",
+    "picture": "chieftain",
+    "place": "chieftain"
+  },
+  "offer": "My horse Grane will not eat, and he is sad. Bring Tova to look at him, and take her home after.",
+  "days": 3,
+  "items": {
+    "tova": {
+      "name": "Tova",
+      "color": "6a9a4a",
+      "picture": ["faces", "healer"],
+      "counted": "Tova"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "tova",
+      "count": 1,
+      "from": "healer",
+      "to": "chieftain",
+      "from_who": {
+        "name": "Tova the healer",
+        "picture": "healer"
+      },
+      "load_say": "Not eating? Let me see his teeth.",
+      "say": "Tova: Just as I thought: a sore tooth. I file it smooth... There. Let him rest a night."
+    },
+    {
+      "do": "carry",
+      "item": "tova",
+      "count": 1,
+      "from": "chieftain",
+      "to": "healer",
+      "wait": 1,
+      "from_who": {
+        "name": "Chieftain Eirik",
+        "picture": "chieftain"
+      },
+      "load_say": "Grane eats like a wolf again! Take Tova home, with my thanks.",
+      "say": "Back on my island. You were good assistants: soon you heal on your own."
+    }
+  ],
+  "reward": {
+    "silver": 50
+  },
+  "fact": "Horses' teeth grow all their life; sometimes they must be filed smooth."
+}

@@ -1,0 +1,51 @@
+{
+  "number": 45,
+  "id": "torches_for_the_dark",
+  "title": "Torches for the Dark",
+  "kind": "deliver",
+  "requires": [
+    "pots_for_ekvik"
+  ],
+  "giver": {
+    "name": "Orm the innkeeper",
+    "hair": "3a2a1a",
+    "place": "inn_2",
+    "picture": "orm"
+  },
+  "offer": "The nights grow long. The guests of the autumn feast need light: bring me tar for torches, two pots from Ekvik, and two crates of flax for the wicks.",
+  "items": {
+    "tar": {
+      "name": "Tar",
+      "color": "3a2a1a",
+      "counted": "{count|a pot of tar|{count} pots of tar}",
+      "picture": ["items", "tar"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "tar",
+      "count": 2,
+      "from": "fishers_2",
+      "to": "inn_2",
+      "from_who": {
+        "name": "Helga the fisher",
+        "hair": "c9602a",
+        "braids": true,
+        "picture": "helga"
+      },
+      "load_say": "Tar for torches? They burn bright and long."
+    },
+    {
+      "do": "deliver",
+      "at": "inn_2",
+      "item": "flax",
+      "count": 2,
+      "say": "Tar and flax: now my torches will light up the whole bay!"
+    }
+  ],
+  "reward": {
+    "silver": 32
+  },
+  "fact": "Viking torches were sticks wrapped in flax or cloth, soaked in tar or fat."
+}

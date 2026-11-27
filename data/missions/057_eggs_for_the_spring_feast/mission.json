@@ -1,0 +1,29 @@
+{
+  "number": 57,
+  "id": "eggs_for_the_spring_feast",
+  "title": "Eggs for the Spring Feast",
+  "kind": "deliver",
+  "requires": [
+    "bjorns_salt_run"
+  ],
+  "giver": {
+    "name": "Gudrun the innkeeper",
+    "picture": "inn",
+    "place": "inn"
+  },
+  "offer": "The spring feast! The children paint eggs and hide them in the grass. I need six crates of eggs. Your hens are busy, I hope!",
+  "days": 3,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "inn",
+      "item": "eggs",
+      "count": 6,
+      "say": "Ivar and Märta paint them red and yellow already. Come and help us hide them!"
+    }
+  ],
+  "reward": {
+    "silver": 32
+  },
+  "fact": "Eggs were a sign of spring and new life long before the Christian Easter."
+}

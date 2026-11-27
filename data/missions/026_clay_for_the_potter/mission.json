@@ -1,0 +1,53 @@
+{
+  "number": 26,
+  "id": "clay_for_the_potter",
+  "title": "Clay for the Potter",
+  "kind": "fetch",
+  "requires": [
+    "letters_for_the_chieftain"
+  ],
+  "giver": {
+    "name": "Dagny the potter",
+    "hair": "3a2a1a",
+    "braids": true,
+    "place": "potter",
+    "picture": "dagny"
+  },
+  "offer": "My island has no clay left! The best clay is on the shore of Ekvik. Bring me four baskets, and you get two crates of my pots.",
+  "items": {
+    "clay": {
+      "name": "Clay",
+      "color": "8a8070",
+      "counted": "{count|a basket of clay|{count} baskets of clay}",
+      "picture": ["items", "clay"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "clay",
+      "count": 4,
+      "from": "fishers_2",
+      "to": "potter",
+      "from_who": {
+        "name": "Helga the fisher",
+        "hair": "c9602a",
+        "braids": true,
+        "picture": "helga"
+      },
+      "load_say": "Grey, sticky clay from the shore. Heavy too!"
+    },
+    {
+      "do": "visit",
+      "at": "potter",
+      "say": "Lovely clay! Squeeze it, smell it... Here are your pots, still warm from the kiln."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "pots": 2
+    },
+    "silver": 4
+  },
+  "fact": "The vikings made pots of clay, but the best ones were carved of soapstone."
+}

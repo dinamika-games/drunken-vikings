@@ -1,0 +1,49 @@
+{
+  "number": 10,
+  "id": "a_bigger_hold",
+  "title": "A Bigger Hold",
+  "kind": "build",
+  "requires": [
+    "flowers_for_the_bride"
+  ],
+  "giver": {
+    "name": "Bjarne the boatwright",
+    "hair": "3a2a1a",
+    "place": "market",
+    "picture": "bjarne"
+  },
+  "offer": "You brought the ale to my wedding, and now I can help you! Bring me two pots of tar from Helga in Ekvik, and I will make your hold wider: room for one more crate.",
+  "items": {
+    "tar": {
+      "name": "Tar",
+      "color": "3a2a1a",
+      "counted": "{count|a pot of tar|{count} pots of tar}",
+      "picture": ["items", "tar"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "tar",
+      "count": 2,
+      "from": "fishers_2",
+      "to": "market",
+      "from_who": {
+        "name": "Helga the fisher",
+        "hair": "c9602a",
+        "braids": true,
+        "picture": "helga"
+      },
+      "load_say": "Pine tar, boiled from the roots in the forest. It smells strong, but it keeps the water out!"
+    },
+    {
+      "do": "visit",
+      "at": "market",
+      "say": "Good tar! A plank here, a rib there... Done: your hold takes one more crate now."
+    }
+  ],
+  "reward": {
+    "capacity": 1
+  },
+  "fact": "The vikings tarred their boats with pine tar, so that the wood stayed dry."
+}

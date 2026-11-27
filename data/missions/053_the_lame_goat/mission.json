@@ -1,0 +1,58 @@
+{
+  "number": 53,
+  "id": "the_lame_goat",
+  "title": "The Lame Goat",
+  "kind": "heal",
+  "requires": [
+    "the_coughing_horse"
+  ],
+  "giver": {
+    "name": "Sigvor the goat woman",
+    "picture": "sigvor",
+    "place": "herders"
+  },
+  "offer": "My best goat, Hedda, limps! A thorn, I think, but she won't let me look. Take her to Tova on Laxön. She takes the room of a crate, and she butts!",
+  "items": {
+    "hedda": {
+      "name": "Hedda",
+      "color": "e8e0d0",
+      "picture": ["items", "hedda"],
+      "counted": "Hedda the goat"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "hedda",
+      "count": 1,
+      "from": "herders",
+      "to": "healer",
+      "to_who": {
+        "name": "Tova the healer",
+        "picture": "healer"
+      },
+      "say": "Hold her head, gently... There: a big thorn. Leave her with me tonight, with a herb wrap."
+    },
+    {
+      "do": "carry",
+      "item": "hedda",
+      "count": 1,
+      "from": "healer",
+      "to": "herders",
+      "wait": 1,
+      "from_who": {
+        "name": "Tova the healer",
+        "picture": "healer"
+      },
+      "load_say": "She walks well again. Take her home!",
+      "say": "Hedda! She jumps like a kid again. Here, the best cheese I have."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "cheese": 2
+    },
+    "silver": 6
+  },
+  "fact": "Goats climb anything: rocks, roofs, and sometimes boats."
+}

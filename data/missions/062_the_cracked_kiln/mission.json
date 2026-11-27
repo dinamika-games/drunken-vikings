@@ -1,0 +1,72 @@
+{
+  "number": 62,
+  "id": "the_cracked_kiln",
+  "title": "The Cracked Kiln",
+  "kind": "build",
+  "requires": [
+    "hilds_wedding"
+  ],
+  "giver": {
+    "name": "Dagny the potter",
+    "hair": "3a2a1a",
+    "braids": true,
+    "place": "potter",
+    "picture": "dagny"
+  },
+  "offer": "My kiln cracked in the frost! To build a new one I need six baskets of clay from Ekvik and three sacks of charcoal from Grim to fire it.",
+  "items": {
+    "clay": {
+      "name": "Clay",
+      "color": "8a8070",
+      "counted": "{count|a basket of clay|{count} baskets of clay}",
+      "picture": ["items", "clay"]
+    },
+    "charcoal": {
+      "name": "Charcoal",
+      "color": "2a2a2a",
+      "counted": "{count|a sack of charcoal|{count} sacks of charcoal}",
+      "picture": ["items", "charcoal"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "clay",
+      "count": 6,
+      "from": "fishers_2",
+      "to": "potter",
+      "from_who": {
+        "name": "Helga the fisher",
+        "hair": "c9602a",
+        "braids": true,
+        "picture": "helga"
+      },
+      "load_say": "Clay again? Dagny must be building a castle!"
+    },
+    {
+      "do": "carry",
+      "item": "charcoal",
+      "count": 3,
+      "from": "farm_3",
+      "to": "potter",
+      "from_who": {
+        "name": "Old Grim of Svanetorp",
+        "hair": "d8d8d0",
+        "picture": "grim"
+      }
+    },
+    {
+      "do": "visit",
+      "at": "potter",
+      "wait": 1,
+      "say": "The new kiln glows! My first pots from it are for you."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "pots": 3
+    },
+    "silver": 8
+  },
+  "fact": "A potter's kiln is a small oven of clay, heated so hot that the pots glow."
+}

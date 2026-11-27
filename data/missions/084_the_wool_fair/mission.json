@@ -1,0 +1,28 @@
+{
+  "number": 84,
+  "id": "the_wool_fair",
+  "title": "The Wool Fair",
+  "kind": "deliver",
+  "requires": [
+    "grain_for_the_north"
+  ],
+  "giver": {
+    "name": "Ulf the market warden",
+    "picture": "market",
+    "place": "market"
+  },
+  "offer": "The wool fair! Traders come from the Long Lake to buy. Bring me eight crates of wool, the more the better, and the fair is a success.",
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "market",
+      "item": "wool",
+      "count": 8,
+      "say": "Eight crates! The traders from the Long Lake ask: who are these girls? I say: the best traders of the Home Lakes."
+    }
+  ],
+  "reward": {
+    "silver": 60
+  },
+  "fact": "Wool was so important that some sagas tell of whole ships full of it."
+}

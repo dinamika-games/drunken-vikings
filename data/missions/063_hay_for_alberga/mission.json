@@ -1,0 +1,34 @@
+{
+  "number": 63,
+  "id": "hay_for_alberga",
+  "title": "Hay for Ålberga",
+  "kind": "deliver",
+  "requires": [
+    "the_swarm",
+    "the_cracked_kiln"
+  ],
+  "giver": {
+    "name": "Sten the shepherd",
+    "hair": "8a5a2b",
+    "place": "herders",
+    "picture": "sten"
+  },
+  "offer": "So many lambs this spring! The ewes eat and eat, and my hay is gone. Bring me eight crates of hay within two days.",
+  "days": 2,
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "herders",
+      "item": "hay",
+      "count": 8,
+      "say": "Eight crates! The ewes munch, and the lambs jump around. Take a fleece of the softest wool."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "wool": 2
+    },
+    "silver": 10
+  },
+  "fact": "A sheep eats about two kilograms of hay a day."
+}

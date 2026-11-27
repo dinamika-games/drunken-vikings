@@ -1,0 +1,44 @@
+{
+  "number": 82,
+  "id": "the_colt_in_the_mud",
+  "title": "The Colt in the Mud",
+  "kind": "rescue",
+  "requires": [
+    "the_healers_round"
+  ],
+  "giver": {
+    "name": "Ragnfrid of the horse farm",
+    "picture": "horse_farm",
+    "place": "horse_farm"
+  },
+  "offer": "Silke's colt ran into the bog and is stuck to his belly! I need a long rope: Tor in Stormvik has the longest. Hurry, he is scared!",
+  "days": 1,
+  "items": {
+    "rope": {
+      "name": "Rope",
+      "color": "c8a878",
+      "counted": "the long rope",
+      "picture": ["items", "rope"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "rope",
+      "count": 1,
+      "from": "fishers",
+      "to": "horse_farm",
+      "from_who": {
+        "name": "Tor the fisher",
+        "hair": "8a5a2b",
+        "picture": "tor"
+      },
+      "load_say": "My longest rope! Take it, quick!",
+      "say": "Rope around him, gently, everybody pull... Slurp! He is out! Muddy, but well. You saved him."
+    }
+  ],
+  "reward": {
+    "silver": 30
+  },
+  "fact": "A horse stuck in mud must be pulled out slowly, or it hurts its legs."
+}

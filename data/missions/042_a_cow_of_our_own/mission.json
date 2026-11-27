@@ -1,0 +1,30 @@
+{
+  "number": 42,
+  "id": "a_cow_of_our_own",
+  "title": "A Cow of Our Own",
+  "kind": "fetch",
+  "requires": [
+    "hay_for_frosttorp"
+  ],
+  "giver": {
+    "name": "Grandmother Åsa",
+    "picture": "grandmother",
+    "place": "home"
+  },
+  "offer": "With the east meadow, we have room for a cow at last! Buy one at the horse farm in Torsgården. A cow is big, but she fits in your boat like a crate, if she stands still.",
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "home",
+      "item": "animal:cow",
+      "count": 1,
+      "say": "Look at her big brown eyes! She will give us milk every day. Let us call her Rosa."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "hay": 4
+    }
+  },
+  "fact": "Cows were the wealth of a farm: a family counted its riches in cows."
+}

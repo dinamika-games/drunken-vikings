@@ -1,0 +1,59 @@
+{
+  "number": 60,
+  "id": "hilds_wedding",
+  "title": "Hild's Wedding",
+  "kind": "deliver",
+  "requires": [
+    "colours_for_the_boat",
+    "the_canoe_race"
+  ],
+  "giver": {
+    "name": "Hrafn the smith",
+    "picture": "smith",
+    "place": "smith"
+  },
+  "offer": "My daughter Hild marries Leif the shepherd! I can forge a sword, but a wedding? Bring four casks of mead from Dimmberga and two crates of cloth for her dress.",
+  "days": 3,
+  "items": {
+    "mead": {
+      "name": "Mead",
+      "color": "c9802a",
+      "picture": ["items", "mead"],
+      "counted": "{count|a cask of mead|{count} casks of mead}"
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "mead",
+      "count": 4,
+      "from": "beekeeper",
+      "to": "smith",
+      "from_who": {
+        "name": "Alfhild the beekeeper",
+        "hair": "e8c25a",
+        "braids": true,
+        "picture": "alfhild"
+      },
+      "load_say": "My sweetest mead, for Hild. Tell her to be happy!",
+      "say": "Mead! Now the cloth."
+    },
+    {
+      "do": "deliver",
+      "at": "smith",
+      "item": "cloth",
+      "count": 2,
+      "who": {
+        "name": "Hild, the smith's daughter",
+        "hair": "3a2a1a",
+        "braids": true,
+        "picture": "hild"
+      },
+      "say": "Blue cloth for my dress! Father cries, he says it is the smoke. Come to the wedding!"
+    }
+  ],
+  "reward": {
+    "silver": 56
+  },
+  "fact": "Mead, made of honey, was the drink of feasts; a bride and groom drank it for a month."
+}

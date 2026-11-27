@@ -1,0 +1,22 @@
+{
+  "comment": "The goods of the game: the name (a noun as it stands in a sentence, see Grammar), the base price in silver pieces, and the color of the crate in the pictures. See scenes/game/economy.gd.",
+  "goods": [
+    {"id": "eggs", "name": "eggs", "base": 2, "color": "f1e6cc"},
+    {"id": "milk", "name": "milk", "base": 3, "color": "f4f2ea"},
+    {"id": "flowers", "name": "flowers", "base": 3, "color": "e86a9a"},
+    {"id": "grain", "name": "grain", "base": 3, "color": "d8b45a"},
+    {"id": "hay", "name": "hay", "base": 2, "color": "c9c26a"},
+    {"id": "flax", "name": "flax", "base": 4, "color": "c8d0a0"},
+    {"id": "fish", "name": "dried fish", "base": 4, "color": "9aa6b0"},
+    {"id": "wool", "name": "wool", "base": 5, "color": "e8e0d0"},
+    {"id": "herbs", "name": "herbs", "base": 5, "color": "6a9a4a"},
+    {"id": "pots", "name": "clay pots", "base": 5, "color": "b8693a"},
+    {"id": "cheese", "name": "cheese", "base": 6, "color": "f2c14e"},
+    {"id": "ale", "name": "ale", "base": 6, "color": "a8743c"},
+    {"id": "honey", "name": "honey", "base": 7, "color": "e8a830"},
+    {"id": "salt", "name": "salt", "base": 8, "color": "ffffff"},
+    {"id": "mead", "name": "mead", "base": 12, "color": "c9802a"},
+    {"id": "cloth", "name": "cloth", "base": 14, "color": "b8332a"},
+    {"id": "tools", "name": "iron tools", "base": 11, "color": "6a7078"}
+  ]
+}

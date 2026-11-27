@@ -1,0 +1,31 @@
+{
+  "number": 35,
+  "id": "wool_for_the_winter_cloth",
+  "title": "Wool for the Winter Cloth",
+  "kind": "deliver",
+  "requires": [
+    "the_chieftains_feast"
+  ],
+  "giver": {
+    "name": "Sæunn the weaver",
+    "picture": "weaver",
+    "place": "weaver"
+  },
+  "offer": "Everybody wants warm cloth for the winter, and my looms are hungry. Bring me four crates of wool, and I give you a bolt of red cloth.",
+  "steps": [
+    {
+      "do": "deliver",
+      "at": "weaver",
+      "item": "wool",
+      "count": 4,
+      "say": "Clack, clack, goes the loom. Here: the reddest cloth I ever made, for you."
+    }
+  ],
+  "reward": {
+    "goods": {
+      "cloth": 1
+    },
+    "silver": 6
+  },
+  "fact": "The women of a viking farm wove all the cloth: sails, clothes and blankets."
+}

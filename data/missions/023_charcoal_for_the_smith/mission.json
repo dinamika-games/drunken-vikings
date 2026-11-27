@@ -1,0 +1,47 @@
+{
+  "number": 23,
+  "id": "charcoal_for_the_smith",
+  "title": "Charcoal for the Smith",
+  "kind": "deliver",
+  "requires": [
+    "salt_for_stormvik"
+  ],
+  "giver": {
+    "name": "Hrafn the smith",
+    "picture": "smith",
+    "place": "smith"
+  },
+  "offer": "My fire needs charcoal, lots of it! Old Grim burns charcoal in the woods by Svanetorp. Bring me seven sacks; it will take you more than one trip.",
+  "items": {
+    "charcoal": {
+      "name": "Charcoal",
+      "color": "2a2a2a",
+      "counted": "{count|a sack of charcoal|{count} sacks of charcoal}",
+      "picture": ["items", "charcoal"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "charcoal",
+      "count": 7,
+      "from": "farm_3",
+      "to": "smith",
+      "from_who": {
+        "name": "Old Grim of Svanetorp",
+        "hair": "d8d8d0",
+        "picture": "grim"
+      },
+      "load_say": "Black as night and light as a feather. Mind your dresses!"
+    },
+    {
+      "do": "visit",
+      "at": "smith",
+      "say": "Now my fire roars! Here, for your help: silver, and a little iron nail for luck."
+    }
+  ],
+  "reward": {
+    "silver": 36
+  },
+  "fact": "Smiths burned charcoal, not wood: it burns much hotter and melts the iron."
+}

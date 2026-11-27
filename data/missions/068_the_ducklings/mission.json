@@ -1,0 +1,54 @@
+{
+  "number": 68,
+  "id": "the_ducklings",
+  "title": "The Ducklings",
+  "kind": "rescue",
+  "requires": [
+    "the_chieftains_horse",
+    "a_brooch_for_thora"
+  ],
+  "giver": {
+    "name": "Freya and Liv",
+    "picture": "freya_and_liv",
+    "place": "market"
+  },
+  "offer": "We found seven ducklings in Stormvik harbour, without their mother! Grim says a duck with no ducklings swims sadly in his swan cove. Can you bring them to her?",
+  "items": {
+    "ducklings": {
+      "name": "Ducklings",
+      "color": "f2e48a",
+      "counted": "the basket of ducklings",
+      "picture": ["items", "ducklings"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "ducklings",
+      "count": 1,
+      "from": "fishers",
+      "to": "farm_3",
+      "from_who": {
+        "name": "Tor the fisher",
+        "hair": "8a5a2b",
+        "picture": "tor"
+      },
+      "to_who": {
+        "name": "Old Grim of Svanetorp",
+        "hair": "d8d8d0",
+        "picture": "grim"
+      },
+      "load_say": "Peep, peep! They are in a basket with some straw. Hurry!",
+      "say": "Look: the duck swims to them, and they all paddle after her in a line. Seven! Ha!"
+    },
+    {
+      "do": "visit",
+      "at": "market",
+      "say": "They found their mother? Hooray! You are the best."
+    }
+  ],
+  "reward": {
+    "silver": 16
+  },
+  "fact": "Ducklings follow the first one they see after hatching, usually their mother."
+}

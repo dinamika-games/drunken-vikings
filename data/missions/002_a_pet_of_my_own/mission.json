@@ -1,0 +1,47 @@
+{
+  "number": 2,
+  "id": "a_pet_of_my_own",
+  "title": "A Pet of My Own",
+  "kind": "ferry",
+  "requires": [
+    "the_old_boat"
+  ],
+  "giver": {
+    "name": "Freya and Liv",
+    "picture": "freya_and_liv",
+    "place": "market"
+  },
+  "offer": "Our cat had five kittens, and Mother says we can keep only one. Would you take the little grey one? It purrs like a drum! Row it home to your farm.",
+  "items": {
+    "kitten": {
+      "name": "Kitten",
+      "color": "b0a898",
+      "counted": "the kitten",
+      "picture": ["items", "kitten"]
+    }
+  },
+  "steps": [
+    {
+      "do": "carry",
+      "item": "kitten",
+      "count": 1,
+      "from": "market",
+      "to": "home",
+      "load_say": "Here she is. Hold her basket tight, she wants to see the fish!"
+    },
+    {
+      "do": "visit",
+      "at": "home",
+      "who": {
+        "name": "Grandmother Åsa",
+        "picture": "grandmother"
+      },
+      "say": "A kitten! She can sleep by the fire and catch the mice in the grain. What a good little sailor."
+    }
+  ],
+  "reward": {
+    "silver": 6,
+    "gift": "a kitten who rides in the bow"
+  },
+  "fact": "Cats were loved on viking farms: they kept the mice away from the grain."
+}
