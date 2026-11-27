@@ -174,6 +174,8 @@ static func snapshot(state: Node) -> Dictionary:
                         "farm": state.farm.to_data(),
                         "economy": state.economy.to_data(),
                         "players": state.players,
+                        "place": state.place,
+                        "boat": [state.boat_at.x, state.boat_at.y, state.boat_heading],
                     }
                 )
             )

@@ -307,8 +307,12 @@ func _leave() -> void:
     get_tree().change_scene_to_file("res://scenes/start/start.tscn")
 
 
+## Closing the window saves, too: on the water, the autosave may be up to
+## [constant AUTOSAVE_EVERY] seconds old.
 func _notification(what: int) -> void:
     if what == NOTIFICATION_WM_CLOSE_REQUEST:
+        if _state != null and _map != null:
+            _save()
         _quit()
 
 

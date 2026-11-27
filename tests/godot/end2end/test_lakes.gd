@@ -98,7 +98,17 @@ func _back() -> void:
     if aborted() or not await wait_for_scene(WORLD):
         return
     var back := snapshot(state)
+    if _left.get("place", "") == "":
+        var boat: RowBoat = current_scene.boat()
+        var at := Vector2(_left["boat"][0], _left["boat"][1])
+        check(
+            boat.position.distance_to(at) < 1.0 and state.place == "",
+            "the boat goes on from where it was left on the water"
+        )
+    # NOTE: The world puts the boat on the water (at no place) as it starts.
     for key in _left:
+        if key == "place" or key == "boat":
+            continue
         check(
             JSON.stringify(_left[key]) == JSON.stringify(back[key]),
             "the journey comes back as it was left: %s" % key
