@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run a fuzzing test (the end-to-end test, the balance bot) with all its
+# Run a fuzzing test (the end-to-end tests, the balance bot) with all its
 # output in a log file, and delete the log only when the test passes; when it
 # fails, keep the log, so that nobody has to run the test again only to see
 # what went wrong, and show its end.
@@ -8,8 +8,8 @@
 #
 # E.g.:
 #
-#   dev/logged.sh playthrough.log $GODOT --headless --fixed-fps 60 --path . \
-#       --script tests/godot/end2end/test_playthrough.gd -- --no-camera
+#   dev/logged.sh lakes.log $GODOT --headless --fixed-fps 60 --path . \
+#       --script tests/godot/end2end/test_lakes.gd -- --no-camera
 #
 # The exit code is the test's.
 

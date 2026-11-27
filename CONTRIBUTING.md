@@ -63,22 +63,22 @@ The map of the Home Lakes is made by `venv/bin/python dev/maps/make_lakes.py --n
 ```
 dotnet test tests/DrunkenVikings.Tests
 for test in tests/godot/test_*.gd; do $GODOT --headless --path . --script $test -- --no-camera; done
-$GODOT --headless --fixed-fps 60 --path . --script tests/godot/end2end/test_playthrough.gd -- --no-camera
+for mode in party chase lakes; do $GODOT --headless --fixed-fps 60 --path . --script tests/godot/end2end/test_$mode.gd -- --no-camera; done
 ```
 
-**The end-to-end test** (`tests/godot/end2end/test_playthrough.gd`) plays the game from the first screen on, as the players do: only through the camera, which `fake_vision.gd` stands in for (it rows strokes, leans to steer, raises both hands to brake, and holds a raised hand on a card until it is chosen), and with Escape and C from the keyboard.
-It starts a new journey with one rower, follows the wedding to its end, does the first 40 tasks on the Home Lakes (`lakes_bot.gd`: it takes the tasks, rows where they lead, buys, carries, hails, plants, unloads, sleeps when a task waits, trades when it lacks silver, buys a ship when it has silver to spare, and takes detours: the news, its tasks, the deals of the skippers, the map, Escape once), escapes the pirates in the chase, starts and deletes a second journey with two rowers, and goes on with the first, which must come back from the disk as it was left.
-All the way, it checks the contracts of the game on every frame (`contracts.gd`, in the tests only): e.g., every screen lets the players go on, the cards fit the screen and their texts fit the cards, the boat never leaves the water nor crosses the land, the boat rows exactly while no screen shows, the silver never goes below zero, the cargo fits the hold, nothing of a finished task stays aboard, and the save on the disk is the voyage in memory whenever the boat docks.
-It fails on any error which the game logs (`error_log.gd`), and whenever the players get stuck: a card which the hand holds is not chosen, the boat comes no closer to its jetty, or a task is not done within 40 legs.
+**The end-to-end tests**, one for each mode of the game (`tests/godot/end2end/test_party.gd`, `test_chase.gd` and `test_lakes.gd`, on the common base `playthrough.gd`), play the game from the very first start on (each chooses the language and starts a new journey), as the players do: only through the camera, which `fake_vision.gd` stands in for (it rows strokes, leans to steer, raises both hands to brake, and holds a raised hand on a card until it is chosen), and with Escape and C from the keyboard.
+The party follows the wedding to its end and goes to the farm; the chase escapes the pirates and goes on with the journey, which must keep the reward; the lakes do the first 40 tasks on the Home Lakes (`lakes_bot.gd`: it takes the tasks, rows where they lead, buys, carries, hails, plants, unloads, sleeps when a task waits, trades when it lacks silver, buys a ship when it has silver to spare, and takes detours: the news, its tasks, the deals of the skippers, the map, Escape once), start and delete a second journey with two rowers, and go on with the first, which must come back from the disk as it was left.
+All the way, they check the contracts of the game on every frame (`contracts.gd`, in the tests only): e.g., every screen lets the players go on, the cards fit the screen and their texts fit the cards, the boat never leaves the water nor crosses the land, the boat rows exactly while no screen shows, the silver never goes below zero, the cargo fits the hold, nothing of a finished task stays aboard, and the save on the disk is the voyage in memory whenever the boat docks.
+They fail on any error which the game logs (`error_log.gd`), and whenever the players get stuck: a card which the hand holds is not chosen, the boat comes no closer to its jetty, or a task is not done within 40 legs.
 
-It runs as fast as the computer can: `--fixed-fps 60` makes every frame 1/60 s of the game however fast it is computed, the game runs 10 times faster than that, and what redraws on every frame (the boats, the wakes, the HUD) is drawn only on every 8th frame, so that about five hours of the game take some three minutes (about 700 frames a second).
-The random choices come from a seed; try others with `-- --seed=<n>`, and more tasks with `-- --tasks=<n>` (all 100 take some seven minutes: `-- --tasks=100 --wall-seconds=600`); `-- --trace` prints every choice and where the bot rows.
+They run as fast as the computer can: `--fixed-fps 60` makes every frame 1/60 s of the game however fast it is computed, the game runs 10 times faster than that, and what redraws on every frame (the boats, the wakes, the HUD) is drawn only on every 8th frame, so that the party and the chase take some seconds, and the five hours of the game on the lakes a few minutes (some 250 to 700 frames a second, depending on the computer); each test has its own limit of the wall clock (2 minutes for the party and the chase, 10 for the lakes).
+The random choices come from a seed; try others with `-- --seed=<n>`, and more tasks on the lakes with `-- --tasks=<n>` (all 100 take longer: e.g., `-- --tasks=100 --wall-seconds=1200`); `-- --trace` prints every choice and where the bot rows.
 
-**Always log the runs of the fuzzing tests** (the end-to-end test and the balance bot) to a file, and delete the log only once the test passes; otherwise a failure means running it all again only to see what went wrong, which takes double the time.
+**Always log the runs of the fuzzing tests** (the end-to-end tests and the balance bot) to a file, and delete the log only once the test passes; otherwise a failure means running it all again only to see what went wrong, which takes double the time.
 `dev/logged.sh <log> <command>...` does just that: it keeps the log and shows its end when the test fails, and deletes it when the test passes (so never delete the logs by hand):
 
 ```
-dev/logged.sh playthrough.log $GODOT --headless --fixed-fps 60 --path . --script tests/godot/end2end/test_playthrough.gd -- --no-camera
+dev/logged.sh lakes.log $GODOT --headless --fixed-fps 60 --path . --script tests/godot/end2end/test_lakes.gd -- --no-camera
 ```
 
 Run one end-to-end test at a time: they share the saved journeys (`user://`), so two at once see each other's journeys and fail.
@@ -140,7 +140,7 @@ venv/bin/python dev/audio/make_audio.py
 ```
 
 which renders the tunes with TiMidity++ and the FluidR3 General MIDI SoundFont (`sudo apt install timidity fluid-soundfont-gm`), and cuts, fades and evens out the sounds with ffmpeg and sox, into `assets/audio/`.
-The end-to-end test checks that the music fits where the players are, and that the players hear the sounds of what they do.
+The end-to-end tests check that the music fits where the players are, and that the players hear the sounds of what they do.
 
 ## Formatting
 
@@ -192,7 +192,7 @@ The players choose the language on the very first screen (and later with the car
   venv/bin/python dev/translations/make_fonts.py
   ```
 
-* **The texts fit:** `tests/godot/test_text_fit.gd` lays out every text of the cards in every language (every value of its placeholders, the longest form for the rowers) and checks that it fits its card, and that the fonts show every letter; `-- --lang=<code>` checks one language. The end-to-end test plays in any language, too (`-- --lang=<code>`), and its contracts check every screen it sees.
+* **The texts fit:** `tests/godot/test_text_fit.gd` lays out every text of the cards in every language (every value of its placeholders, the longest form for the rowers) and checks that it fits its card, and that the fonts show every letter; `-- --lang=<code>` checks one language. The end-to-end tests play in any language, too (`-- --lang=<code>`), and their contracts check every screen they see.
 * **Add a language** with one entry in `translations/languages.json` (the code, its name in itself, an optional second line, "Choose your language" in itself, optionally a short name for the card "Language", and `"rtl": true` if it is written from right to left; keep English first and the rest sorted by the code), then run `extract.py`, which creates its `.po` file; add its plural rule to `Grammar.plural_index` and `PLURAL_FORMS` of `extract.py` if it is not "one and other", and its font to `make_fonts.py` and `Languages` if Godot's font lacks its letters.
 
 ## A class, not a positional array

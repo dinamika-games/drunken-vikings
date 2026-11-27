@@ -1,5 +1,5 @@
 extends SceneTree
-## The base of the end-to-end test (see test_playthrough.gd): it runs the game
+## The base of the end-to-end tests (see playthrough.gd): it runs the game
 ## frame by frame as fast as the computer can, checks the contracts on every
 ## frame (see contracts.gd), and plays as the players do, only through the
 ## camera (see fake_vision.gd): it rows strokes, leans to steer, raises both
@@ -97,6 +97,12 @@ func _play() -> void:
     pass
 
 
+## Overridden by the test: how long it may take by default, in seconds of the
+## wall clock (-- --wall-seconds=<s> sets another limit).
+func default_wall_seconds() -> float:
+    return DEFAULT_WALL_SECONDS
+
+
 func _run() -> void:
     # NOTE: With --fixed-fps 60, every frame plays exactly 1/60 s, however fast.
     await process_frame
@@ -111,7 +117,7 @@ func _run() -> void:
     seed(seed_value)
     time_scale = float(argument("time-scale", str(DEFAULT_TIME_SCALE)))
     draw_every = maxi(1, int(argument("draw-every", str(DEFAULT_DRAW_EVERY))))
-    wall_seconds = float(argument("wall-seconds", str(DEFAULT_WALL_SECONDS)))
+    wall_seconds = float(argument("wall-seconds", str(default_wall_seconds())))
     tracing = "--trace" in OS.get_cmdline_user_args()
     Engine.time_scale = time_scale
     Engine.max_fps = 0
