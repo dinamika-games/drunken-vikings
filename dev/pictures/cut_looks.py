@@ -53,7 +53,10 @@ DEFAULT = pathlib.Path.home() / "Downloads" / "viking-masks"
 
 #: The areas of a mask, by their index, and their colours.
 AREAS = ["background", "skin", "hair", "clothes", "keep"]
-COLORS = np.array([[0, 0, 0], [255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 255]], dtype=np.float64)
+COLORS = np.array(
+    [[0, 0, 0], [255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 255]],
+    dtype=np.float64,
+)
 
 #: A patch of an area smaller than this share of the picture is a speck which
 #: ChatGPT left (e.g., white flecks in the hair); it takes the area around it.
@@ -110,7 +113,9 @@ def load_rgba(path: pathlib.Path) -> np.ndarray:
 
 def areas_of(mask_rgb: np.ndarray) -> np.ndarray:
     """The index of the area of each pixel of a painted mask: the nearest of the colours."""
-    distances = np.linalg.norm(mask_rgb[..., None, :] - COLORS[None, None, :, :], axis=3)
+    distances = np.linalg.norm(
+        mask_rgb[..., None, :] - COLORS[None, None, :, :], axis=3
+    )
     return distances.argmin(axis=2).astype(np.uint8)
 
 
@@ -126,13 +131,17 @@ def fit_mask(areas: np.ndarray, alpha: np.ndarray) -> np.ndarray:
     known[~inside] = 0
     # NOTE: The specks: small patches of an area within another.
     for index in range(1, len(AREAS)):
-        count, labels, stats, _ = cv2.connectedComponentsWithStats((known == index).astype(np.uint8), 8)
+        count, labels, stats, _ = cv2.connectedComponentsWithStats(
+            (known == index).astype(np.uint8), 8
+        )
         small = np.nonzero(stats[1:, cv2.CC_STAT_AREA] < SPECK * inside.sum())[0] + 1
         known[np.isin(labels, small)] = 0
     unknown = (known == 0).astype(np.uint8)
     if unknown.all():
         sys.exit("A mask has no area within its picture.")
-    _, nearest = cv2.distanceTransformWithLabels(unknown, cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
+    _, nearest = cv2.distanceTransformWithLabels(
+        unknown, cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL
+    )
     # NOTE: The label of a pixel is the index of its nearest known pixel (a
     # zero of the input), numbered along the rows.
     ys, xs = np.nonzero(unknown == 0)
@@ -164,9 +173,13 @@ def hair_back(areas: np.ndarray, rgb: np.ndarray) -> np.ndarray:
     if not hair.any():
         return areas
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
-    hsv = cv2.cvtColor(np.clip(rgb, 0, 255).astype(np.uint8), cv2.COLOR_RGB2HSV).astype(int)
+    hsv = cv2.cvtColor(np.clip(rgb, 0, 255).astype(np.uint8), cv2.COLOR_RGB2HSV).astype(
+        int
+    )
     golden = (hsv[..., 0] >= 14) & (r - b > 70) & (g > 0.55 * r)
-    near_hair = cv2.dilate(hair.astype(np.uint8), np.ones((HAIR_NEAR, HAIR_NEAR), np.uint8)) > 0
+    near_hair = (
+        cv2.dilate(hair.astype(np.uint8), np.ones((HAIR_NEAR, HAIR_NEAR), np.uint8)) > 0
+    )
     result = areas.copy()
     result[(areas == AREAS.index("keep")) & golden & near_hair] = AREAS.index("hair")
     return result
@@ -177,7 +190,9 @@ def save_mask(areas: np.ndarray, picture: pathlib.Path) -> None:
     rgba = load_rgba(picture)
     alpha = rgba[..., 3]
     if areas.shape != alpha.shape:
-        areas = cv2.resize(areas, (alpha.shape[1], alpha.shape[0]), interpolation=cv2.INTER_NEAREST)
+        areas = cv2.resize(
+            areas, (alpha.shape[1], alpha.shape[0]), interpolation=cv2.INTER_NEAREST
+        )
     areas = hair_back(areas, rgba[..., :3])
     save_rgba(fit_mask(areas, alpha), picture.with_name(picture.stem + "_mask.png"))
 
@@ -197,7 +212,9 @@ def resize_rgba(rgba: np.ndarray, size: Tuple[int, int]) -> np.ndarray:
 
 def ylva_masks(folder: pathlib.Path) -> None:
     """The masks of Ylva's dress-up: her pieces sit on the sheet at their size."""
-    manifest = DressManifest.model_validate_json((folder / "02_girl" / "manifest.json").read_text())
+    manifest = DressManifest.model_validate_json(
+        (folder / "02_girl" / "manifest.json").read_text()
+    )
     areas = areas_of(load_rgb(folder / "02_girl" / "mask_ylva.png"))
     for name, box in manifest.pieces.items():
         save_mask(crop_box(areas, box), PICTURES / "dress" / f"{name}.png")
@@ -217,7 +234,9 @@ def cut_boy_dress(folder: pathlib.Path) -> None:
     head = cut_dress.clean(crop_box(sheet, head_box))
     cut_dress.save(head, "head", 1.0)
     save_mask(crop_box(areas, head_box), out / "head.png")
-    head_anchor = cut_dress.Head(eyes=cut_dress.Point(x=220.0, y=340.0), eye_distance=100.0)
+    head_anchor = cut_dress.Head(
+        eyes=cut_dress.Point(x=220.0, y=340.0), eye_distance=100.0
+    )
 
     pieces = {}
     for name, (left, top, right, bottom) in BOY_REGIONS.items():
@@ -232,7 +251,10 @@ def cut_boy_dress(folder: pathlib.Path) -> None:
         cut_dress.save(piece, name, 1.0)
         piece_areas = region_areas[dy : dy + piece.shape[0], dx : dx + piece.shape[1]]
         save_mask(piece_areas, out / f"{name}.png")
-        pieces[name] = (piece, None if wrist is None else (wrist[0] - dx, wrist[1] - dy))
+        pieces[name] = (
+            piece,
+            None if wrist is None else (wrist[0] - dx, wrist[1] - dy),
+        )
 
     dress = cut_dress.Dress(
         head=head_anchor,
@@ -246,7 +268,9 @@ def cut_boy_dress(folder: pathlib.Path) -> None:
     print(f"Wrote dress_boy/dress.json:\n{dress.model_dump_json(indent=2)}")
 
 
-def _off_with_the_sleeve(region: np.ndarray, areas: np.ndarray) -> Tuple[np.ndarray, Tuple[float, float]]:
+def _off_with_the_sleeve(
+    region: np.ndarray, areas: np.ndarray
+) -> Tuple[np.ndarray, Tuple[float, float]]:
     """
     Take the sleeve and its cuff off a fist (the game draws the sleeve
     along the arm): the clothes of the mask, and the area which keeps its
@@ -256,10 +280,14 @@ def _off_with_the_sleeve(region: np.ndarray, areas: np.ndarray) -> Tuple[np.ndar
     clothes = areas == AREAS.index("clothes")
     # NOTE: The edges of the white in the mask come out bluish here and there:
     # the sleeve is the big part of the clothes, not those.
-    count, labels, stats, _ = cv2.connectedComponentsWithStats(clothes.astype(np.uint8), 8)
+    count, labels, stats, _ = cv2.connectedComponentsWithStats(
+        clothes.astype(np.uint8), 8
+    )
     if count > 1:
         biggest = stats[1:, cv2.CC_STAT_AREA].max()
-        clothes = np.isin(labels, np.nonzero(stats[:, cv2.CC_STAT_AREA] >= 0.2 * biggest)[0][1:])
+        clothes = np.isin(
+            labels, np.nonzero(stats[:, cv2.CC_STAT_AREA] >= 0.2 * biggest)[0][1:]
+        )
     keep = areas == AREAS.index("keep")
     # NOTE: The cuff and the handle touch in the mask; the cuff is the band
     # which keeps its colour next to the sleeve, the handle lies farther.
@@ -270,7 +298,9 @@ def _off_with_the_sleeve(region: np.ndarray, areas: np.ndarray) -> Tuple[np.ndar
     ys, xs = np.nonzero(cuff)
     # NOTE: The wrist is where the cuff meets the hand: the middle of the cuff.
     wrist = (float(xs.mean()), float(ys.mean()))
-    removed = cv2.dilate((clothes | cuff).astype(np.uint8), np.ones((7, 7), np.uint8)) > 0
+    removed = (
+        cv2.dilate((clothes | cuff).astype(np.uint8), np.ones((7, 7), np.uint8)) > 0
+    )
     fist = region.copy()
     fist[..., 3] *= ~removed
     return cut_dress.clean(fist, open_px=11), wrist
@@ -340,7 +370,9 @@ def _fist_anchors(fist: np.ndarray, wrist: Tuple[float, float]) -> cut_dress.Fis
         ys = np.nonzero(a[:, x])[0]
         wood_y.append((ys.min() + ys.max()) / 2.0)
     return cut_dress.Fist(
-        hand=cut_dress.Point(x=(cols.min() + cols.max()) / 2.0, y=(rows.min() + rows.max()) / 2.0),
+        hand=cut_dress.Point(
+            x=(cols.min() + cols.max()) / 2.0, y=(rows.min() + rows.max()) / 2.0
+        ),
         wrist=cut_dress.Point(x=wrist[0], y=wrist[1]),
         width=float(cols.max() - cols.min()),
         handle_y=float(np.mean(wood_y)),
@@ -349,9 +381,13 @@ def _fist_anchors(fist: np.ndarray, wrist: Tuple[float, float]) -> cut_dress.Fis
 
 def rowers(folder: pathlib.Path) -> None:
     """The masks of the girls rowing, and the boy rowing with his masks."""
-    manifest = RowerManifest.model_validate_json((folder / "04_rower_girl" / "manifest.json").read_text())
+    manifest = RowerManifest.model_validate_json(
+        (folder / "04_rower_girl" / "manifest.json").read_text()
+    )
     girls = areas_of(load_rgb(folder / "04_rower_girl" / "mask_rowers_girls.png"))
-    boy = cut_dress.key_magenta(load_rgb(folder / "03_rower_boy" / "sheet_rowers_boy.png"))
+    boy = cut_dress.key_magenta(
+        load_rgb(folder / "03_rower_boy" / "sheet_rowers_boy.png")
+    )
     boy_areas = areas_of(load_rgb(folder / "03_rower_boy" / "mask_rowers_boy.png"))
     out = PICTURES / "rowboat"
     for name, box in manifest.sprites.items():
@@ -359,7 +395,9 @@ def rowers(folder: pathlib.Path) -> None:
         save_mask(crop_box(girls, box), girl_picture)
         who, pose = name.split("_")
         size = Image.open(girl_picture).size
-        boy_picture = out / (f"boy_{pose}.png" if who == "ylva" else f"boy_one_{pose}.png")
+        boy_picture = out / (
+            f"boy_{pose}.png" if who == "ylva" else f"boy_one_{pose}.png"
+        )
         figure = cut_dress.clean(resize_rgba(crop_box(boy, box), size))
         save_rgba(figure, boy_picture)
         save_mask(crop_box(boy_areas, box), boy_picture)

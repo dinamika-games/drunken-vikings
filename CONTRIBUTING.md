@@ -60,6 +60,16 @@ The map of the Home Lakes is made by `venv/bin/python dev/maps/make_lakes.py --n
 
 ## The tests
 
+`dev/continuous_integration/precommit.py` runs all the checks, one step after the other: `format`, `lint`, `translations`, `dotnet-tests`, `build`, `import`, `check-scripts`, `unit-tests` and `e2e-tests`.
+With `--overwrite`, it re-formats the code and updates the translation files instead of only checking them; `--select <step>...` and `--skip <step>...` choose the steps, and `--only <name>...` the tests (e.g., `--select e2e-tests --only lakes`).
+A failed end-to-end test keeps its log in `.cache/precommit/`:
+
+```
+GODOT=<the Godot executable> venv/bin/python dev/continuous_integration/precommit.py [--overwrite] [--skip e2e-tests]
+```
+
+Or step by step:
+
 ```
 dotnet test tests/DrunkenVikings.Tests
 for test in tests/godot/test_*.gd; do $GODOT --headless --path . --script $test -- --no-camera; done
@@ -145,9 +155,9 @@ The end-to-end tests check that the music fits where the players are, and that t
 ## Formatting
 
 ```
-venv/bin/black -l 110 dev/
-venv/bin/gdformat dev/ scenes/
-venv/bin/gdlint dev/ scenes/
+venv/bin/black dev/
+venv/bin/gdformat dev/ scenes/ tests/
+venv/bin/gdlint dev/ scenes/ tests/
 ```
 
 ## Packaging

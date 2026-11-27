@@ -131,7 +131,18 @@ ENDINGS = {
 }
 
 #: Real places (and names too close to them) which we never make.
-AVOID = {"Birka", "Sigtuna", "Uppsala", "Hedeby", "Ekerö", "Torö", "Askö", "Lovö", "Alby", "Ekby"}
+AVOID = {
+    "Birka",
+    "Sigtuna",
+    "Uppsala",
+    "Hedeby",
+    "Ekerö",
+    "Torö",
+    "Askö",
+    "Lovö",
+    "Alby",
+    "Ekby",
+}
 
 
 def make_name(rng: random.Random, kind: str, used: set) -> str:
@@ -160,7 +171,8 @@ class Noise1D:
 
     def __init__(self, rng: random.Random, wavelengths: Sequence[float]):
         self.waves = [
-            (2 * math.pi / w, rng.uniform(0, 2 * math.pi), 1.0 / (i + 1)) for i, w in enumerate(wavelengths)
+            (2 * math.pi / w, rng.uniform(0, 2 * math.pi), 1.0 / (i + 1))
+            for i, w in enumerate(wavelengths)
         ]
         self.norm = sum(a for _, _, a in self.waves)
 
@@ -207,7 +219,9 @@ def route_points(rng: random.Random) -> List[Vec]:
     return points
 
 
-def blob(rng: random.Random, center: Vec, radius: float, wiggle: float, count: int = 48) -> Polygon:
+def blob(
+    rng: random.Random, center: Vec, radius: float, wiggle: float, count: int = 48
+) -> Polygon:
     """A round shape with a noisy edge."""
     noise = Noise1D(rng, [2 * math.pi, math.pi, math.pi / 2])
     ring = []
@@ -218,12 +232,16 @@ def blob(rng: random.Random, center: Vec, radius: float, wiggle: float, count: i
     return Polygon(ring).buffer(0)
 
 
-def wiggle_ring(rng: random.Random, coords: Sequence[Vec], amplitude: float) -> List[Vec]:
+def wiggle_ring(
+    rng: random.Random, coords: Sequence[Vec], amplitude: float
+) -> List[Vec]:
     """Push the points of a ring in and out along its normals with a smooth noise."""
     ring = LineString(coords)
     length = ring.length
     count = max(16, int(length / 12.0))
-    noise = Noise1D(rng, [length / max(1, int(length / w)) for w in (600.0, 260.0, 110.0, 45.0)])
+    noise = Noise1D(
+        rng, [length / max(1, int(length / w)) for w in (600.0, 260.0, 110.0, 45.0)]
+    )
     points = [ring.interpolate(length * i / count) for i in range(count)]
     result = []
     for i, p in enumerate(points):
@@ -238,7 +256,9 @@ def wiggle_ring(rng: random.Random, coords: Sequence[Vec], amplitude: float) -> 
 
 def wiggle_polygon(rng: random.Random, polygon: Polygon, amplitude: float) -> Polygon:
     shell = wiggle_ring(rng, list(polygon.exterior.coords), amplitude)
-    holes = [wiggle_ring(rng, list(r.coords), amplitude * 0.7) for r in polygon.interiors]
+    holes = [
+        wiggle_ring(rng, list(r.coords), amplitude * 0.7) for r in polygon.interiors
+    ]
     return Polygon(shell, holes).buffer(0)
 
 
@@ -324,10 +344,17 @@ def make(seed: int) -> dict:
             arm = [(base.x, base.y)]
             for k in range(1, 5):
                 a = angle + bend * k / 4
-                arm.append((arm[-1][0] + reach / 4 * math.cos(a), arm[-1][1] + reach / 4 * math.sin(a)))
+                arm.append(
+                    (
+                        arm[-1][0] + reach / 4 * math.cos(a),
+                        arm[-1][1] + reach / 4 * math.sin(a),
+                    )
+                )
             width = rng.uniform(45.0, 110.0)
             water = water.union(LineString(arm).buffer(width, quad_segs=8))
-            water = water.union(Point(arm[-1]).buffer(width * rng.uniform(1.2, 2.0), quad_segs=12))
+            water = water.union(
+                Point(arm[-1]).buffer(width * rng.uniform(1.2, 2.0), quad_segs=12)
+            )
 
     # NOTE (mristin):
     # Islands in the lakes, never in the way of the route.
@@ -341,12 +368,16 @@ def make(seed: int) -> dict:
         island = blob(rng, center, radius, 0.35)
         if not water.buffer(-30.0).contains(island):
             continue
-        if island.intersects(corridor) or any(island.distance(other) < 40.0 for other in islands):
+        if island.intersects(corridor) or any(
+            island.distance(other) < 40.0 for other in islands
+        ):
             continue
         islands.append(island)
     water = water.difference(unary_union(islands)) if islands else water
 
-    water = unary_union([wiggle_polygon(rng, p, SHORE_WIGGLE_M) for p in polygons(water)])
+    water = unary_union(
+        [wiggle_polygon(rng, p, SHORE_WIGGLE_M) for p in polygons(water)]
+    )
     # NOTE (mristin):
     # The wiggles must not close the way: the corridor along the route stays water.
     water = water.union(line.buffer(CLEAR_M, quad_segs=8))
@@ -375,7 +406,13 @@ def make(seed: int) -> dict:
                 if water.buffer(-40.0).contains(q):
                     p = q
                     break
-        labels.append({"kind": kind, "name": make_name(rng, kind, used), "at": shift([(p.x, p.y)])[0]})
+        labels.append(
+            {
+                "kind": kind,
+                "name": make_name(rng, kind, used),
+                "at": shift([(p.x, p.y)])[0],
+            }
+        )
 
     # The islands, the larger first.
     for hole in sorted(water.interiors, key=lambda r: -Polygon(r).area):
@@ -384,13 +421,19 @@ def make(seed: int) -> dict:
             continue
         p = island.representative_point()
         labels.append(
-            {"kind": "island", "name": make_name(rng, "island", used), "at": shift([(p.x, p.y)])[0]}
+            {
+                "kind": "island",
+                "name": make_name(rng, "island", used),
+                "at": shift([(p.x, p.y)])[0],
+            }
         )
 
     places = place_settlements(rng, used, water, line, route, sections, section_of)
     # NOTE (mristin):
     # The healer lives on the largest island, which keeps its own name.
-    largest_island = next((label for label in labels if label["kind"] == "island"), None)
+    largest_island = next(
+        (label for label in labels if label["kind"] == "island"), None
+    )
     for place in places:
         if place["kind"] == "healer" and largest_island is not None:
             place["name"] = largest_island["name"]
@@ -412,13 +455,24 @@ def make(seed: int) -> dict:
     market = shifted_place(places[1])
     return {
         "seed": seed,
-        "size_m": [round(east - west + 2 * MARGIN_M, 1), round(south - north + 2 * MARGIN_M, 1)],
+        "size_m": [
+            round(east - west + 2 * MARGIN_M, 1),
+            round(south - north + 2 * MARGIN_M, 1),
+        ],
         "water": [
-            {"outer": shift(water.exterior.coords), "holes": [shift(r.coords) for r in water.interiors]}
+            {
+                "outer": shift(water.exterior.coords),
+                "holes": [shift(r.coords) for r in water.interiors],
+            }
         ],
         "route": shift(line.simplify(2.0).coords),
         "labels": [
-            {**label, "at": label["at"] if label["kind"] != "place" else shift([label["at"]])[0]}
+            {
+                **label,
+                "at": (
+                    label["at"] if label["kind"] != "place" else shift([label["at"]])[0]
+                ),
+            }
             for label in labels
         ],
         "places": [shifted_place(place) for place in places],
@@ -543,7 +597,9 @@ def jetty_zones(places: List[dict]):
     """The water around the jetties, where the boats which the game steers do not go."""
     return unary_union(
         [
-            LineString([place["at"], place["jetty"]]).buffer(JETTY_CLEARANCE_M + JETTY_KEEP_OFF_M)
+            LineString([place["at"], place["jetty"]]).buffer(
+                JETTY_CLEARANCE_M + JETTY_KEEP_OFF_M
+            )
             for place in places
         ]
     )
@@ -556,7 +612,11 @@ def make_place_name(rng: random.Random, endings: List[str], used: set) -> str:
         stem = rng.choice(STEMS)
         if "stem:" + stem in used:
             continue
-        name = stem + (rng.choice(LINKS) if rng.random() < 0.3 else "") + rng.choice(endings)
+        name = (
+            stem
+            + (rng.choice(LINKS) if rng.random() < 0.3 else "")
+            + rng.choice(endings)
+        )
         if name in used or name in AVOID:
             continue
         used.add(name)
@@ -565,7 +625,9 @@ def make_place_name(rng: random.Random, endings: List[str], used: set) -> str:
     raise RuntimeError("Could not make a new name of a place")
 
 
-def shore_spots(water: Polygon, ring_coords, spacing: float = 30.0) -> List[Tuple[Vec, Vec]]:
+def shore_spots(
+    water: Polygon, ring_coords, spacing: float = 30.0
+) -> List[Tuple[Vec, Vec]]:
     """
     The spots along a ring of the shore where a settlement could stand: each
     the point on the land and the point of the jetty out on the water.
@@ -590,7 +652,9 @@ def shore_spots(water: Polygon, ring_coords, spacing: float = 30.0) -> List[Tupl
     return spots
 
 
-def place_settlements(rng, used, water, line, route, sections, section_of) -> List[dict]:
+def place_settlements(
+    rng, used, water, line, route, sections, section_of
+) -> List[dict]:
     outer_spots = shore_spots(water, list(water.exterior.coords))
     island_rings = sorted(water.interiors, key=lambda r: -Polygon(r).area)
     places: List[dict] = []
@@ -612,13 +676,19 @@ def place_settlements(rng, used, water, line, route, sections, section_of) -> Li
             # route; another settlement on the second largest.
             index = 0 if where == "island" else 1
             ring = island_rings[index] if len(island_rings) > index else None
-            spots = shore_spots(water, list(ring.coords)) if ring is not None else outer_spots
+            spots = (
+                shore_spots(water, list(ring.coords))
+                if ring is not None
+                else outer_spots
+            )
             spot = min(spots, key=lambda s: line.distance(Point(s[1])))
         else:
-            candidates = [s for s in outer_spots if section_of(s[1]) == min(where, sections - 1)]
-            candidates = [s for s in candidates if far_enough(s[0]) >= MIN_PLACE_DISTANCE_M] or [
-                s for s in outer_spots if far_enough(s[0]) >= MIN_PLACE_DISTANCE_M
+            candidates = [
+                s for s in outer_spots if section_of(s[1]) == min(where, sections - 1)
             ]
+            candidates = [
+                s for s in candidates if far_enough(s[0]) >= MIN_PLACE_DISTANCE_M
+            ] or [s for s in outer_spots if far_enough(s[0]) >= MIN_PLACE_DISTANCE_M]
             if not candidates:
                 raise RuntimeError(f"No room for the settlement {kind}")
             # NOTE (mristin):
@@ -721,10 +791,16 @@ def find_routes(water: Polygon, places: List[dict]) -> dict:
             path = [cells[b]]
             while path[-1] != cells[a]:
                 if path[-1] not in parent:
-                    raise RuntimeError(f"No way on the water from {place['id']} to {places[b]['id']}")
+                    raise RuntimeError(
+                        f"No way on the water from {place['id']} to {places[b]['id']}"
+                    )
                 path.append(parent[path[-1]])
             path.reverse()
-            points = [berths[a]] + [(west + c * GRID_M, north + r * GRID_M) for r, c in path] + [berths[b]]
+            points = (
+                [berths[a]]
+                + [(west + c * GRID_M, north + r * GRID_M) for r, c in path]
+                + [berths[b]]
+            )
             routes[f"{place['id']}|{places[b]['id']}"] = straighten(points)
     return routes
 
@@ -770,7 +846,9 @@ def plot(data: dict, path: str) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
     parser.add_argument("--seed", type=int, default=7, help="the seed of the lakes")
     parser.add_argument("--name", default="lakes", help="write data/world/<name>.json")
     parser.add_argument("--plot", help="also draw the map into this PNG")
@@ -780,7 +858,9 @@ def main() -> int:
     target = REPO_ROOT / "data" / "world" / f"{args.name}.json"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(data, separators=(",", ":"), ensure_ascii=False))
-    points = sum(len(p["outer"]) + sum(len(h) for h in p["holes"]) for p in data["water"])
+    points = sum(
+        len(p["outer"]) + sum(len(h) for h in p["holes"]) for p in data["water"]
+    )
     print(
         f"Wrote {target}: {data['size_m'][0]:.0f} x {data['size_m'][1]:.0f} m, {points} points, "
         f"{len(data['water'][0]['holes'])} islands, route {LineString(data['route']).length:.0f} m, "

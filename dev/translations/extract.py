@@ -66,7 +66,9 @@ def read_languages() -> List[Language]:
 #: The languages besides English, from translations/languages.json, which lists
 #: every language of the game. A new language needs only a new entry there; this
 #: script then creates its .po file.
-LANGUAGES = [language.code for language in read_languages() if language.code != SOURCE_LANGUAGE]
+LANGUAGES = [
+    language.code for language in read_languages() if language.code != SOURCE_LANGUAGE
+]
 
 #: The plural forms of the languages, in the order of Grammar.plural_index.
 PLURAL_FORMS = {
@@ -133,7 +135,9 @@ Key = Tuple[str, str]
 
 
 def _unescape(text: str) -> str:
-    return text.encode("utf-8").decode("unicode_escape").encode("latin-1").decode("utf-8")
+    return (
+        text.encode("utf-8").decode("unicode_escape").encode("latin-1").decode("utf-8")
+    )
 
 
 class Messages:
@@ -142,7 +146,9 @@ class Messages:
     def __init__(self) -> None:
         self.entries: Dict[Key, polib.POEntry] = {}
 
-    def add(self, msgid: str, relative: str, comment: Optional[str], context: str = "") -> None:
+    def add(
+        self, msgid: str, relative: str, comment: Optional[str], context: str = ""
+    ) -> None:
         """Add the message (or another place where it appears)."""
         if msgid == "":
             return
@@ -196,7 +202,9 @@ def _literals(text: str, at: int) -> Optional[Tuple[str, int]]:
                 break
             if start < 0:
                 start = i
-            parts.append(match.group(1) if match.group(1) is not None else match.group(2))
+            parts.append(
+                match.group(1) if match.group(1) is not None else match.group(2)
+            )
             i = match.end()
             following = re.match(r"\s*\+\s*", text[i:])
             if following is None:
@@ -442,7 +450,9 @@ def collect_data(messages: Messages) -> None:
     path = REPO_ROOT / "data/world/home_lakes.json"
     world: World = _read(World, path)
     for place in world.places + [world.start, world.goal]:
-        messages.add_name(place.name, "place", relative(path), "the name of a settlement")
+        messages.add_name(
+            place.name, "place", relative(path), "the name of a settlement"
+        )
     for label in world.labels:
         messages.add(
             label.name,
@@ -465,13 +475,25 @@ def collect_data(messages: Messages) -> None:
     path = REPO_ROOT / "data/farm/farm.json"
     farm: Farm = _read(Farm, path)
     for animal in farm.animals.values():
-        messages.add(animal.name, relative(path), "an animal, under its crate in the boat")
-        messages.add_name(animal.counted, "thing", relative(path), f"so many animals; {COUNTED}")
-        messages.add(animal.plural, relative(path), "all the animals of a kind, e.g., 'The hens'")
+        messages.add(
+            animal.name, relative(path), "an animal, under its crate in the boat"
+        )
+        messages.add_name(
+            animal.counted, "thing", relative(path), f"so many animals; {COUNTED}"
+        )
+        messages.add(
+            animal.plural, relative(path), "all the animals of a kind, e.g., 'The hens'"
+        )
         if animal.young is not None:
-            messages.add_name(animal.young, "thing", relative(path), f"so many young; {COUNTED}")
+            messages.add_name(
+                animal.young, "thing", relative(path), f"so many young; {COUNTED}"
+            )
         if animal.young_plural is not None:
-            messages.add(animal.young_plural, relative(path), "the young of a kind, e.g., 'no lambs'")
+            messages.add(
+                animal.young_plural,
+                relative(path),
+                "the young of a kind, e.g., 'no lambs'",
+            )
     for crop in farm.crops.values():
         messages.add_name(
             crop.name,
@@ -490,18 +512,30 @@ def collect_data(messages: Messages) -> None:
     path = REPO_ROOT / "data/how_to/how_to.json"
     how_to: HowTo = _read(HowTo, path)
     for part in how_to.parts:
-        messages.add(part.title, relative(path), "the title of a part of How to play, a few words")
-        messages.add(part.text, relative(path), "how to play: at most 2 lines on the screen, short sentences")
+        messages.add(
+            part.title,
+            relative(path),
+            "the title of a part of How to play, a few words",
+        )
+        messages.add(
+            part.text,
+            relative(path),
+            "how to play: at most 2 lines on the screen, short sentences",
+        )
 
     path = REPO_ROOT / "data/ships/ships.json"
     ships: Ships = _read(Ships, path)
-    messages.add_name(ships.shipwright.name, "person", relative(path), "the name of the shipwright")
+    messages.add_name(
+        ships.shipwright.name, "person", relative(path), "the name of the shipwright"
+    )
     messages.add(
         ships.shipwright.short,
         relative(path),
         "the first name of the shipwright, on the second line of a card (a button)",
     )
-    messages.add(ships.shipwright.yard, relative(path), "the title of the shipyard's screen")
+    messages.add(
+        ships.shipwright.yard, relative(path), "the title of the shipyard's screen"
+    )
     for ship in ships.ships:
         messages.add_name(
             ship.name,
@@ -509,7 +543,9 @@ def collect_data(messages: Messages) -> None:
             relative(path),
             "a kind of ship (lower case); also the title of its card (a button)",
         )
-        messages.add(ship.about, relative(path), "what the ship is like, one short sentence")
+        messages.add(
+            ship.about, relative(path), "what the ship is like, one short sentence"
+        )
 
     for path in sorted((REPO_ROOT / "data/missions").glob("*/mission.json")):
         mission: Mission = _read(Mission, path)
@@ -520,7 +556,9 @@ def collect_data(messages: Messages) -> None:
             "the title of a task, also on its card (a button): a few words, at most two short lines",
         )
         messages.add_name(mission.giver.name, "person", where, "who gives a task")
-        messages.add(mission.offer, where, "what the giver of a task asks, at most 6 lines")
+        messages.add(
+            mission.offer, where, "what the giver of a task asks, at most 6 lines"
+        )
         for step in mission.steps:
             for line in [step.say, step.load_say] + step.says:
                 if line is not None:
@@ -529,12 +567,24 @@ def collect_data(messages: Messages) -> None:
                 if who is not None:
                     messages.add_name(who.name, "person", where, "who speaks in a task")
         for item in mission.items.values():
-            messages.add(item.name, where, "a thing of a task, under its crate: at most 10 letters")
-            messages.add_name(item.counted, "thing", where, f"a thing of a task; {COUNTED}")
+            messages.add(
+                item.name,
+                where,
+                "a thing of a task, under its crate: at most 10 letters",
+            )
+            messages.add_name(
+                item.counted, "thing", where, f"a thing of a task; {COUNTED}"
+            )
         if mission.reward.gift is not None:
-            messages.add_name(mission.reward.gift, "thing", where, "a gift for a task: 'You get ...'")
+            messages.add_name(
+                mission.reward.gift, "thing", where, "a gift for a task: 'You get ...'"
+            )
         if mission.fact is not None:
-            messages.add(mission.fact, where, "a fun fact at the end of a task, 2 short sentences")
+            messages.add(
+                mission.fact,
+                where,
+                "a fun fact at the end of a task, 2 short sentences",
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -560,7 +610,9 @@ def make_template(messages: Messages) -> polib.POFile:
     return template
 
 
-def merge(template: polib.POFile, existing: Optional[polib.POFile], language: str) -> polib.POFile:
+def merge(
+    template: polib.POFile, existing: Optional[polib.POFile], language: str
+) -> polib.POFile:
     """Make the translation of the template, keeping the existing translations."""
     old: Dict[Key, polib.POEntry] = {}
     if existing is not None:
@@ -622,13 +674,19 @@ def main() -> int:
     collect_data(messages)
     template = make_template(messages)
 
-    outputs: List[Tuple[pathlib.Path, str]] = [(TRANSLATIONS_DIR / "messages.pot", str(template))]
+    outputs: List[Tuple[pathlib.Path, str]] = [
+        (TRANSLATIONS_DIR / "messages.pot", str(template))
+    ]
     for language in LANGUAGES:
         path = TRANSLATIONS_DIR / f"{language}.po"
         existing = polib.pofile(str(path), wrapwidth=100) if path.exists() else None
         outputs.append((path, str(merge(template, existing, language))))
 
-    stale = [path for path, text in outputs if not path.exists() or path.read_text("utf-8") != text]
+    stale = [
+        path
+        for path, text in outputs
+        if not path.exists() or path.read_text("utf-8") != text
+    ]
     if args.check:
         for path in stale:
             print(

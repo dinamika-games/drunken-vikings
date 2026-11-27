@@ -107,7 +107,9 @@ def export(godot: str, preset: str, output: pathlib.Path) -> None:
         if re.match(r"^(ERROR|SCRIPT ERROR)", line) and not HARMLESS_ERRORS.search(line)
     ]
     if errors:
-        raise RuntimeError(f"The export for {preset} reported errors:\n" + "\n".join(errors))
+        raise RuntimeError(
+            f"The export for {preset} reported errors:\n" + "\n".join(errors)
+        )
 
 
 def check_onnx_runtime(platform: str, output: pathlib.Path) -> None:
@@ -127,10 +129,14 @@ def check_onnx_runtime(platform: str, output: pathlib.Path) -> None:
 def onnx_runtime_license() -> pathlib.Path:
     """Find the license of ONNX Runtime in the NuGet cache, at the version of the game."""
     project = (REPO_ROOT / "DrunkenVikings.csproj").read_text(encoding="utf-8")
-    match = re.search(r'Include="Microsoft\.ML\.OnnxRuntime" Version="([^"]+)"', project)
+    match = re.search(
+        r'Include="Microsoft\.ML\.OnnxRuntime" Version="([^"]+)"', project
+    )
     if match is None:
         raise RuntimeError("DrunkenVikings.csproj references no ONNX Runtime.")
-    packages = pathlib.Path(os.environ.get("NUGET_PACKAGES", pathlib.Path.home() / ".nuget" / "packages"))
+    packages = pathlib.Path(
+        os.environ.get("NUGET_PACKAGES", pathlib.Path.home() / ".nuget" / "packages")
+    )
     return packages / "microsoft.ml.onnxruntime" / match.group(1) / "LICENSE"
 
 
@@ -194,7 +200,9 @@ def main() -> int:
         default=sorted(PLATFORMS),
         help="Which platforms to package (default: all)",
     )
-    parser.add_argument("--godot", help="The Godot executable (default: $GODOT or the path)")
+    parser.add_argument(
+        "--godot", help="The Godot executable (default: $GODOT or the path)"
+    )
     args = parser.parse_args()
 
     godot = find_godot(args.godot)
@@ -227,7 +235,9 @@ def main() -> int:
             if platform == "windows":
                 add_camera_extension(output.parent)
 
-            print(f"Packaged {preset} into {output.relative_to(REPO_ROOT)}.", flush=True)
+            print(
+                f"Packaged {preset} into {output.relative_to(REPO_ROOT)}.", flush=True
+            )
     except subprocess.CalledProcessError as exception:
         print(f"Failed with exit code {exception.returncode}.", file=sys.stderr)
         return 1

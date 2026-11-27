@@ -100,7 +100,9 @@ def download(code: str) -> pathlib.Path:
         print(f"Downloading {item['properties']['title']} from {href}")
         user, password = credentials()
         token = base64.b64encode(f"{user}:{password}".encode()).decode()
-        request = urllib.request.Request(href, headers={"Authorization": f"Basic {token}"})
+        request = urllib.request.Request(
+            href, headers={"Authorization": f"Basic {token}"}
+        )
         partial = archive.with_suffix(".part")
         with urllib.request.urlopen(request, timeout=600) as response:
             partial.write_bytes(response.read())
@@ -109,7 +111,9 @@ def download(code: str) -> pathlib.Path:
     with zipfile.ZipFile(archive) as zipped:
         names = [n for n in zipped.namelist() if n.endswith(".gpkg")]
         if len(names) != 1:
-            raise RuntimeError(f"Expected one GeoPackage in {archive}, but got: {zipped.namelist()}")
+            raise RuntimeError(
+                f"Expected one GeoPackage in {archive}, but got: {zipped.namelist()}"
+            )
         target = CACHE_DIR / pathlib.Path(names[0]).name
         if not target.exists():
             target.write_bytes(zipped.read(names[0]))
@@ -128,13 +132,17 @@ def geometry_of(blob: bytes) -> Optional[shapely.Geometry]:
 
 def layers(connection: sqlite3.Connection) -> List[Tuple[str, str]]:
     """The feature tables of the GeoPackage and their geometry columns."""
-    return list(connection.execute("SELECT table_name, column_name FROM gpkg_geometry_columns"))
+    return list(
+        connection.execute("SELECT table_name, column_name FROM gpkg_geometry_columns")
+    )
 
 
 def inspect(path: pathlib.Path) -> None:
     connection = sqlite3.connect(path)
     for table, column in layers(connection):
-        columns = [row[1] for row in connection.execute(f'PRAGMA table_info("{table}")')]
+        columns = [
+            row[1] for row in connection.execute(f'PRAGMA table_info("{table}")')
+        ]
         count = connection.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
         print(f"  {table} ({count} rows), geometry {column}, columns {columns}")
         if "objekttyp" in columns:
@@ -148,10 +156,14 @@ def water_of(path: pathlib.Path, clip: shapely.Geometry) -> List[shapely.Geometr
     connection = sqlite3.connect(path)
     found = []
     for table, column in layers(connection):
-        columns = [row[1] for row in connection.execute(f'PRAGMA table_info("{table}")')]
+        columns = [
+            row[1] for row in connection.execute(f'PRAGMA table_info("{table}")')
+        ]
         if "objekttyp" not in columns:
             continue
-        for kind, blob in connection.execute(f'SELECT objekttyp, "{column}" FROM "{table}"'):
+        for kind, blob in connection.execute(
+            f'SELECT objekttyp, "{column}" FROM "{table}"'
+        ):
             if kind not in WATER_KINDS:
                 continue
             geometry = geometry_of(blob)
@@ -175,8 +187,12 @@ def ring(coordinates) -> List[List[float]]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("--inspect", action="store_true", help="only print what the downloads hold")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser.add_argument(
+        "--inspect", action="store_true", help="only print what the downloads hold"
+    )
     args = parser.parse_args()
 
     packages = [download(code) for code in MUNICIPALITIES]
@@ -206,8 +222,15 @@ def main() -> int:
     for polygon in polygons(water):
         if polygon.area < MIN_AREA_M2:
             continue
-        islands = [r for r in polygon.interiors if shapely.Polygon(r).area >= MIN_AREA_M2]
-        kept.append({"water": ring(polygon.exterior.coords), "islands": [ring(r.coords) for r in islands]})
+        islands = [
+            r for r in polygon.interiors if shapely.Polygon(r).area >= MIN_AREA_M2
+        ]
+        kept.append(
+            {
+                "water": ring(polygon.exterior.coords),
+                "islands": [ring(r.coords) for r in islands],
+            }
+        )
     kept.sort(key=lambda p: -shapely.Polygon(p["water"]).area)
 
     west, south, east, north = BOX
@@ -230,7 +253,9 @@ def main() -> int:
     )
     points = sum(len(p["water"]) + sum(len(i) for i in p["islands"]) for p in kept)
     islands = sum(len(p["islands"]) for p in kept)
-    print(f"Wrote {TARGET}: {len(kept)} bodies of water, {islands} islands, {points} points")
+    print(
+        f"Wrote {TARGET}: {len(kept)} bodies of water, {islands} islands, {points} points"
+    )
     return 0
 
 

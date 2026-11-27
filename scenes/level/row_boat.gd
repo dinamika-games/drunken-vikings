@@ -168,8 +168,10 @@ func move(delta: float, map: LakeMap) -> float:
     since_in_time += delta
     var turning := (
         clampf(TURN_STILL + speed / TURN_FULL_SPEED, TURN_STILL, 1.0)
-        + TURN_FAST_EXTRA
-        * clampf((speed - TURN_FULL_SPEED) / (TURN_FAST_SPEED - TURN_FULL_SPEED), 0.0, 1.0)
+        + (
+            TURN_FAST_EXTRA
+            * clampf((speed - TURN_FULL_SPEED) / (TURN_FAST_SPEED - TURN_FULL_SPEED), 0.0, 1.0)
+        )
     )
     heading = wrapf(
         heading + (steer * deg_to_rad(TURN_DEGREES) * turning * turn_share + yaw_rate) * delta,

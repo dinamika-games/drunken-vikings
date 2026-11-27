@@ -156,9 +156,13 @@ class NewMeter:
         else:
             self.tilt = sample.tilt - self.level
             leans = abs(self.tilt) >= self.TILT_DEAD_ZONE
-            level_tau = 5.0 if not leans else 20.0 if away < self.DEAD_ZONE else math.inf
+            level_tau = (
+                5.0 if not leans else 20.0 if away < self.DEAD_ZONE else math.inf
+            )
             self.level += (sample.tilt - self.level) * follow(dt, level_tau)
-            self.tilt_steer = sign(self.tilt) * ramp(abs(self.tilt), self.TILT_DEAD_ZONE, self.FULL_TILT)
+            self.tilt_steer = sign(self.tilt) * ramp(
+                abs(self.tilt), self.TILT_DEAD_ZONE, self.FULL_TILT
+            )
 
         if leans:
             tau = math.inf
@@ -172,7 +176,11 @@ class NewMeter:
 
         self.head_steer = sign(self.shift) * ramp(away, self.DEAD_ZONE, self.FULL_STEER)
         if sign(self.head_steer) * sign(self.tilt_steer) >= 0:
-            self.steer = self.head_steer if abs(self.head_steer) >= abs(self.tilt_steer) else self.tilt_steer
+            self.steer = (
+                self.head_steer
+                if abs(self.head_steer) >= abs(self.tilt_steer)
+                else self.tilt_steer
+            )
         else:
             self.steer = min(max(self.head_steer + self.tilt_steer, -1.0), 1.0)
 
@@ -188,11 +196,18 @@ def load(path: pathlib.Path) -> tuple[list[Sample], list[Mark]]:
             line = Line.model_validate_json(text).root
         except pydantic.ValidationError as error:
             broken += 1
-            print(f"Skipping the broken line {number}: {error.errors()[0]['msg']}", file=sys.stderr)
+            print(
+                f"Skipping the broken line {number}: {error.errors()[0]['msg']}",
+                file=sys.stderr,
+            )
             continue
         if isinstance(line, Mark):
             marks.append(line)
-        if not isinstance(line, PoseLine) or not line.players or line.players[0] is None:
+        if (
+            not isinstance(line, PoseLine)
+            or not line.players
+            or line.players[0] is None
+        ):
             continue
         player = line.players[0]
         heads = [p for p in (player.point(i) for i in HEAD) if p is not None]
@@ -217,8 +232,12 @@ def main() -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("recording", type=pathlib.Path)
-    parser.add_argument("--every", type=float, default=0.25, help="print a line every this many seconds")
-    parser.add_argument("--csv", type=pathlib.Path, help="write the samples for the unit tests")
+    parser.add_argument(
+        "--every", type=float, default=0.25, help="print a line every this many seconds"
+    )
+    parser.add_argument(
+        "--csv", type=pathlib.Path, help="write the samples for the unit tests"
+    )
     args = parser.parse_args()
 
     samples, marks = load(args.recording)
@@ -228,7 +247,9 @@ def main() -> int:
 
     old = OldMeter()
     new = NewMeter()
-    print("     t  head_x   unit   tilt | old: shift steer | new: shift   tilt head  body steer")
+    print(
+        "     t  head_x   unit   tilt | old: shift steer | new: shift   tilt head  body steer"
+    )
     printed = -math.inf
     parted = 0
     for sample in samples:
@@ -245,17 +266,23 @@ def main() -> int:
             )
     for mark in marks:
         print(f"Mark at {mark.t:.2f} s: {mark.name}")
-    print(f"The old and the new steering differ by more than 0.5 in {parted} of {len(samples)} poses.")
+    print(
+        f"The old and the new steering differ by more than 0.5 in {parted} of {len(samples)} poses."
+    )
 
     if args.csv is not None:
         with args.csv.open("w") as out:
-            out.write(f"# The head and the shoulders of the player in {args.recording.name}.\n")
+            out.write(
+                f"# The head and the shoulders of the player in {args.recording.name}.\n"
+            )
             out.write("t,head_x,head_y,unit,tilt\n")
             t0 = samples[0].t
             for s in samples:
                 values = [s.head_x, s.head_y, s.unit, s.tilt]
                 out.write(
-                    f"{s.t - t0:.3f}," + ",".join("" if math.isnan(v) else f"{v:.1f}" for v in values) + "\n"
+                    f"{s.t - t0:.3f},"
+                    + ",".join("" if math.isnan(v) else f"{v:.1f}" for v in values)
+                    + "\n"
                 )
         print(f"Wrote the samples to {args.csv}.")
     return 0

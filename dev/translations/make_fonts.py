@@ -59,7 +59,9 @@ def _characters() -> Set[str]:
     for path in sorted((REPO_ROOT / "translations").glob("*.po")):
         for entry in polib.pofile(str(path)):
             result.update(entry.msgstr)
-    result.update((REPO_ROOT / "translations/languages.json").read_text(encoding="utf-8"))
+    result.update(
+        (REPO_ROOT / "translations/languages.json").read_text(encoding="utf-8")
+    )
     # NOTE (mristin):
     # The marks of the stars of the tasks, and the digits and the Latin letters,
     # so that the numbers and the Swedish names look the same in every language.

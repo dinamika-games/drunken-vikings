@@ -60,8 +60,10 @@ func _run() -> void:
     _check(state.players == 2, "the first journey keeps its two rowers")
     _check(state.look(1) == boy, "the first journey keeps how its rowers look")
     _check(
-        Looks.normalized({"figure": "dragon", "skin": 99, "hair": 3.0}, 0)
-        == {"figure": "girl", "skin": 1, "hair": 3, "clothes": 0},
+        (
+            Looks.normalized({"figure": "dragon", "skin": 99, "hair": 3.0}, 0)
+            == {"figure": "girl", "skin": 1, "hair": 3, "clothes": 0}
+        ),
         "a look from a save is checked"
     )
     _check(state.last_journey() == first, "the opened journey is the last one")

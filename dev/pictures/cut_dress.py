@@ -152,7 +152,9 @@ def crop(rgba: np.ndarray, margin: int = 4) -> tuple[np.ndarray, tuple[int, int]
     """Crop to the opaque part with a margin; return it with the offset of its corner."""
     ys, xs = np.nonzero(rgba[..., 3] > 8)
     top, left = max(0, ys.min() - margin), max(0, xs.min() - margin)
-    bottom, right = min(rgba.shape[0], ys.max() + 1 + margin), min(rgba.shape[1], xs.max() + 1 + margin)
+    bottom, right = min(rgba.shape[0], ys.max() + 1 + margin), min(
+        rgba.shape[1], xs.max() + 1 + margin
+    )
     return rgba[top:bottom, left:right], (left, top)
 
 
@@ -160,7 +162,9 @@ def save(rgba: np.ndarray, name: str, scale: float = SCALE) -> float:
     """Save the piece scaled; return the scale."""
     image = Image.fromarray(np.clip(rgba, 0, 255).astype(np.uint8), "RGBA")
     if scale != 1.0:
-        image = image.resize((round(image.width * scale), round(image.height * scale)), Image.LANCZOS)
+        image = image.resize(
+            (round(image.width * scale), round(image.height * scale)), Image.LANCZOS
+        )
     OUT.mkdir(parents=True, exist_ok=True)
     image.save(OUT / f"{name}.png")
     print(f"Wrote {name}.png ({image.width} x {image.height}).")
@@ -176,13 +180,17 @@ def eyes_of(rgb: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """The centres of the two dark eyes of the template in a painting over it."""
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
     dark = (np.abs(r - g) < 14) & (np.abs(g - b) < 14) & (r < 80)
-    count, _, stats, centres = cv2.connectedComponentsWithStats(dark.astype(np.uint8), 8)
+    count, _, stats, centres = cv2.connectedComponentsWithStats(
+        dark.astype(np.uint8), 8
+    )
     h, w = dark.shape
     found = [
         centres[k]
         for k in range(1, count)
         if 600 < stats[k, cv2.CC_STAT_AREA] < 8000
-        and 1.2 < stats[k, cv2.CC_STAT_WIDTH] / max(1, stats[k, cv2.CC_STAT_HEIGHT]) < 3.5
+        and 1.2
+        < stats[k, cv2.CC_STAT_WIDTH] / max(1, stats[k, cv2.CC_STAT_HEIGHT])
+        < 3.5
         and 0.3 * h < centres[k][1] < 0.6 * h
     ]
     pairs = [
@@ -199,9 +207,9 @@ def eyes_of(rgb: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 def cut_head(folder: pathlib.Path) -> Head:
     painting = load(folder / "01_head" / "head.png")
-    template = np.asarray(Image.open(folder / "01_head" / "face_template.png").convert("RGB")).astype(
-        np.float64
-    )
+    template = np.asarray(
+        Image.open(folder / "01_head" / "face_template.png").convert("RGB")
+    ).astype(np.float64)
     left, right = eyes_of(painting)
     t_left, t_right = eyes_of(template)
 
@@ -213,19 +221,29 @@ def cut_head(folder: pathlib.Path) -> Head:
     matrix = np.array([[c, -s, 0.0], [s, c, 0.0]])
     matrix[:, 2] = t_middle - matrix[:, :2] @ middle
     h, w = template.shape[:2]
-    warped = cv2.warpAffine(painting, matrix, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    warped = cv2.warpAffine(
+        painting,
+        matrix,
+        (w, h),
+        flags=cv2.INTER_LINEAR,
+        borderMode=cv2.BORDER_REPLICATE,
+    )
 
     # NOTE: The hair is what differs from the template. The eyes, the nose and
     # the mouth were repainted a little off, so we leave the face out.
     difference = np.abs(warped - template).max(axis=2)
     alpha = np.clip((difference - 30.0) / 40.0, 0.0, 1.0)
     face = np.zeros((h, w), np.uint8)
-    cv2.ellipse(face, (int(t_middle[0]), int(t_middle[1]) + 120), (150, 230), 0, 0, 360, 1, -1)
+    cv2.ellipse(
+        face, (int(t_middle[0]), int(t_middle[1]) + 120), (150, 230), 0, 0, 360, 1, -1
+    )
     hair_over_face = (warped[..., 0] - warped[..., 2] > 60) & (warped[..., 0] > 120)
     alpha[(face > 0) & ~hair_over_face] = 0.0
     # NOTE: The edges of the template (the shoulders, the neck) were repainted
     # a little off, too; they are pale and gray, the hair is not.
-    pale_gray = (warped.max(axis=2) - warped.min(axis=2) < 25) & (warped.min(axis=2) > 90)
+    pale_gray = (warped.max(axis=2) - warped.min(axis=2) < 25) & (
+        warped.min(axis=2) > 90
+    )
     alpha[pale_gray] = 0.0
     head = clean(np.dstack([warped, alpha * 255.0]))
 
@@ -235,7 +253,9 @@ def cut_head(folder: pathlib.Path) -> Head:
     x1, y1 = x0 + box[2] * eye_px, y0 + box[3] * eye_px
     region = head[int(round(y0)) : int(round(y1)), int(round(x0)) : int(round(x1))]
     save(region, "head", HEAD_UNIT / eye_px)
-    return Head(eyes=Point(x=-box[0] * HEAD_UNIT, y=-box[1] * HEAD_UNIT), eye_distance=HEAD_UNIT)
+    return Head(
+        eyes=Point(x=-box[0] * HEAD_UNIT, y=-box[1] * HEAD_UNIT), eye_distance=HEAD_UNIT
+    )
 
 
 def cut_bodice(folder: pathlib.Path) -> Bodice:
@@ -248,7 +268,9 @@ def cut_bodice(folder: pathlib.Path) -> Bodice:
 
     # NOTE: The belt is the band of rows in the middle with little teal; we
     # cut just below it, with its outline.
-    share = np.array([teal[y].sum() / max(1, opaque[y].sum()) for y in range(rgba.shape[0])])
+    share = np.array(
+        [teal[y].sum() / max(1, opaque[y].sum()) for y in range(rgba.shape[0])]
+    )
     lo, hi = top + int(0.3 * (bottom - top)), top + int(0.65 * (bottom - top))
     belt = [y for y in range(lo, hi) if share[y] < 0.35]
     if not belt:
@@ -314,7 +336,10 @@ def cut_fists(folder: pathlib.Path) -> tuple[Fist, Fist]:
     rgba = key_magenta(load(folder / "05_fists" / "fists.png"))
     w = rgba.shape[1]
     fists = []
-    for name, half in (("fist_reach", rgba[:, : w // 2]), ("fist_pull", rgba[:, w // 2 :])):
+    for name, half in (
+        ("fist_reach", rgba[:, : w // 2]),
+        ("fist_pull", rgba[:, w // 2 :]),
+    ):
         piece = half.copy()
         rgb = piece[..., :3]
         hsv = cv2.cvtColor(rgb.astype(np.uint8), cv2.COLOR_RGB2HSV).astype(int)
@@ -329,7 +354,9 @@ def cut_fists(folder: pathlib.Path) -> tuple[Fist, Fist]:
         wrist = (float(xs.mean()), float(ys.mean()))
         # NOTE: Off with the sleeve and its cuff, and with their outlines
         # (thin lines, which the opening takes away).
-        removed = cv2.dilate((teal | red).astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
+        removed = (
+            cv2.dilate((teal | red).astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
+        )
         piece[..., 3] *= ~removed
         piece = clean(piece, open_px=11)
         piece, (dx, dy) = crop(piece)

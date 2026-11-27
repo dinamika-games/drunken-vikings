@@ -142,7 +142,9 @@ def check_entry(entry: polib.POEntry, plurals: int, language: str) -> List[str]:
             continue
         if forms is not None:
             if key not in expected and key not in numbers:
-                errors.append(f"{where}: a choice by {{{key}}}, which the English does not have")
+                errors.append(
+                    f"{where}: a choice by {{{key}}}, which the English does not have"
+                )
             if len(forms) > plurals:
                 errors.append(
                     f"{where}: the choice by {{{key}}} has {len(forms)} forms, but the "
@@ -150,14 +152,20 @@ def check_entry(entry: polib.POEntry, plurals: int, language: str) -> List[str]:
                 )
             continue
         if form and form not in KNOWN_FORMS:
-            errors.append(f"{where}: the placeholder {{{key}@{form}}} asks for an unknown form")
+            errors.append(
+                f"{where}: the placeholder {{{key}@{form}}} asks for an unknown form"
+            )
         found.add(key)
     missing = expected - found
     if missing:
-        errors.append(f"{where}: the translation lacks {sorted(missing)}: {entry.msgstr!r}")
+        errors.append(
+            f"{where}: the translation lacks {sorted(missing)}: {entry.msgstr!r}"
+        )
     extra = found - expected - numbers
     if extra:
-        errors.append(f"{where}: the translation has unknown {sorted(extra)}: {entry.msgstr!r}")
+        errors.append(
+            f"{where}: the translation has unknown {sorted(extra)}: {entry.msgstr!r}"
+        )
     return errors
 
 
@@ -165,7 +173,9 @@ def check(language: str, verbose: bool) -> List[str]:
     """Check one language and return the errors."""
     path = extract.TRANSLATIONS_DIR / f"{language}.po"
     if not path.exists():
-        return [f"{path.relative_to(REPO_ROOT)} is missing; run dev/translations/extract.py"]
+        return [
+            f"{path.relative_to(REPO_ROOT)} is missing; run dev/translations/extract.py"
+        ]
 
     po = polib.pofile(str(path))
     plural_match = PLURAL_COUNT_RE.search(po.metadata.get("Plural-Forms", ""))
@@ -205,8 +215,12 @@ def check(language: str, verbose: bool) -> List[str]:
 def main() -> int:
     """Execute the main routine."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--verbose", action="store_true", help="List the open messages.")
-    parser.add_argument("--language", nargs="*", help="Check only these languages, e.g., de fr.")
+    parser.add_argument(
+        "--verbose", action="store_true", help="List the open messages."
+    )
+    parser.add_argument(
+        "--language", nargs="*", help="Check only these languages, e.g., de fr."
+    )
     args = parser.parse_args()
 
     errors: List[str] = []

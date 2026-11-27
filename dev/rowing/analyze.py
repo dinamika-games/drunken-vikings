@@ -100,7 +100,10 @@ def players_of(start, poses):
             players[i].sources[player["source"]] += 1
             players[i].t.append(row["t"])
             players[i].signals.append(
-                [np.nan if player["signals"].get(n) is None else player["signals"][n] for n in names]
+                [
+                    np.nan if player["signals"].get(n) is None else player["signals"][n]
+                    for n in names
+                ]
             )
             players[i].scores.append(player["keypoints"][2::3])
     for player in players:
@@ -225,7 +228,9 @@ def report(path, window, plot):
             )
 
         print()
-        print(f"  The strongest rhythms in windows of about {window:.0f} s (period in s, strength):")
+        print(
+            f"  The strongest rhythms in windows of about {window:.0f} s (period in s, strength):"
+        )
         for a, b in windows(t0, t1, marks, window):
             found = []
             for name, (grid, resampled) in rhythms.items():
@@ -236,7 +241,9 @@ def report(path, window, plot):
                 if strength >= 0.4:
                     found.append((strength, name, period))
             found.sort(reverse=True)
-            text = ", ".join(f"{n} {p:.1f} s {s:.2f}" for s, n, p in found[:4]) or "none"
+            text = (
+                ", ".join(f"{n} {p:.1f} s {s:.2f}" for s, n, p in found[:4]) or "none"
+            )
             print(f"    {a - t0:6.1f}-{b - t0:6.1f} s: {text}")
 
     if plot:
@@ -253,7 +260,9 @@ def draw(path, players, marks, t0):
     import matplotlib.pyplot as plt
 
     names = [n for n in players[0].names if n != "unit"]
-    figure, axes = plt.subplots(len(names), 1, figsize=(18, 2.0 * len(names)), sharex=True)
+    figure, axes = plt.subplots(
+        len(names), 1, figsize=(18, 2.0 * len(names)), sharex=True
+    )
     colors = ["tab:orange", "tab:blue"]
     for axis, name in zip(axes, names):
         for index, player in enumerate(players):
@@ -279,11 +288,18 @@ def draw(path, players, marks, t0):
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("recording", help="the recording (.jsonl) of dev/rowing/record_rowing.gd")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser.add_argument(
+        "recording", help="the recording (.jsonl) of dev/rowing/record_rowing.gd"
+    )
     parser.add_argument("--plot", help="draw the signals into this PNG")
     parser.add_argument(
-        "--window", type=float, default=10.0, help="the length of the windows of the rhythms, in seconds"
+        "--window",
+        type=float,
+        default=10.0,
+        help="the length of the windows of the rhythms, in seconds",
     )
     args = parser.parse_args()
     return report(args.recording, args.window, args.plot)

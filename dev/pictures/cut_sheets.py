@@ -86,7 +86,12 @@ SHEETS = {
         "02_longships/sheet_longships.png",
         [
             ["hull_plain", "hull_wedding", "hull_pirate", "oar"],
-            ["sail_plain_full", "sail_plain_slack", "sail_wedding_full", "sail_wedding_slack"],
+            [
+                "sail_plain_full",
+                "sail_plain_slack",
+                "sail_wedding_full",
+                "sail_wedding_slack",
+            ],
             ["sail_pirate_full", "sail_pirate_slack", "bride_and_groom", "oar_splash"],
             ["crew_wedding", "crew_plain", "crew_pirate", "pirate_fist"],
         ],
@@ -115,7 +120,10 @@ SHEETS = {
     ),
     "treats": Sheet(
         "06_treats/sheet_treats.png",
-        [["wreath", "ribbon", "cake", "apple"], ["bread", "bouquet", "toy_horse", "coin"]],
+        [
+            ["wreath", "ribbon", "cake", "apple"],
+            ["bread", "bouquet", "toy_horse", "coin"],
+        ],
     ),
     "buildings": Sheet(
         "07_buildings/sheet_buildings.png",
@@ -189,7 +197,12 @@ SHEETS = {
         "14_ships/sheet_ships.png",
         [
             ["hull_faering", "hull_karve", "hull_knarr", "hull_longship"],
-            ["sail_karve_full", "sail_karve_slack", "sail_knarr_full", "sail_knarr_slack"],
+            [
+                "sail_karve_full",
+                "sail_karve_slack",
+                "sail_knarr_full",
+                "sail_knarr_slack",
+            ],
             ["crew_faering", "crew_karve", "crew_knarr", "crew_longship"],
             ["cargo_knarr", "oar_short", "slipway", "timber"],
         ],
@@ -252,7 +265,9 @@ SHEETS = {
         ],
         alpha=(64, 240),
     ),
-    "how_to_jetty": Sheet("how-to/sheet_how_to_jetty.png", [["jetty", "shore"]], folder="how_to"),
+    "how_to_jetty": Sheet(
+        "how-to/sheet_how_to_jetty.png", [["jetty", "shore"]], folder="how_to"
+    ),
 }
 
 #: The rowers of How to play, from the front (see HowToFigure), relative to
@@ -287,7 +302,10 @@ BACKDROP_SIZE = (1440, 1080)
 
 #: The seamless textures of the ground, relative to SHEETS_DIR, and their
 #: names in assets/pictures/ground/.
-GROUND = {"grass_lush": "12_grass/grass_lush.png", "grass_dry": "12_grass/grass_dry.png"}
+GROUND = {
+    "grass_lush": "12_grass/grass_lush.png",
+    "grass_dry": "12_grass/grass_dry.png",
+}
 
 #: The textures of the ground are saved with this many pixels on a side.
 GROUND_SIDE = 512
@@ -302,7 +320,9 @@ def drop_strays(alpha: np.ndarray) -> np.ndarray:
     the neighbouring picture, a line of the grid): the patches which touch the
     border and are less than a tenth of the biggest patch.
     """
-    count, labels, stats, _ = cv2.connectedComponentsWithStats((alpha > 0).astype(np.uint8), connectivity=8)
+    count, labels, stats, _ = cv2.connectedComponentsWithStats(
+        (alpha > 0).astype(np.uint8), connectivity=8
+    )
     if count <= 2:
         return alpha
     areas = stats[1:, cv2.CC_STAT_AREA]
@@ -347,11 +367,17 @@ def cut(name: str, sheet: Sheet) -> int:
             right, bottom = (c + 1) * width // cols, (r + 1) * height // rows
             if picture_name in sheet.textures:
                 inset = 12
-                cell = image[top + inset : bottom - inset, left + inset : right - inset].copy()
+                cell = image[
+                    top + inset : bottom - inset, left + inset : right - inset
+                ].copy()
                 cell[..., 3] = 255
-                picture = Image.fromarray(cell).resize((TEXTURE_SIDE, TEXTURE_SIDE), Image.LANCZOS)
+                picture = Image.fromarray(cell).resize(
+                    (TEXTURE_SIDE, TEXTURE_SIDE), Image.LANCZOS
+                )
             else:
-                image[top:bottom, left:right, 3] = drop_strays(image[top:bottom, left:right, 3])
+                image[top:bottom, left:right, 3] = drop_strays(
+                    image[top:bottom, left:right, 3]
+                )
                 box = painted_box(image[top:bottom, left:right, 3])
                 if box is None:
                     print(f"The cell {picture_name} of {name} is empty.")
@@ -380,10 +406,16 @@ def cut_figures() -> int:
     """
     image = np.asarray(Image.open(SHEETS_DIR / FIGURES).convert("RGBA"))
     alpha = image[..., 3]
-    count, labels, stats, _ = cv2.connectedComponentsWithStats((alpha > 32).astype(np.uint8), connectivity=8)
-    figures = [label for label in range(1, count) if stats[label, cv2.CC_STAT_AREA] > 2000]
+    count, labels, stats, _ = cv2.connectedComponentsWithStats(
+        (alpha > 32).astype(np.uint8), connectivity=8
+    )
+    figures = [
+        label for label in range(1, count) if stats[label, cv2.CC_STAT_AREA] > 2000
+    ]
     if len(figures) != len(FIGURE_NAMES):
-        print(f"Found {len(figures)} figures in {FIGURES}, expected {len(FIGURE_NAMES)}.")
+        print(
+            f"Found {len(figures)} figures in {FIGURES}, expected {len(FIGURE_NAMES)}."
+        )
         return 1
 
     def bottom(label: int) -> int:
@@ -391,7 +423,9 @@ def cut_figures() -> int:
 
     # NOTE (mristin):
     # By rows (the bottoms of a row lie within a few pixels), then from the left.
-    figures.sort(key=lambda label: (round(bottom(label) / 50.0), stats[label, cv2.CC_STAT_LEFT]))
+    figures.sort(
+        key=lambda label: (round(bottom(label) / 50.0), stats[label, cv2.CC_STAT_LEFT])
+    )
     out = OUT / "how_to"
     out.mkdir(parents=True, exist_ok=True)
     width, height = FIGURE_CANVAS
@@ -404,7 +438,9 @@ def cut_figures() -> int:
         figure[labels[y : y + h, x : x + w] != label] = 0
         lap = np.flatnonzero(figure[-30:, :, 3].max(axis=0) > 128)
         middle = (lap[0] + lap[-1]) / 2.0 * scale
-        scaled = Image.fromarray(figure).resize((round(w * scale), round(h * scale)), Image.LANCZOS)
+        scaled = Image.fromarray(figure).resize(
+            (round(w * scale), round(h * scale)), Image.LANCZOS
+        )
         left = int(round(width / 2.0 - middle))
         if left < 0 or left + scaled.width > width or scaled.height > height:
             print(
@@ -415,8 +451,14 @@ def cut_figures() -> int:
         canvas.alpha_composite(scaled, (left, height - scaled.height))
         target = out / f"{name}.png"
         canvas.save(target, optimize=True)
-        print(f"{target.relative_to(REPO)}: {width} x {height} (the figure {scaled.width} x {scaled.height})")
-    backdrop = Image.open(SHEETS_DIR / BACKDROP).convert("RGB").resize(BACKDROP_SIZE, Image.LANCZOS)
+        print(
+            f"{target.relative_to(REPO)}: {width} x {height} (the figure {scaled.width} x {scaled.height})"
+        )
+    backdrop = (
+        Image.open(SHEETS_DIR / BACKDROP)
+        .convert("RGB")
+        .resize(BACKDROP_SIZE, Image.LANCZOS)
+    )
     target = out / "backdrop.jpg"
     backdrop.save(target, quality=88, optimize=True)
     print(f"{target.relative_to(REPO)}: {BACKDROP_SIZE[0]} x {BACKDROP_SIZE[1]}")
@@ -425,7 +467,11 @@ def cut_figures() -> int:
 
 def cut_start() -> None:
     """Scale the painting of the start screen to the screen."""
-    painting = Image.open(SHEETS_DIR / START).convert("RGB").resize((1920, 1080), Image.LANCZOS)
+    painting = (
+        Image.open(SHEETS_DIR / START)
+        .convert("RGB")
+        .resize((1920, 1080), Image.LANCZOS)
+    )
     target = OUT / "start" / "start.jpg"
     target.parent.mkdir(parents=True, exist_ok=True)
     painting.save(target, quality=88, optimize=True)
@@ -452,14 +498,20 @@ def main() -> int:
         if name == "ground":
             cut_ground()
             continue
-        if name in SHEETS and not (SHEETS_DIR / SHEETS[name].path).exists() and not sys.argv[1:]:
+        if (
+            name in SHEETS
+            and not (SHEETS_DIR / SHEETS[name].path).exists()
+            and not sys.argv[1:]
+        ):
             print(f"Skipping the sheet {name}: {SHEETS[name].path} is not there yet.")
             continue
         if name == "start":
             cut_start()
         elif name == "how_to_rowers":
             if not (SHEETS_DIR / FIGURES).exists():
-                print(f"Skipping the rowers of How to play: {FIGURES} is not there yet.")
+                print(
+                    f"Skipping the rowers of How to play: {FIGURES} is not there yet."
+                )
             elif cut_figures() != 0:
                 return 1
         elif name in SHEETS:

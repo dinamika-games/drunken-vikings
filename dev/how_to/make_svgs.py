@@ -158,7 +158,9 @@ def joints(center: float, height: float, p: Dict) -> Dict:
             elbow = lerp(reach_elbow, pull_elbow, lean)
             wrist = lerp(reach_wrist, pull_wrist, lean)
         elif p["hands"] == "up":
-            elbow = lerp(rest_elbow, add(shoulder, scale((0.05 * side, -0.1), height)), up)
+            elbow = lerp(
+                rest_elbow, add(shoulder, scale((0.05 * side, -0.1), height)), up
+            )
             wrist = lerp(rest_wrist, add(head, scale((0.13 * side, -0.2), height)), up)
         elif p["hands"] == "point" and side > 0.0:
             target = p.get("target", add(shoulder, scale((0.15, -0.12), height)))
@@ -188,7 +190,9 @@ def figure(center: float, height: float, p: Dict, look: int) -> List[str]:
         for k in range(5):
             x = hx + (0.075 + 0.004) * side * u
             y = hy + (0.02 + 0.04 * k) * u
-            out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.026 * u:.1f}" fill="{colors["hair"]}"/>')
+            out.append(
+                f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.026 * u:.1f}" fill="{colors["hair"]}"/>'
+            )
     s0, s1 = at["shoulders"]
     hips = at["hips"]
     dress = [s0, s1, add(hips, (0.15 * u, 0.0)), add(hips, (-0.15 * u, 0.0))]
@@ -206,13 +210,17 @@ def figure(center: float, height: float, p: Dict, look: int) -> List[str]:
                 f'stroke="{colors["sleeve"]}" stroke-width="{w * u:.1f}" stroke-linecap="round"/>'
             )
         ex, ey = at["wrists"][i]
-        out.append(f'<circle cx="{ex:.1f}" cy="{ey:.1f}" r="{0.032 * u:.1f}" fill="{SKIN}"/>')
+        out.append(
+            f'<circle cx="{ex:.1f}" cy="{ey:.1f}" r="{0.032 * u:.1f}" fill="{SKIN}"/>'
+        )
     nx, ny = at["neck"]
     out.append(
         f'<line x1="{nx:.1f}" y1="{ny:.1f}" x2="{hx:.1f}" y2="{hy:.1f}" stroke="{SKIN}" '
         f'stroke-width="{0.07 * u:.1f}"/>'
     )
-    out.append(f'<circle cx="{hx:.1f}" cy="{hy:.1f}" r="{HEAD * u:.1f}" fill="{SKIN}"/>')
+    out.append(
+        f'<circle cx="{hx:.1f}" cy="{hy:.1f}" r="{HEAD * u:.1f}" fill="{SKIN}"/>'
+    )
     r = HEAD * u
     out.append(
         f'<path d="M {hx - r:.1f} {hy - 0.1 * r:.1f} A {r:.1f} {r:.1f} 0 0 1 {hx + r:.1f} {hy - 0.1 * r:.1f}" '
@@ -236,7 +244,9 @@ def figure(center: float, height: float, p: Dict, look: int) -> List[str]:
 
 def arrow(points: List[Vec], color: str = GOLD) -> List[str]:
     """A thick arrow along the points, with its head at the last one."""
-    path = " ".join(f"{'M' if i == 0 else 'L'} {x:.1f} {y:.1f}" for i, (x, y) in enumerate(points))
+    path = " ".join(
+        f"{'M' if i == 0 else 'L'} {x:.1f} {y:.1f}" for i, (x, y) in enumerate(points)
+    )
     (ax, ay), (bx, by) = points[-2], points[-1]
     angle = math.atan2(by - ay, bx - ax)
     head = [
@@ -252,7 +262,9 @@ def arrow(points: List[Vec], color: str = GOLD) -> List[str]:
     ]
 
 
-def boat(cx: float, cy: float, players: int, pulls: List[float], braking: bool, golden: bool) -> List[str]:
+def boat(
+    cx: float, cy: float, players: int, pulls: List[float], braking: bool, golden: bool
+) -> List[str]:
     """The small boat from above, its bow up, with its rowers and their oars."""
     out = [
         f'<ellipse cx="{cx}" cy="{cy}" rx="34" ry="95" fill="#7a4f28" stroke="#3a2412" stroke-width="5"/>',
@@ -262,7 +274,10 @@ def boat(cx: float, cy: float, players: int, pulls: List[float], braking: bool, 
     for i, side in enumerate((-1.0, 1.0)):
         swing = 0.0 if braking else (-0.5 + pulls[i] * 1.0 if pulls[i] >= 0.0 else -0.3)
         lock = (cx + side * 30, cy)
-        blade = (lock[0] + side * math.cos(swing) * 120, lock[1] + math.sin(swing) * 120)
+        blade = (
+            lock[0] + side * math.cos(swing) * 120,
+            lock[1] + math.sin(swing) * 120,
+        )
         out.append(
             f'<line x1="{lock[0] - side * 30:.1f}" y1="{lock[1]:.1f}" x2="{blade[0]:.1f}" y2="{blade[1]:.1f}" '
             f'stroke="{oar}" stroke-width="7" stroke-linecap="round"/>'
@@ -294,7 +309,9 @@ def panel(part: Part, t: float, players: int) -> List[str]:
             f'<rect x="{kx}" y="{ky}" width="250" height="190" rx="14" fill="{PAPER}" '
             f'stroke="{GOLD if lit else "#6a4320"}" stroke-width="{12 if lit else 6}"/>'
         )
-        out.append(f'<rect x="{kx + 95}" y="{ky + 30}" width="60" height="60" rx="8" fill="#8a5a2b"/>')
+        out.append(
+            f'<rect x="{kx + 95}" y="{ky + 30}" width="60" height="60" rx="8" fill="#8a5a2b"/>'
+        )
         out.append(
             f'<text x="{kx + 125}" y="{ky + 150}" font-size="30" text-anchor="middle" fill="{INK}" '
             f'font-family="sans-serif">Sell</text>'
@@ -322,15 +339,20 @@ def panel(part: Part, t: float, players: int) -> List[str]:
             f'<path d="M {wx} {wy} q 10 -8 20 0" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="3"/>'
         )
     if part.panel == "jetty":
-        out.append(f'<rect x="{cx + 80}" y="{y}" width="{x + w - cx - 80}" height="{h}" fill="#5d6b3a"/>')
-        out.append(f'<rect x="{cx + 80}" y="{y}" width="16" height="{h}" fill="#c9b98a"/>')
+        out.append(
+            f'<rect x="{cx + 80}" y="{y}" width="{x + w - cx - 80}" height="{h}" fill="#5d6b3a"/>'
+        )
+        out.append(
+            f'<rect x="{cx + 80}" y="{y}" width="16" height="{h}" fill="#c9b98a"/>'
+        )
         out.append(
             f'<rect x="{cx + 30}" y="{cy - 14}" width="60" height="28" fill="#8a6a40" stroke="#5a3a1e" stroke-width="3"/>'
         )
     moves = {m.do for who in range(players) for m in moves_at(part, t, who)}
     rowing = [any(m.do == "row" for m in moves_at(part, t, who)) for who in range(2)]
     pulls = [
-        pose(part, t, who, players)["lean"] if rowing[min(who, players - 1)] else -1.0 for who in range(2)
+        pose(part, t, who, players)["lean"] if rowing[min(who, players - 1)] else -1.0
+        for who in range(2)
     ]
     if players == 1:
         pulls[1] = pulls[0]
@@ -339,16 +361,25 @@ def panel(part: Part, t: float, players: int) -> List[str]:
     if "lean" in moves:
         side = next(m.side for m in moves_at(part, t, 0) if m.do == "lean")
         out += arrow(
-            [(cx, cy - 110), (cx, cy - 170), (cx + side * 60, cy - 230), (cx + side * 150, cy - 250)]
+            [
+                (cx, cy - 110),
+                (cx, cy - 170),
+                (cx + side * 60, cy - 230),
+                (cx + side * 150, cy - 250),
+            ]
         )
     elif part.id == "turn":
-        out += arrow([(cx, cy - 110), (cx, cy - 170), (cx + 60, cy - 230), (cx + 150, cy - 250)])
+        out += arrow(
+            [(cx, cy - 110), (cx, cy - 170), (cx + 60, cy - 230), (cx + 150, cy - 250)]
+        )
     elif braking:
         out.append(
             f'<rect x="{cx - 90}" y="{cy - 175}" width="180" height="22" rx="10" fill="#b8332a" opacity="0.9"/>'
         )
     elif "row" in moves or part.id == "glide":
-        out += arrow([(cx, cy - 110), (cx, cy - 250)], GOLD if "row" in moves else "#ffffff")
+        out += arrow(
+            [(cx, cy - 110), (cx, cy - 250)], GOLD if "row" in moves else "#ffffff"
+        )
     out += boat(cx, cy, players, pulls, braking, golden)
     return out
 
@@ -366,7 +397,12 @@ def screen(part: Part, t: float, players: int) -> str:
     out.append(f'<rect x="{fx}" y="{fy}" width="{fw}" height="{fh}" fill="#2c3440"/>')
     out.append(f'<g transform="translate({fx} {fy})">')
     for who in range(players):
-        out += figure(center_of(players, who), height_of(players), pose(part, t, who, players), who)
+        out += figure(
+            center_of(players, who),
+            height_of(players),
+            pose(part, t, who, players),
+            who,
+        )
     out.append("</g>")
     out += panel(part, t, players)
     for (rx, ry, rw, rh), label in (
@@ -392,9 +428,14 @@ def screen(part: Part, t: float, players: int) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
     parser.add_argument(
-        "--out", default=str(pathlib.Path.home() / "Downloads" / "viking" / "how-to" / "all_svgs")
+        "--out",
+        default=str(
+            pathlib.Path.home() / "Downloads" / "viking" / "how-to" / "all_svgs"
+        ),
     )
     args = parser.parse_args()
     out = pathlib.Path(args.out).expanduser()

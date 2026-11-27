@@ -193,7 +193,13 @@ def parse(path: pathlib.Path) -> Log:
         elif m := PICK.match(text):
             g = m.groups()
             log.picks.append(
-                PickLine(t=number(g[0]), picked=int(g[1]), coins=int(g[2]), x=number(g[3]), y=number(g[4]))
+                PickLine(
+                    t=number(g[0]),
+                    picked=int(g[1]),
+                    coins=int(g[2]),
+                    x=number(g[3]),
+                    y=number(g[4]),
+                )
             )
         else:
             log.unparsed += 1
@@ -212,11 +218,19 @@ def report_vision(log: Log) -> None:
     seen = [p for p in poses if p.source != "None"]
     span = poses[-1].t - poses[0].t
     print(f"## The vision ({span:.0f} s, {len(poses)} pose lines)")
-    print(f"The player was seen in {100 * len(seen) / len(poses):.0f} % of the lines.", end=" ")
+    print(
+        f"The player was seen in {100 * len(seen) / len(poses):.0f} % of the lines.",
+        end=" ",
+    )
     sources: dict[str, int] = {}
     for p in poses:
         sources[p.source] = sources.get(p.source, 0) + 1
-    print("Sources: " + ", ".join(f"{k} {100 * v / len(poses):.0f} %" for k, v in sorted(sources.items())))
+    print(
+        "Sources: "
+        + ", ".join(
+            f"{k} {100 * v / len(poses):.0f} %" for k, v in sorted(sources.items())
+        )
+    )
     tilts = [p for p in seen if not math.isnan(p.tilt)]
     print(
         f"The shoulders were seen in {100 * len(tilts) / max(1, len(seen)):.0f} % of the poses with a player."
@@ -229,10 +243,14 @@ def report_vision(log: Log) -> None:
         )
     gaps = [b.t - a.t for a, b in zip(seen, seen[1:]) if b.t - a.t > 1.0]
     if gaps:
-        print(f"The player was lost {len(gaps)} time(s) for over 1 s, the longest {max(gaps):.1f} s.")
+        print(
+            f"The player was lost {len(gaps)} time(s) for over 1 s, the longest {max(gaps):.1f} s."
+        )
     print(f"Strokes: {poses[-1].strokes - poses[0].strokes}.")
     braking = [p for p in poses if p.brake]
-    print(f"The player braked (both hands above the head) in {len(braking)} of the pose lines.")
+    print(
+        f"The player braked (both hands above the head) in {len(braking)} of the pose lines."
+    )
     print()
 
 
@@ -264,7 +282,11 @@ def report_steering(log: Log) -> None:
     # NOTE: Episodes of steering to one side, merged over short gaps.
     episodes: list[list[PoseLine]] = []
     for p in steering:
-        if episodes and p.t - episodes[-1][-1].t < 0.6 and p.steer * episodes[-1][-1].steer > 0:
+        if (
+            episodes
+            and p.t - episodes[-1][-1].t < 0.6
+            and p.steer * episodes[-1][-1].steer > 0
+        ):
             episodes[-1].append(p)
         else:
             episodes.append([p])
@@ -280,7 +302,9 @@ def report_steering(log: Log) -> None:
     # NOTE: Levels which drifted far, or homes which jumped, hint at trouble.
     levels = [p.level for p in poses if not math.isnan(p.level)]
     if levels:
-        print(f"The level of the shoulders stayed within {min(levels):+.1f}..{max(levels):+.1f} degrees.")
+        print(
+            f"The level of the shoulders stayed within {min(levels):+.1f}..{max(levels):+.1f} degrees."
+        )
     print()
 
 
@@ -294,7 +318,9 @@ def report_treats(log: Log) -> None:
     if not log.boats:
         print("No party lines: the log is not of the party, or --log-pose was missing.")
         return
-    print(f"## The treats ({len(log.drops)} dropped, {sum(p.picked for p in log.picks)} picked)")
+    print(
+        f"## The treats ({len(log.drops)} dropped, {sum(p.picked for p in log.picks)} picked)"
+    )
     picks = list(log.picks)
     # NOTE: The last treats which the boat did not pick are still on the water
     # at the end of the log: not missed, only not reached yet.
@@ -303,7 +329,12 @@ def report_treats(log: Log) -> None:
     outcomes: list[str] = []
     for d in log.drops:
         pick = next(
-            (p for p in picks if p.t >= d.t and math.hypot(p.x - d.x, p.y - d.y) <= PICK_RADIUS), None
+            (
+                p
+                for p in picks
+                if p.t >= d.t and math.hypot(p.x - d.x, p.y - d.y) <= PICK_RADIUS
+            ),
+            None,
         )
         if pick is not None:
             picks.remove(pick)

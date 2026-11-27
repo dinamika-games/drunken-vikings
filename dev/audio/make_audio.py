@@ -95,9 +95,21 @@ SOUNDS: List[Sound] = [
     Sound(source="goat_2.ogg", name="goat", duration=2.5, fade_out=0.4),
     Sound(source="cow_1.ogg", name="cow", duration=3.0, fade_out=0.5),
     Sound(source="bees_1.ogg", name="bees", duration=4.0, fade_in=0.3, fade_out=0.8),
-    Sound(source="market_crowd.ogg", name="market", duration=5.0, fade_in=0.5, fade_out=1.0),
+    Sound(
+        source="market_crowd.ogg",
+        name="market",
+        duration=5.0,
+        fade_in=0.5,
+        fade_out=1.0,
+    ),
     Sound(source="seagulls_1.ogg", name="gulls", fade_out=0.3),
-    Sound(source="water_lapping_loop_1.ogg", name="water", duration=24.0, fade_in=1.0, fade_out=1.0),
+    Sound(
+        source="water_lapping_loop_1.ogg",
+        name="water",
+        duration=24.0,
+        fade_in=1.0,
+        fade_out=1.0,
+    ),
 ]
 
 
@@ -155,20 +167,29 @@ def make_sounds(source: pathlib.Path, work: pathlib.Path) -> None:
         if sound.fade_in > 0.0:
             filters.append(f"afade=t=in:d={sound.fade_in}")
         if sound.duration is not None and sound.fade_out > 0.0:
-            filters.append(f"afade=t=out:st={sound.duration - sound.fade_out}:d={sound.fade_out}")
+            filters.append(
+                f"afade=t=out:st={sound.duration - sound.fade_out}:d={sound.fade_out}"
+            )
         wav = work / f"{sound.name}.wav"
         ffmpeg(arguments + ["-af", ",".join(filters), "-ar", "44100", str(wav)])
         # NOTE (mristin):
         # The loudness filter of ffmpeg needs some 3 s; the short sounds are
         # brought to their peak instead.
         target = OUT / "sounds" / f"{sound.name}.ogg"
-        subprocess.run(["sox", str(wav), "-C", "5", str(target), "gain", "-n", str(SOUND_PEAK)], check=True)
+        subprocess.run(
+            ["sox", str(wav), "-C", "5", str(target), "gain", "-n", str(SOUND_PEAK)],
+            check=True,
+        )
         print(f"  {target.relative_to(REPO_ROOT)} <- {sound.source}")
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("--source", default=str(pathlib.Path.home() / "Downloads" / "viking"))
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser.add_argument(
+        "--source", default=str(pathlib.Path.home() / "Downloads" / "viking")
+    )
     args = parser.parse_args()
     source = pathlib.Path(args.source).expanduser()
     # NOTE (mristin):

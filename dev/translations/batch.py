@@ -54,7 +54,14 @@ def _entries(po: polib.POFile) -> List[polib.POEntry]:
     return [entry for entry in po if not entry.obsolete]
 
 
-def dump(language: str, start: int, count: Optional[int], missing: bool, context: bool, grep: str) -> None:
+def dump(
+    language: str,
+    start: int,
+    count: Optional[int],
+    missing: bool,
+    context: bool,
+    grep: str,
+) -> None:
     """Print the messages as JSON."""
     po = polib.pofile(str(_path(language)), wrapwidth=100)
     result = []
@@ -96,7 +103,9 @@ def apply(language: str, source: pathlib.Path) -> int:
             continue
         entry = entries[translated.index]
         if entry.msgid != translated.english:
-            problems.append(f"The message {translated.index} is {entry.msgid!r}, not {translated.english!r}.")
+            problems.append(
+                f"The message {translated.index} is {entry.msgid!r}, not {translated.english!r}."
+            )
             continue
         entry.msgstr = translated.translation
         if translated.translation and "fuzzy" not in entry.flags:
@@ -130,7 +139,9 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.command == "dump":
-        dump(args.language, args.start, args.count, args.missing, args.context, args.grep)
+        dump(
+            args.language, args.start, args.count, args.missing, args.context, args.grep
+        )
         return 0
     return apply(args.language, args.source)
 
