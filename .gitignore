@@ -41,3 +41,6 @@ __pycache__/
 
 # The exports (see export_presets.cfg)
 /build/
+
+# The zips of the packages (see dev/package.py)
+/dist/
