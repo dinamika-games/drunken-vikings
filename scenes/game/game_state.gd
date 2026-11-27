@@ -3,7 +3,7 @@ extends Node
 ## The state of the players' voyage, for the whole game (the autoload
 ## GameState): the silver, the cargo of the boat, the day, the economy of the
 ## lakes, the farm, the prices the players saw and the news they heard. It
-## saves in every port (see [method save]).
+## saves in every port, and every 30 seconds on the water (see [method save]).
 ##
 ## The players keep as many **journeys** as they like (so that several
 ## children can share a computer): each is one voyage with its own name, its
@@ -14,7 +14,9 @@ extends Node
 const OLD_SAVE_PATH := "user://voyage.json"
 
 ## The version of the format of the saves.
-const FORMAT := 2
+##
+## 3: the boat on the water ("boat": {"x", "y", "heading"} when "place" is "").
+const FORMAT := 3
 
 const MAP_PATH := "res://data/world/home_lakes.json"
 const GOODS_PATH := "res://data/economy/goods.json"
@@ -68,6 +70,11 @@ var place := "home":
         place = value
         if value != "" and value != "home":
             travelled = true
+
+## Where the boat is on the water, while [member place] is "" (the world sets
+## it before it saves there), and its heading, in radians.
+var boat_at := Vector2.ZERO
+var boat_heading := 0.0
 
 ## Whether the boat came to another place than home since the players last
 ## slept: they may sleep only after a day's trip, so
@@ -124,6 +131,7 @@ func _ready() -> void:
 ## The journeys, the most recently played first: Array of {"id", "name",
 ## "players", "day", "silver", "updated"}.
 func journeys() -> Array:
+    _recover_saves()
     var result: Array = []
     for file in DirAccess.get_files_at(saves_dir):
         if not file.ends_with(".json"):
@@ -168,6 +176,7 @@ func new_journey(count: int) -> void:
 
 ## Go on with the journey [param id]; return whether it could be read.
 func open_journey(id: String) -> bool:
+    _recover_saves()
     if not FileAccess.file_exists(_journey_path(id)):
         return false
     _use_journey(id)
@@ -266,6 +275,8 @@ func new_voyage() -> void:
     cargo = {}
     day = 1
     place = "home"
+    boat_at = Vector2.ZERO
+    boat_heading = 0.0
     travelled = false
     price_book = {}
     news = []
@@ -386,14 +397,30 @@ func save() -> bool:
         "price_book": price_book,
         "news": news,
     }
+    if place == "":
+        data["boat"] = {"x": boat_at.x, "y": boat_at.y, "heading": boat_heading}
     DirAccess.make_dir_recursive_absolute(save_path.get_base_dir())
+    # NOTE (mristin):
+    # The save must never be half written (the game autosaves while the
+    # children row, and they switch the computer off whenever they like). We
+    # write the whole voyage into a temporary file next to the save, and only
+    # then put it in the place of the save: a crash leaves either the old save
+    # or the new one. The temporary file holds JSON which ends with the last
+    # brace, so a cut one does not parse, and a whole one is the newest save
+    # (see [method _recover_saves]); e.g., Windows removes the old save before
+    # it renames the new one into its place.
     var temporary := save_path + ".tmp"
+    var text := JSON.stringify(data, "  ")
     var file := FileAccess.open(temporary, FileAccess.WRITE)
     if file == null:
         push_error("Could not save the voyage into %s." % temporary)
         return false
-    file.store_string(JSON.stringify(data, "  "))
+    var written := file.store_string(text)
     file.close()
+    if not written or FileAccess.get_file_as_string(temporary) != text:
+        push_error("Could not save the voyage into %s." % temporary)
+        DirAccess.remove_absolute(temporary)
+        return false
     if DirAccess.rename_absolute(temporary, save_path) != OK:
         push_error("Could not save the voyage into %s." % save_path)
         return false
@@ -409,6 +436,7 @@ func look(player: int) -> Dictionary:
 
 ## Load the saved voyage; return whether there was one.
 func load_voyage() -> bool:
+    _recover_saves()
     if not FileAccess.file_exists(save_path):
         return false
     var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(save_path))
@@ -433,6 +461,14 @@ func load_voyage() -> bool:
     ships.restore(data.get("ships", {}), int(data.get("capacity", 4)))
     day = int(data.get("day", 1))
     place = str(data.get("place", "home"))
+    var boat: Variant = data.get("boat", null)
+    if place == "" and boat is Dictionary:
+        boat_at = Vector2(float(boat.get("x", 0.0)), float(boat.get("y", 0.0)))
+        boat_heading = float(boat.get("heading", 0.0))
+    elif place == "":
+        # NOTE (mristin):
+        # The saves from before the format 3 did not say where on the water.
+        place = "home"
     # NOTE (mristin):
     # The saves from before the trips counted may sleep at once.
     travelled = bool(data.get("travelled", true))
@@ -442,3 +478,23 @@ func load_voyage() -> bool:
     price_book = data.get("price_book", {})
     news = data.get("news", [])
     return true
+
+
+## Finish the saves which a crash cut short (see [method save]): a whole
+## temporary file is the newest save and takes the place of the save; a cut
+## one is dropped, and the save before it stays.
+func _recover_saves() -> void:
+    var dirs := [saves_dir]
+    if save_path != "" and save_path.get_base_dir() != saves_dir:
+        dirs.append(save_path.get_base_dir())
+    for dir: String in dirs:
+        for file in DirAccess.get_files_at(dir):
+            if not file.ends_with(".json.tmp"):
+                continue
+            var temporary := dir + "/" + file
+            var json := JSON.new()
+            var text := FileAccess.get_file_as_string(temporary)
+            if json.parse(text) == OK and json.data is Dictionary:
+                DirAccess.rename_absolute(temporary, temporary.trim_suffix(".tmp"))
+            else:
+                DirAccess.remove_absolute(temporary)

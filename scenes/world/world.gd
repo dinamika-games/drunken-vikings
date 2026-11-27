@@ -39,6 +39,9 @@ const HAIL_SPEED := 4.0
 ## Seconds before a skipper hails the players again.
 const HAIL_COOLDOWN := 90.0
 
+## Seconds between the saves on the water (the ports save when the boat docks).
+const AUTOSAVE_EVERY := 30.0
+
 ## How many boats sail the lakes.
 const NPC_COUNT := 9
 
@@ -106,6 +109,7 @@ var _talking_to: NpcBoat
 var _toast := ""
 var _toast_left := 0.0
 var _gulls_left := 10.0
+var _autosave_clock := 0.0
 
 var _autopilot := false
 var _autopilot_target := ""
@@ -214,7 +218,10 @@ func _ready() -> void:
     add_child(_chart_layer)
 
     _screens = PortScreens.new(self, _state, _map)
-    _undock(_state.place)
+    if _state.place == "" and _map.is_water(_state.boat_at):
+        _set_out(_state.boat_at, _state.boat_heading, 0.0)
+    else:
+        _undock(_state.place)
     _camera.rotation = _boat.heading
     _camera.position = _boat.position + Vector2.UP.rotated(_boat.heading) * LOOK_AHEAD
     Audio.ambient("water")
@@ -296,7 +303,7 @@ func _add_label(text: String, kind: String, at: Vector2) -> void:
 ## Escape twice ends the journey: save, and back to the first screen.
 func _leave() -> void:
     if _state != null:
-        _state.save()
+        _save()
     get_tree().change_scene_to_file("res://scenes/start/start.tscn")
 
 
@@ -407,6 +414,11 @@ func _process(delta: float) -> void:
         # NOTE: The boat which just docked hails nobody: the port shows.
         if _mode == "rowing":
             _check_hailing()
+        if _mode == "rowing":
+            _autosave_clock += delta
+            if _autosave_clock >= AUTOSAVE_EVERY:
+                _autosave_clock = 0.0
+                _save()
     else:
         # NOTE (mristin):
         # The strokes in a port choose; they must not row once the boat is out.
@@ -537,6 +549,7 @@ func _dock(id: String) -> void:
     _boat.position = place["berth"]
     _state.place = id
     _state.save()
+    _autosave_clock = 0.0
     _mode = "port"
     _sound_of_port(place)
     _screens.show_port()
@@ -563,19 +576,35 @@ func _undock(id: String) -> void:
     var place := _map.place(id)
     if place.is_empty():
         place = _map.places[0]
-    _boat.position = place["berth"]
     var out: Vector2 = (place["jetty"] - place["at"]).normalized()
-    _boat.heading = out.angle() + PI / 2.0
-    _boat.speed = 2.0
+    _set_out(place["berth"], out.angle() + PI / 2.0, 2.0)
     _left_place = place["id"]
     _autopilot_from = place["id"]
+
+
+## Put the boat on the water [param at], with the [param heading] and the
+## [param speed].
+func _set_out(at: Vector2, heading: float, speed: float) -> void:
+    _boat.position = at
+    _boat.heading = heading
+    _boat.speed = speed
+    _left_place = ""
     _state.place = ""
+    _autosave_clock = 0.0
     _mode = "rowing"
     Audio.music("lakes")
     _panel.close()
     _farm_view.visible = false
     _arrows.visible = true
     _autopilot_target = ""
+
+
+## Save the voyage, and where the boat is when it is on the water.
+func _save() -> void:
+    if _state.place == "":
+        _state.boat_at = _boat.position
+        _state.boat_heading = _boat.heading
+    _state.save()
 
 
 ## Show a screen of choices (for PortScreens).
@@ -668,7 +697,7 @@ func _hail(npc: NpcBoat) -> void:
     var face := {"hair": who["hair"], "braids": who["braids"], "picture": who.get("picture", "")}
     var events: Array = _state.missions.hail(_state, who.get("picture", ""))
     if not events.is_empty():
-        _state.save()
+        _save()
         _show_hail_events(events, 0, face)
         return
     var news := Gossip.news(_state, who, _rng)

@@ -384,7 +384,7 @@ Each mission gives 1 to 3 stars, by how many days it took against its "days" (3 
 
 ## 11. The trips and the saves
 
-* The game saves in every port and at the homestead, as plain data (as in Bird Dog).
+* The game saves in every port and at the homestead, as plain data (as in Bird Dog), and every 30 seconds on the water, where the boat is, so that a voyage cut short (the computer switched off) goes on from there. A save is never half written: it is written whole into a temporary file first, which then takes the place of the save.
 * A **session** is a trip: from a port to a port, with a mission or free trading. At the end of a trip the game shows what happened (silver, goods, stars, the news), and the players can stop with one click (pillar 4).
 * Several voyages (save files) for several families or children.
 

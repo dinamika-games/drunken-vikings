@@ -2,6 +2,8 @@
 
 **Drunken Vikings is a rowing game for children, played by rowing in front of a webcam: you row, and so you train your abs.**
 
+![Two vikings sit on the floor in front of a laptop with a webcam and row with resistance bands around their feet](docs/how_to_play.jpg)
+
 The game is still being designed. For now, there is an experiment which checks that the vision sees the rowing and the steering; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 **No network access.**
